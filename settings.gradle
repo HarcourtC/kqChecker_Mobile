@@ -1,0 +1,15 @@
+pluginManagement {
+	repositories {
+		// Aliyun mirrors to speed up dependency/plugin resolution in China
+		maven { url 'https://maven.aliyun.com/repository/public' }
+		maven { url 'https://maven.aliyun.com/repository/google' }
+		maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+		maven { url 'https://maven.aliyun.com/repository/central' }
+		gradlePluginPortal()
+		google()
+		mavenCentral()
+	}
+}
+
+rootProject.name = 'Origin_Mobile'
+include ':app'

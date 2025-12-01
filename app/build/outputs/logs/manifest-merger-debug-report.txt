@@ -1,0 +1,652 @@
+-- Merging decision tree log ---
+manifest
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:2:1-31:12
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:2:1-31:12
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:2:1-31:12
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:2:1-31:12
+MERGED from [com.google.android.material:material:1.7.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3a994da96c016d59308289cacc64ccfa\transformed\material-1.7.0\AndroidManifest.xml:17:1-26:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\fcc8fd2fea2c83a9049f0507d5310283\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\166a1d3e668cbd33fed9f379a09af8dd\transformed\constraintlayout-2.0.1\AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\da3520a450c63769f7199621a6393a54\transformed\appcompat-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.material:material-ripple-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a10f3ee7827861de803a2b3a91e61376\transformed\jetified-material-ripple-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e3bb678b32719f8e3faafdf245b5c87c\transformed\jetified-material-icons-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bc615b7c7a38fc0440500c6d1a502dfa\transformed\jetified-material-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abe676affe17ebd943be053aa97b76fa\transformed\jetified-foundation-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0c68eff14e856887c399d38cf1160ca7\transformed\jetified-foundation-layout-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5de48da1700d201827d83c1ef3774359\transformed\jetified-animation-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\78d638b2421f5f6b5850e87e0325de99\transformed\jetified-animation-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-util-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\58a9c7a28eb65eb0ee5e5028b2bf829f\transformed\jetified-ui-util-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-unit-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5f04b16ce576bf799dcf662615a54e70\transformed\jetified-ui-unit-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-text-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f8e6645df95ca5626bba045c67dd2fd0\transformed\jetified-ui-text-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-graphics-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cbfdae77743865fff7a41d2617ae0bd2\transformed\jetified-ui-graphics-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-geometry-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cec71982c6a7afbb0c3fdea2b20ed2b8\transformed\jetified-ui-geometry-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b82b13cbfd748b6593552bb49c59e1c5\transformed\jetified-ui-tooling-data-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b52131a775401c0cebdef587a2b3b2fa\transformed\jetified-ui-tooling-preview-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.ui:ui-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\acc8cd547a27a18652d98862c156b61d\transformed\jetified-ui-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:17:1-28:12
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0dfabc13f297170248edec36c0d3693f\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\511505e373687d114038d8d6019d5cab\transformed\fragment-1.3.6\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity-ktx:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3b423f7ea402479bafa6495e8430da49\transformed\jetified-activity-ktx-1.7.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ca6152279681aa73d6accf457a12e308\transformed\jetified-activity-1.7.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity-compose:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d1aa382a2185fe0aebf7d802bfc96075\transformed\jetified-activity-compose-1.7.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.work:work-runtime-ktx:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40929e2cae30d48fe959fdb39acc0047\transformed\work-runtime-ktx-2.8.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:17:1-145:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\07cb1e99ff3a36b36d550111e3d787d3\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\95a13b5af75557176e23bf544c818499\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\47f90db92c0c0ce6fa7e7a86c9ae32ba\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\55fc1651abbe3bdcf88bc0487bcdbe9e\transformed\jetified-emoji2-views-helper-1.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-service:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f783e444e5d6dac2550f0ad7d33ded0a\transformed\jetified-lifecycle-service-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e05442756992e42c54ff58acbbc3e82\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b10fd36649637f4b583dd234358a85c7\transformed\jetified-lifecycle-viewmodel-ktx-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7d2b49f1e9d0e1e95b0ee381ae9e8fc\transformed\jetified-lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f47194eb4b71ff33540a55323f8363b2\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b47b00630e56c0f156c2a21d045bb4f5\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7ec2acfe0e58730149edd32d92fb6bc8\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\960704205a7d1beff9d9e231b4aa87c9\transformed\drawerlayout-1.1.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\24b58af379cc8f8fc99ff7d73a008623\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ddcc57ea9388abf515bd1174b157d86e\transformed\transition-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a36bc9a306b1ba3073aa14fa0e172963\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\dd628965f5becf6fb3e461331d668542\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a120091cfd62015b5e165846ed024f18\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\265f9906ba9f20ab11e04e4e3c6123f9\transformed\recyclerview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0bafb6830b97ea656120cb6b3a010ee1\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bd541fdbfe49246e065f0049f49628f2\transformed\jetified-autofill-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5996c796f892ff55a92053f96903aaee\transformed\jetified-customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.core:core-ktx:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c130d2969a2dc40cef54c9f141263918\transformed\jetified-core-ktx-1.10.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\915bba003d9e8d93e384e2f191e23023\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\34bb5ba4408f7ba5cc13de43fca29306\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e6297ac999338eac810cb92da229632\transformed\jetified-lifecycle-runtime-ktx-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\35210c6339bea5b0e579174490b7abc4\transformed\jetified-runtime-saveable-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\373c5919d7748464452f04aa9697b0c1\transformed\jetified-runtime-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:17:1-31:12
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\caf2f51411f36abc3373127a65b222d2\transformed\jetified-security-crypto-1.1.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.sqlite:sqlite-framework:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e7e389dcba00543f212167d4ebff6b86\transformed\sqlite-framework-2.3.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bea6354e949e4d92c2a14fe1ef86cc88\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\be7f06375eda64171ec26396996966bd\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5bc5c33788971a3a4529617e132b4aad\transformed\jetified-tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f6ab6a96cb999e1781aa3fdd2d2aa555\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\4b6f0d895957db756206f043713b5b89\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7321a865d8fbbc8aa62f399c177b56e\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abf55ee81945332b09a57b389c7e24ac\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\89e478e8fd4c06c5ccdb3ddd4bd36ba4\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\619df3d3323a96ab6a3c4556c39e74a2\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.sqlite:sqlite:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c86c145d98d934b74a5ed37bcd6eda90\transformed\sqlite-2.3.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\1c6d0ed5186a7a5b5b0f0adfc5581eb9\transformed\jetified-annotation-experimental-1.3.0\AndroidManifest.xml:17:1-22:12
+	package
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:4:5-67
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:4:22-64
+uses-permission#android.permission.WRITE_CALENDAR
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:5:5-73
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:5:22-70
+uses-permission#android.permission.READ_CALENDAR
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:6:5-72
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:6:22-69
+uses-permission#android.permission.WAKE_LOCK
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:7:5-68
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:23:5-68
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:23:5-68
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:7:22-65
+uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:8:5-81
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:25:5-81
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:25:5-81
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:8:22-78
+application
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:10:5-29:19
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:10:5-29:19
+MERGED from [com.google.android.material:material:1.7.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3a994da96c016d59308289cacc64ccfa\transformed\material-1.7.0\AndroidManifest.xml:24:5-20
+MERGED from [com.google.android.material:material:1.7.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3a994da96c016d59308289cacc64ccfa\transformed\material-1.7.0\AndroidManifest.xml:24:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\166a1d3e668cbd33fed9f379a09af8dd\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\166a1d3e668cbd33fed9f379a09af8dd\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
+MERGED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:28:5-143:19
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:28:5-143:19
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:23:5-29:19
+MERGED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:23:5-29:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\4b6f0d895957db756206f043713b5b89\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\4b6f0d895957db756206f043713b5b89\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+	android:extractNativeLibs
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:28:18-86
+	android:label
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:13:9-34
+	android:allowBackup
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:12:9-35
+	android:theme
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:15:9-74
+	android:usesCleartextTraffic
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:14:9-44
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:11:9-59
+activity#org.example.kqchecker.MainActivity
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:16:9-22:20
+	android:exported
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:17:13-36
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:16:19-68
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:18:13-21:29
+action#android.intent.action.MAIN
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:19:17-69
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:19:25-66
+category#android.intent.category.LAUNCHER
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:20:17-77
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:20:27-74
+activity#org.example.kqchecker.auth.WebLoginActivity
+ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:25:9-28:41
+	android:label
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:28:13-38
+	android:exported
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:27:13-36
+	android:name
+		ADDED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml:26:13-71
+uses-sdk
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+MERGED from [com.google.android.material:material:1.7.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3a994da96c016d59308289cacc64ccfa\transformed\material-1.7.0\AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.android.material:material:1.7.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3a994da96c016d59308289cacc64ccfa\transformed\material-1.7.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\fcc8fd2fea2c83a9049f0507d5310283\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\fcc8fd2fea2c83a9049f0507d5310283\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\166a1d3e668cbd33fed9f379a09af8dd\transformed\constraintlayout-2.0.1\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\166a1d3e668cbd33fed9f379a09af8dd\transformed\constraintlayout-2.0.1\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\da3520a450c63769f7199621a6393a54\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\da3520a450c63769f7199621a6393a54\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a10f3ee7827861de803a2b3a91e61376\transformed\jetified-material-ripple-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a10f3ee7827861de803a2b3a91e61376\transformed\jetified-material-ripple-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e3bb678b32719f8e3faafdf245b5c87c\transformed\jetified-material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e3bb678b32719f8e3faafdf245b5c87c\transformed\jetified-material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bc615b7c7a38fc0440500c6d1a502dfa\transformed\jetified-material-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bc615b7c7a38fc0440500c6d1a502dfa\transformed\jetified-material-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abe676affe17ebd943be053aa97b76fa\transformed\jetified-foundation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abe676affe17ebd943be053aa97b76fa\transformed\jetified-foundation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0c68eff14e856887c399d38cf1160ca7\transformed\jetified-foundation-layout-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0c68eff14e856887c399d38cf1160ca7\transformed\jetified-foundation-layout-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5de48da1700d201827d83c1ef3774359\transformed\jetified-animation-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5de48da1700d201827d83c1ef3774359\transformed\jetified-animation-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\78d638b2421f5f6b5850e87e0325de99\transformed\jetified-animation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\78d638b2421f5f6b5850e87e0325de99\transformed\jetified-animation-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\58a9c7a28eb65eb0ee5e5028b2bf829f\transformed\jetified-ui-util-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\58a9c7a28eb65eb0ee5e5028b2bf829f\transformed\jetified-ui-util-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5f04b16ce576bf799dcf662615a54e70\transformed\jetified-ui-unit-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5f04b16ce576bf799dcf662615a54e70\transformed\jetified-ui-unit-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f8e6645df95ca5626bba045c67dd2fd0\transformed\jetified-ui-text-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f8e6645df95ca5626bba045c67dd2fd0\transformed\jetified-ui-text-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cbfdae77743865fff7a41d2617ae0bd2\transformed\jetified-ui-graphics-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cbfdae77743865fff7a41d2617ae0bd2\transformed\jetified-ui-graphics-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cec71982c6a7afbb0c3fdea2b20ed2b8\transformed\jetified-ui-geometry-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\cec71982c6a7afbb0c3fdea2b20ed2b8\transformed\jetified-ui-geometry-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b82b13cbfd748b6593552bb49c59e1c5\transformed\jetified-ui-tooling-data-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b82b13cbfd748b6593552bb49c59e1c5\transformed\jetified-ui-tooling-data-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b52131a775401c0cebdef587a2b3b2fa\transformed\jetified-ui-tooling-preview-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b52131a775401c0cebdef587a2b3b2fa\transformed\jetified-ui-tooling-preview-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\acc8cd547a27a18652d98862c156b61d\transformed\jetified-ui-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\acc8cd547a27a18652d98862c156b61d\transformed\jetified-ui-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0dfabc13f297170248edec36c0d3693f\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0dfabc13f297170248edec36c0d3693f\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\511505e373687d114038d8d6019d5cab\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\511505e373687d114038d8d6019d5cab\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity-ktx:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3b423f7ea402479bafa6495e8430da49\transformed\jetified-activity-ktx-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-ktx:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\3b423f7ea402479bafa6495e8430da49\transformed\jetified-activity-ktx-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ca6152279681aa73d6accf457a12e308\transformed\jetified-activity-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ca6152279681aa73d6accf457a12e308\transformed\jetified-activity-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-compose:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d1aa382a2185fe0aebf7d802bfc96075\transformed\jetified-activity-compose-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-compose:1.7.2] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d1aa382a2185fe0aebf7d802bfc96075\transformed\jetified-activity-compose-1.7.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.work:work-runtime-ktx:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40929e2cae30d48fe959fdb39acc0047\transformed\work-runtime-ktx-2.8.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.work:work-runtime-ktx:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40929e2cae30d48fe959fdb39acc0047\transformed\work-runtime-ktx-2.8.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\07cb1e99ff3a36b36d550111e3d787d3\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\07cb1e99ff3a36b36d550111e3d787d3\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\95a13b5af75557176e23bf544c818499\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\95a13b5af75557176e23bf544c818499\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\47f90db92c0c0ce6fa7e7a86c9ae32ba\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\47f90db92c0c0ce6fa7e7a86c9ae32ba\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\55fc1651abbe3bdcf88bc0487bcdbe9e\transformed\jetified-emoji2-views-helper-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\55fc1651abbe3bdcf88bc0487bcdbe9e\transformed\jetified-emoji2-views-helper-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-service:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f783e444e5d6dac2550f0ad7d33ded0a\transformed\jetified-lifecycle-service-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-service:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f783e444e5d6dac2550f0ad7d33ded0a\transformed\jetified-lifecycle-service-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e05442756992e42c54ff58acbbc3e82\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e05442756992e42c54ff58acbbc3e82\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b10fd36649637f4b583dd234358a85c7\transformed\jetified-lifecycle-viewmodel-ktx-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b10fd36649637f4b583dd234358a85c7\transformed\jetified-lifecycle-viewmodel-ktx-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7d2b49f1e9d0e1e95b0ee381ae9e8fc\transformed\jetified-lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7d2b49f1e9d0e1e95b0ee381ae9e8fc\transformed\jetified-lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f47194eb4b71ff33540a55323f8363b2\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f47194eb4b71ff33540a55323f8363b2\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b47b00630e56c0f156c2a21d045bb4f5\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\b47b00630e56c0f156c2a21d045bb4f5\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7ec2acfe0e58730149edd32d92fb6bc8\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7ec2acfe0e58730149edd32d92fb6bc8\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\960704205a7d1beff9d9e231b4aa87c9\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\960704205a7d1beff9d9e231b4aa87c9\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\24b58af379cc8f8fc99ff7d73a008623\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\24b58af379cc8f8fc99ff7d73a008623\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ddcc57ea9388abf515bd1174b157d86e\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\ddcc57ea9388abf515bd1174b157d86e\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a36bc9a306b1ba3073aa14fa0e172963\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a36bc9a306b1ba3073aa14fa0e172963\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\dd628965f5becf6fb3e461331d668542\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\dd628965f5becf6fb3e461331d668542\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a120091cfd62015b5e165846ed024f18\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\a120091cfd62015b5e165846ed024f18\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\265f9906ba9f20ab11e04e4e3c6123f9\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\265f9906ba9f20ab11e04e4e3c6123f9\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0bafb6830b97ea656120cb6b3a010ee1\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0bafb6830b97ea656120cb6b3a010ee1\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bd541fdbfe49246e065f0049f49628f2\transformed\jetified-autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bd541fdbfe49246e065f0049f49628f2\transformed\jetified-autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5996c796f892ff55a92053f96903aaee\transformed\jetified-customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5996c796f892ff55a92053f96903aaee\transformed\jetified-customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.core:core-ktx:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c130d2969a2dc40cef54c9f141263918\transformed\jetified-core-ktx-1.10.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c130d2969a2dc40cef54c9f141263918\transformed\jetified-core-ktx-1.10.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\915bba003d9e8d93e384e2f191e23023\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\915bba003d9e8d93e384e2f191e23023\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\34bb5ba4408f7ba5cc13de43fca29306\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\34bb5ba4408f7ba5cc13de43fca29306\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e6297ac999338eac810cb92da229632\transformed\jetified-lifecycle-runtime-ktx-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\7e6297ac999338eac810cb92da229632\transformed\jetified-lifecycle-runtime-ktx-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\35210c6339bea5b0e579174490b7abc4\transformed\jetified-runtime-saveable-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\35210c6339bea5b0e579174490b7abc4\transformed\jetified-runtime-saveable-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\373c5919d7748464452f04aa9697b0c1\transformed\jetified-runtime-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\373c5919d7748464452f04aa9697b0c1\transformed\jetified-runtime-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\caf2f51411f36abc3373127a65b222d2\transformed\jetified-security-crypto-1.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.security:security-crypto:1.1.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\caf2f51411f36abc3373127a65b222d2\transformed\jetified-security-crypto-1.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite-framework:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e7e389dcba00543f212167d4ebff6b86\transformed\sqlite-framework-2.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite-framework:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\e7e389dcba00543f212167d4ebff6b86\transformed\sqlite-framework-2.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bea6354e949e4d92c2a14fe1ef86cc88\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\bea6354e949e4d92c2a14fe1ef86cc88\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\be7f06375eda64171ec26396996966bd\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\be7f06375eda64171ec26396996966bd\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5bc5c33788971a3a4529617e132b4aad\transformed\jetified-tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\5bc5c33788971a3a4529617e132b4aad\transformed\jetified-tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f6ab6a96cb999e1781aa3fdd2d2aa555\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f6ab6a96cb999e1781aa3fdd2d2aa555\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\4b6f0d895957db756206f043713b5b89\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\4b6f0d895957db756206f043713b5b89\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7321a865d8fbbc8aa62f399c177b56e\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\d7321a865d8fbbc8aa62f399c177b56e\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abf55ee81945332b09a57b389c7e24ac\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\abf55ee81945332b09a57b389c7e24ac\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\89e478e8fd4c06c5ccdb3ddd4bd36ba4\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\89e478e8fd4c06c5ccdb3ddd4bd36ba4\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\619df3d3323a96ab6a3c4556c39e74a2\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\619df3d3323a96ab6a3c4556c39e74a2\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c86c145d98d934b74a5ed37bcd6eda90\transformed\sqlite-2.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite:2.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c86c145d98d934b74a5ed37bcd6eda90\transformed\sqlite-2.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\1c6d0ed5186a7a5b5b0f0adfc5581eb9\transformed\jetified-annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\1c6d0ed5186a7a5b5b0f0adfc5581eb9\transformed\jetified-annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+	android:targetSdkVersion
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from E:\Program\kaoqing\Origin_Mobile\app\src\main\AndroidManifest.xml
+activity#androidx.compose.ui.tooling.PreviewActivity
+ADDED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:23:9-25:39
+	android:exported
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:25:13-36
+	android:name
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.5.3] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\eb449efb479163071c9142e21fb8b464\transformed\jetified-ui-tooling-release\AndroidManifest.xml:24:13-71
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:24:5-79
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:24:22-76
+uses-permission#android.permission.FOREGROUND_SERVICE
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:26:5-77
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:26:22-74
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:29:9-37:20
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c648e1ef08648521544eee27f28ecf64\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:33:13-31
+	android:authorities
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:31:13-68
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:32:13-37
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:30:13-67
+meta-data#androidx.work.WorkManagerInitializer
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:34:13-36:52
+	android:value
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:36:17-49
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:35:17-68
+service#androidx.work.impl.background.systemalarm.SystemAlarmService
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:39:9-45:35
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:42:13-72
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:43:13-37
+	tools:ignore
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:44:13-60
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:45:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:41:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:40:13-88
+service#androidx.work.impl.background.systemjob.SystemJobService
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:46:9-52:35
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:49:13-70
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:50:13-36
+	android:permission
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:51:13-69
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:52:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:48:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:47:13-84
+service#androidx.work.impl.foreground.SystemForegroundService
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:53:9-59:35
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:56:13-77
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:57:13-37
+	tools:ignore
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:58:13-60
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:59:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:55:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:54:13-81
+receiver#androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:61:9-66:35
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:64:13-35
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:65:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:66:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:63:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:62:13-88
+receiver#androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:67:9-77:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:70:13-36
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:71:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:72:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:69:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:68:13-106
+intent-filter#action:name:android.intent.action.ACTION_POWER_CONNECTED+action:name:android.intent.action.ACTION_POWER_DISCONNECTED
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:73:13-76:29
+action#android.intent.action.ACTION_POWER_CONNECTED
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:74:17-87
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:74:25-84
+action#android.intent.action.ACTION_POWER_DISCONNECTED
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:75:17-90
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:75:25-87
+receiver#androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:78:9-88:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:81:13-36
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:82:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:83:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:80:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:79:13-104
+intent-filter#action:name:android.intent.action.BATTERY_LOW+action:name:android.intent.action.BATTERY_OKAY
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:84:13-87:29
+action#android.intent.action.BATTERY_OKAY
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:85:17-77
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:85:25-74
+action#android.intent.action.BATTERY_LOW
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:86:17-76
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:86:25-73
+receiver#androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:89:9-99:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:92:13-36
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:93:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:94:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:91:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:90:13-104
+intent-filter#action:name:android.intent.action.DEVICE_STORAGE_LOW+action:name:android.intent.action.DEVICE_STORAGE_OK
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:95:13-98:29
+action#android.intent.action.DEVICE_STORAGE_LOW
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:96:17-83
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:96:25-80
+action#android.intent.action.DEVICE_STORAGE_OK
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:97:17-82
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:97:25-79
+receiver#androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:100:9-109:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:103:13-36
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:104:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:105:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:102:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:101:13-103
+intent-filter#action:name:android.net.conn.CONNECTIVITY_CHANGE
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:106:13-108:29
+action#android.net.conn.CONNECTIVITY_CHANGE
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:107:17-79
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:107:25-76
+receiver#androidx.work.impl.background.systemalarm.RescheduleReceiver
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:110:9-121:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:113:13-36
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:114:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:115:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:112:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:111:13-88
+intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.TIMEZONE_CHANGED+action:name:android.intent.action.TIME_SET
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:116:13-120:29
+action#android.intent.action.BOOT_COMPLETED
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:117:17-79
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:117:25-76
+action#android.intent.action.TIME_SET
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:118:17-73
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:118:25-70
+action#android.intent.action.TIMEZONE_CHANGED
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:119:17-81
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:119:25-78
+receiver#androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:122:9-131:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:125:13-72
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:126:13-37
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:127:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:124:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:123:13-99
+intent-filter#action:name:androidx.work.impl.background.systemalarm.UpdateProxies
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:128:13-130:29
+action#androidx.work.impl.background.systemalarm.UpdateProxies
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:129:17-98
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:129:25-95
+receiver#androidx.work.impl.diagnostics.DiagnosticsReceiver
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:132:9-142:20
+	android:enabled
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:135:13-35
+	android:exported
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:136:13-36
+	android:permission
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:137:13-57
+	tools:targetApi
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:138:13-32
+	android:directBootAware
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:134:13-44
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:133:13-78
+intent-filter#action:name:androidx.work.diagnostics.REQUEST_DIAGNOSTICS
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:139:13-141:29
+action#androidx.work.diagnostics.REQUEST_DIAGNOSTICS
+ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:140:17-88
+	android:name
+		ADDED from [androidx.work:work-runtime:2.8.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\169f697bcc9d945fa2b5b9f5901a5f12\transformed\work-runtime-2.8.1\AndroidManifest.xml:140:25-85
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\0113bc8dea157b6266aba5d945319166\transformed\jetified-emoji2-1.4.0\AndroidManifest.xml:30:17-75
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\289b377e4d47507233d70d45383250fe\transformed\jetified-lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:23:9-81
+permission#org.example.kqchecker.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:26:22-94
+uses-permission#org.example.kqchecker.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.10.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\40c4abfd1e756c66cc10e5e36fb64a59\transformed\core-1.10.0\AndroidManifest.xml:26:22-94
+service#androidx.room.MultiInstanceInvalidationService
+ADDED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:24:9-28:63
+	android:exported
+		ADDED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:28:13-60
+	android:directBootAware
+		ADDED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:26:13-43
+	android:name
+		ADDED from [androidx.room:room-runtime:2.5.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\f3ccb3754b0215ff24d16156c0afb22d\transformed\room-runtime-2.5.0\AndroidManifest.xml:25:13-74
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Harco\.gradle\caches\9.0-milestone-1\transforms\c63c08faa00ccf4c7bb5323844b42f88\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:25-92

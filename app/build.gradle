@@ -1,0 +1,69 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace "org.example.kqchecker"
+    compileSdkVersion 36
+
+    defaultConfig {
+        applicationId "org.example.kqchecker"
+        minSdkVersion 21
+        targetSdkVersion 36
+        versionCode 1
+        versionName "0.1"
+        // default base url (can be overridden by assets/config.json at runtime)
+        buildConfigField "String", "BASE_URL", '"http://bkkq.xjtu.edu.cn/attendance-student-pc"'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        compose true
+        // enable generation of BuildConfig so custom buildConfigField is allowed
+        buildConfig true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.3'
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.7.0'
+
+    // Compose
+    implementation 'androidx.activity:activity-compose:1.7.2'
+    implementation 'androidx.compose.ui:ui:1.5.3'
+    implementation 'androidx.compose.material:material:1.5.3'
+    implementation 'androidx.compose.ui:ui-tooling-preview:1.5.3'
+    debugImplementation 'androidx.compose.ui:ui-tooling:1.5.3'
+
+    // Lifecycle
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+
+    // Networking
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+
+    // WorkManager
+    implementation 'androidx.work:work-runtime-ktx:2.8.1'
+
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0'
+
+    // Security (EncryptedSharedPreferences)
+    implementation 'androidx.security:security-crypto:1.1.0'
+
+}
