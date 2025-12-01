@@ -20,13 +20,13 @@ interface ApiService {
      * 获取周课表数据（API1）
      */
     @POST("attendance-student/rankClass/getWeekSchedule2")
-    suspend fun getWeeklyData(@Body requestBody: RequestBody): JSONObject?
+    suspend fun getWeeklyData(@Body requestBody: RequestBody): ResponseBody?
     
     /**
      * 获取水课表数据（API2）
      */
-    @POST("attendance-student/rankClass/getWaterList")
-    suspend fun getWaterListData(@Body requestBody: RequestBody): JSONObject?
+    @POST("attendance-student/waterList/page")
+    suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?
     
     companion object {
         /**

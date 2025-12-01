@@ -1,0 +1,37 @@
+{
+    "code": 200,
+    "success": true,
+    "data": {
+        "totalCount": 1,
+        "pageSize": 0,
+        "totalPage": 0,
+        "currPage": 0,
+        "offset": 0,
+        "list": [
+            {
+                "pageSize": 10,
+                "current": 1,
+                "offset": 0,
+                "orderByField": null,
+                "orderByType": null,
+                "bh": "55668204",
+                "sno": "2245114237",
+                "cardId": null,
+                "rbh": "1740",
+                "eqno": "教2楼-西203",
+                "eqname": "2245114237-2025-12-0",
+                "watertime": "2025-12-01 07:58:17",
+                "photoname": "/0010528/2025-12-01/jk286975.jpg",
+                "intime": "2025-12-01 07:58:25",
+                "isdone": "1",
+                "fromtype": "1",
+                "calendarBh": "606",
+                "timeCondition": null,
+                "startdate": null,
+                "enddate": null,
+                "sBh": "40564134"
+            }
+        ]
+    },
+    "msg": "操作成功"
+}

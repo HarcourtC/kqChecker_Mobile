@@ -119,19 +119,23 @@ class WeeklyRepository(private val context: Context) {
             Log.d(TAG, "准备请求参数...")
             val requestBody = createWeeklyRequest()
             
-            Log.d(TAG, "发送API请求到: ${getBaseUrl()}api/weekly")
-            val jsonResponse = apiService.getWeeklyData(requestBody)
-            
+            Log.d(TAG, "发送API请求到: ${getBaseUrl()}attendance-student/rankClass/getWeekSchedule2")
+            val respBody = apiService.getWeeklyData(requestBody)
+
             // 验证响应
-            if (jsonResponse == null) {
+            if (respBody == null) {
                 Log.e(TAG, "❌ API returned null response")
                 return null
             }
-            
-            val responseString = jsonResponse.toString()
+
+            val responseString = try { respBody.string() } catch (e: Exception) {
+                Log.e(TAG, "Failed to read response body", e)
+                return null
+            }
+
             Log.d(TAG, "API响应内容长度: ${responseString.length} 字符")
             Log.d(TAG, "API响应内容预览: ${responseString.take(100)}...")
-            
+
             // 转换为WeeklyResponse
             Log.d(TAG, "解析API响应数据...")
             val response = WeeklyResponse.fromJson(responseString)

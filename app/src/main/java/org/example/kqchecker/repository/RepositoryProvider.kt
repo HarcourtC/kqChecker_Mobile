@@ -10,6 +10,7 @@ object RepositoryProvider {
     private var weeklyRepository: WeeklyRepository? = null
     private var waterListRepository: WaterListRepository? = null
     private var debugRepository: DebugRepository? = null
+    private var weeklyCleaner: WeeklyCleaner? = null
     private var cacheManager: CacheManager? = null
     
     /**
@@ -23,6 +24,7 @@ object RepositoryProvider {
         weeklyRepository = WeeklyRepository(appContext)
         waterListRepository = WaterListRepository(appContext)
         debugRepository = DebugRepository(appContext)
+        weeklyCleaner = WeeklyCleaner(appContext)
     }
     
     /**
@@ -37,6 +39,10 @@ object RepositoryProvider {
      */
     fun getWaterListRepository(): WaterListRepository {
         return waterListRepository ?: throw IllegalStateException("RepositoryProvider not initialized")
+    }
+
+    fun getWeeklyCleaner(): WeeklyCleaner {
+        return weeklyCleaner ?: throw IllegalStateException("RepositoryProvider not initialized")
     }
     
     /**
@@ -57,5 +63,6 @@ object RepositoryProvider {
         weeklyRepository = null
         waterListRepository = null
         cacheManager = null
+        weeklyCleaner = null
     }
 }

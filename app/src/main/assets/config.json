@@ -1,5 +1,5 @@
 {
-  "base_url": "http://bkkq.xjtu.edu.cn/attendance-student-pc",
+  "base_url": "http://bkkq.xjtu.edu.cn/",
   "auth_login_url": "http://bkkq.xjtu.edu.cn",
   "auth_redirect_prefix": "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home",
   "termNo": 606,

@@ -7,6 +7,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
@@ -15,8 +16,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,10 +53,14 @@ import kotlinx.coroutines.withContext
 import org.example.kqchecker.network.NetworkModule
 import org.example.kqchecker.network.WeeklyResponse
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
 import org.example.kqchecker.sync.TestWriteCalendar
 import org.example.kqchecker.sync.WriteCalendar
 import androidx.work.WorkManager
 import org.example.kqchecker.sync.SyncWorker
+import org.example.kqchecker.sync.Api2AttendanceQueryWorker
 import org.example.kqchecker.repository.RepositoryProvider
 import org.example.kqchecker.repository.WeeklyRepository
 import org.example.kqchecker.repository.WaterListRepository
@@ -85,6 +97,7 @@ fun AppContent() {
     // 获取Repository实例
     val weeklyRepository = RepositoryProvider.getWeeklyRepository()
     val waterListRepository = RepositoryProvider.getWaterListRepository()
+    val weeklyCleaner = RepositoryProvider.getWeeklyCleaner()
     
     // 组件启动时自动检查缓存是否过期并在必要时触发自动刷新
     LaunchedEffect(key1 = Unit) {
@@ -116,7 +129,7 @@ fun AppContent() {
                     } catch (e: Exception) {
                         Log.e("AutoRefreshWeekly", "auto-refresh failed", e)
                         withContext(Dispatchers.Main) {
-                            postEvent("Auto-refresh failed: ${e.message}")
+                            postEvent("Auto-refresh failed: ${e.message ?: e.toString()}")
                         }
                     }
                 }
@@ -139,8 +152,45 @@ fun AppContent() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("AutoRefreshWeekly", "Error checking cache status", e)
-            postEvent("Auto-refresh check failed: ${e.message}")
+                Log.e("AutoRefreshWeekly", "Error checking cache status", e)
+                postEvent("Auto-refresh check failed: ${e.message ?: e.toString()}")
+            }
+    }
+
+    // --- 自动查询开关相关 (SharedPreferences 保存) ---
+    val prefs = context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE)
+    var api2AutoEnabled by remember { mutableStateOf(prefs.getBoolean("api2_auto_enabled", false)) }
+
+    fun enableApi2Periodic() {
+        try {
+            val workManager = WorkManager.getInstance(context)
+            val periodic = PeriodicWorkRequestBuilder<Api2AttendanceQueryWorker>(15, TimeUnit.MINUTES)
+                .build()
+            workManager.enqueueUniquePeriodicWork("api2_att_query_periodic", ExistingPeriodicWorkPolicy.REPLACE, periodic)
+            prefs.edit().putBoolean("api2_auto_enabled", true).apply()
+            postEvent("Automatic api2 queries enabled")
+        } catch (e: Exception) {
+            Log.e("Api2Auto", "Failed to enable periodic work", e)
+            postEvent("Failed to enable automatic api2 queries: ${e.message}")
+        }
+    }
+
+    fun disableApi2Periodic() {
+        try {
+            val workManager = WorkManager.getInstance(context)
+            workManager.cancelUniqueWork("api2_att_query_periodic")
+            prefs.edit().putBoolean("api2_auto_enabled", false).apply()
+            postEvent("Automatic api2 queries disabled")
+        } catch (e: Exception) {
+            Log.e("Api2Auto", "Failed to disable periodic work", e)
+            postEvent("Failed to disable automatic api2 queries: ${e.message}")
+        }
+    }
+
+    // 如果偏好里已开启，则确保周期任务在运行
+    LaunchedEffect(key1 = Unit) {
+        if (api2AutoEnabled) {
+            enableApi2Periodic()
         }
     }
 
@@ -189,12 +239,12 @@ fun AppContent() {
                                 }
                             }
                     }
-                } catch (e: Exception) {
-                    Log.e("WriteCalendarButton", "执行writeCalendar时发生异常", e)
-                    withContext(Dispatchers.Main) {
-                        events.add("❌ 执行日历写入时出错: ${e.message}")
+                    } catch (e: Exception) {
+                        Log.e("WriteCalendarButton", "执行writeCalendar时发生异常", e)
+                        withContext(Dispatchers.Main) {
+                            events.add("❌ 执行日历写入时出错: ${e.message ?: e.toString()}")
+                        }
                     }
-                }
             }
         } else {
             events.add("Calendar permission denied. Cannot sync to calendar.")
@@ -225,6 +275,11 @@ fun AppContent() {
 
     Surface(color = MaterialTheme.colors.background, modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // 按钮区域：可滚动，防止按钮溢出屏幕
+            val buttonsScroll = rememberScrollState()
+            Column(modifier = Modifier
+                .fillMaxHeight(0.5f)
+                .verticalScroll(buttonsScroll)) {
             Text(text = "kqChecker - Android Skeleton")
 
             Button(onClick = {
@@ -238,7 +293,7 @@ fun AppContent() {
                         if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
                     }
                 } catch (e: Exception) {
-                    Log.i("MainActivity", "No config.json or parse error, using defaults: ${e.message}")
+                        Log.i("MainActivity", "No config.json or parse error, using defaults: ${e.message ?: e.toString()}")
                 }
 
                 val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
@@ -265,11 +320,8 @@ fun AppContent() {
                                     cacheStatus.isExpired -> "Cache Expired"
                                     else -> "Cache Valid"
                                 })
-                                if (cacheStatus.expiresDate != null) {
-                                    events.add("Cache expires on: ${cacheStatus.expiresDate}")
-                                } else {
-                                    events.add("Cache expiration date unknown")
-                                }
+                                val expiresMsg = cacheStatus.expiresDate ?: "unknown"
+                                events.add("Cache expires on: $expiresMsg")
                             } else {
                                 events.add("Sync failed - null result")
                             }
@@ -345,7 +397,7 @@ fun AppContent() {
                         } catch (e: Exception) {
                             Log.e("WriteCalendarButton", "执行writeCalendar时发生异常", e)
                             withContext(Dispatchers.Main) {
-                                events.add("❌ 执行日历写入时出错: ${e.message}")
+                                events.add("❌ 执行日历写入时出错: ${e.message ?: e.toString()}")
                             }
                         }
                     }
@@ -374,12 +426,39 @@ fun AppContent() {
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
-                            events.add("Experimental sync exception: ${e.message}")
+                            events.add("Experimental sync exception: ${e.message ?: e.toString()}")
                         }
                     }
                 }
             }, modifier = Modifier.padding(top = 8.dp)) {
                 Text(text = "Run Experimental Sync")
+            }
+
+            // 手动触发 Api2AttendanceQueryWorker（一次性）
+            Button(onClick = {
+                events.add("Manual api2 query triggered")
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val request = OneTimeWorkRequestBuilder<Api2AttendanceQueryWorker>().build()
+                        WorkManager.getInstance(context).enqueue(request)
+                        withContext(Dispatchers.Main) { postEvent("Manual api2 query enqueued") }
+                    } catch (e: Exception) {
+                        Log.e("ManualApi2", "Failed to enqueue manual api2 query", e)
+                        withContext(Dispatchers.Main) { postEvent("Failed to enqueue manual api2 query: ${e.message}") }
+                    }
+                }
+            }, modifier = Modifier.padding(top = 8.dp)) {
+                Text(text = "Manual Api2 Query")
+            }
+
+            // 自动查询开关
+            androidx.compose.foundation.layout.Row(modifier = Modifier.padding(top = 12.dp)) {
+                Text(text = "Enable automatic Api2 queries:")
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(8.dp))
+                Switch(checked = api2AutoEnabled, onCheckedChange = { checked ->
+                    api2AutoEnabled = checked
+                    if (checked) enableApi2Periodic() else disableApi2Periodic()
+                })
             }
 
             Button(onClick = {
@@ -402,7 +481,7 @@ fun AppContent() {
                             }
                         } catch (e: Exception) {
                         Log.e("DebugRequest", "Exception during debug request", e)
-                        events.add("Debug request failed: ${e.message}")
+                        events.add("Debug request failed: ${e.message ?: e.toString()}")
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
@@ -438,14 +517,13 @@ fun AppContent() {
                         }
                         try {
                             val uri = java.net.URI(fullUrl)
-                            val host = uri.host ?: fullUrl.replace(Regex("https?://"), "").split(":")[0]
-                            val addrs = java.net.InetAddress.getAllByName(host)
-                            val ips = addrs.joinToString(",") { it.hostAddress }
-                            val hostStr = host ?: "(unknown)"
-                            val ipsStr = ips ?: "(unknown)"
-                            events.add("DNS: $hostStr -> $ipsStr")
+                            val hostStr: String = uri.host ?: fullUrl.replace(Regex("https?://"), "").split(":")[0]
+                            val addrs = java.net.InetAddress.getAllByName(hostStr)
+                            val ipsStr: String = addrs.joinToString(",") { it.hostAddress }
+                            val dnsMsg = "DNS: " + hostStr.toString() + " -> " + ipsStr.toString()
+                            events.add(dnsMsg)
                         } catch (e: Exception) {
-                            events.add("Host resolve failed: ${e.message}")
+                            events.add("Host resolve failed: ${e.message ?: e.toString()}")
                         }
 
                         // Use WeeklyRepository to fetch and cache the weekly data
@@ -470,10 +548,10 @@ fun AppContent() {
                         val raw = withContext(Dispatchers.IO) { cm.readFromCache(org.example.kqchecker.repository.CacheManager.WEEKLY_RAW_CACHE_FILE) }
                         if (!raw.isNullOrBlank()) events.add(raw.take(800))
 
-                    } catch (e: Exception) {
-                        Log.e("FetchWeekly", "migrated fetch failed", e)
-                        events.add("Fetch failed: ${e.message}")
-                    }
+                        } catch (e: Exception) {
+                            Log.e("FetchWeekly", "migrated fetch failed", e)
+                            events.add("Fetch failed: ${e.message ?: e.toString()}")
+                        }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
                 Text(text = "Fetch Weekly (API)")
@@ -505,7 +583,7 @@ fun AppContent() {
                         } catch (e: Exception) {
                             Log.e("FetchApi2", "error", e)
                             withContext(Dispatchers.Main) {
-                                events.add("api2 water list request failed: ${e.message}")
+                                events.add("api2 water list request failed: ${e.message ?: e.toString()}")
                             }
                         }
 
@@ -577,15 +655,67 @@ fun AppContent() {
                         }
 
                     } catch (e: Exception) {
-                        Log.e("PrintWeekly", "Print failed: ${e.message}", e)
-                        withContext(Dispatchers.Main) { events.add("Print failed: ${e.message}") }
+                        Log.e("PrintWeekly", "Print failed: ${e.message ?: e.toString()}", e)
+                        withContext(Dispatchers.Main) { events.add("Print failed: ${e.message ?: e.toString()}") }
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
                 Text(text = "Print weekly.json")
             }
 
-            LazyColumn(modifier = Modifier.padding(top = 12.dp)) {
+            Button(onClick = {
+                // Trigger cleaning and show weekly_cleaned.json path/preview
+                scope.launch {
+                    events.add("Generating cleaned weekly (weekly_cleaned.json)...")
+                    try {
+                        val ok = withContext(Dispatchers.IO) { weeklyCleaner.generateCleanedWeekly() }
+                        withContext(Dispatchers.Main) {
+                            if (ok) {
+                                events.add("Weekly cleaned generation succeeded")
+                                val cleanedPath = weeklyCleaner.getCleanedFilePath()
+                                if (cleanedPath != null) {
+                                    events.add("Saved cleaned weekly: $cleanedPath")
+                                    // read preview
+                                    try {
+                                        val cm = org.example.kqchecker.repository.CacheManager(context)
+                                        val content = withContext(Dispatchers.IO) { cm.readFromCache(org.example.kqchecker.repository.WeeklyCleaner.CLEANED_WEEKLY_FILE) }
+                                        if (!content.isNullOrBlank()) {
+                                            // Log full content to Logcat in chunks to avoid truncation
+                                            withContext(Dispatchers.IO) {
+                                                val tag = "WeeklyCleaned"
+                                                val chunks = content.chunked(4000)
+                                                for ((index, chunk) in chunks.withIndex()) {
+                                                    Log.d(tag, "Chunk ${index + 1}/${chunks.size}: $chunk")
+                                                }
+                                            }
+                                            val preview = if (content.length > 800) content.substring(0, 800) + "... (truncated)" else content
+                                            events.add("Preview: $preview")
+                                        } else {
+                                            events.add("Cleaned file is empty or unreadable")
+                                        }
+                                    } catch (e: Exception) {
+                                        events.add("Failed to read cleaned file: ${e.message ?: e.toString()}")
+                                    }
+                                } else {
+                                    events.add("Could not determine cleaned file path")
+                                }
+                            } else {
+                                events.add("Weekly cleaned generation failed")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("WeeklyCleanerBtn", "Error generating cleaned weekly", e)
+                        withContext(Dispatchers.Main) { events.add("Exception during cleaning: ${e.message ?: e.toString()}") }
+                    }
+                }
+            }, modifier = Modifier.padding(top = 12.dp)) {
+                Text(text = "Generate Cleaned Weekly")
+            }
+
+            }
+
+            // 日志区域：固定为可见的一半高度并可滚动
+            LazyColumn(modifier = Modifier.fillMaxHeight(0.5f).padding(top = 12.dp)) {
                 items(events) { e ->
                     Card(modifier = Modifier.padding(4.dp)) {
                         Text(text = e, modifier = Modifier.padding(8.dp))

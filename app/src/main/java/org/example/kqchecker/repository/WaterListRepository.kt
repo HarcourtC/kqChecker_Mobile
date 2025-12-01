@@ -110,28 +110,31 @@ class WaterListRepository(private val context: Context) {
             val requestBody = ApiService.jsonToRequestBody(requestData)
             
             // 调用API
-            val jsonResponse = apiService.getWaterListData(requestBody)
-            
-            // 验证响应
-            if (jsonResponse == null) {
-                Log.e(TAG, "API2 returned null response")
+            val respBody = apiService.getWaterListData(requestBody)
+
+            if (respBody == null) {
+                Log.e(TAG, "api2 returned null")
                 return null
             }
-            
-            // 转换为WaterListResponse
-            val response = WaterListResponse.fromJson(jsonResponse.toString())
-            
-            if (response == null || response.code != 0 || response.data == null) {
-                Log.e(TAG, "Invalid API2 response: code=${response?.code}, data=${response?.data}")
+
+            val respStr = try { respBody.string() } catch (e: Exception) {
+                Log.e(TAG, "Failed to read api2 response body", e)
                 return null
             }
-            
+
+            Log.d(TAG, "api2 resp length: ${respStr.length}")
+            val wr = WaterListResponse.fromJson(respStr)
+
+            if (wr == null || wr.data == null || !wr.success) {
+                Log.e(TAG, "Invalid API2 response: code=${wr?.code}, success=${wr?.success}, data=${wr?.data}")
+                return null
+            }
+
             // 保存到缓存
-            cacheManager.saveToCache(CacheManager.WATER_LIST_CACHE_FILE, jsonResponse.toString())
-            
+            cacheManager.saveToCache(CacheManager.WATER_LIST_CACHE_FILE, respStr)
+
             Log.d(TAG, "Successfully fetched and cached water list data")
-            return response
-            
+            return wr
         } catch (e: Exception) {
             Log.e(TAG, "Error in getWaterListDataFromApi", e)
             throw e
