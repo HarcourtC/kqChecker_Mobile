@@ -1,9 +1,7 @@
 {
-  "base_url": "http://bkkq.xjtu.edu.cn/attendance-student-pc",
+  "base_url": "http://bkkq.xjtu.edu.cn/",
   "auth_login_url": "http://bkkq.xjtu.edu.cn",
   "auth_redirect_prefix": "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home",
-  "api1_params": {
-    "termNo": 606,
-    "week": 13
-  }
+  "termNo": 606,
+  "week": 13
 }

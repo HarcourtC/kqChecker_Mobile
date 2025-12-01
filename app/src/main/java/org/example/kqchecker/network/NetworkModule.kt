@@ -6,7 +6,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import org.example.kqchecker.auth.TokenAuthenticator
-import org.example.kqchecker.auth.TokenInterceptor
+import org.example.kqchecker.network.TokenInterceptor
 import org.example.kqchecker.auth.TokenManager
 import java.util.concurrent.TimeUnit
 

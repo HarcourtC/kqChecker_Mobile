@@ -4,36 +4,48 @@ plugins {
 }
 
 android {
-    namespace "org.example.kqchecker"
-    compileSdkVersion 36
+    namespace = "org.example.kqchecker"
+    compileSdk 36
 
     defaultConfig {
-        applicationId "org.example.kqchecker"
-        minSdkVersion 21
-        targetSdkVersion 36
-        versionCode 1
-        versionName "0.1"
+        applicationId = "org.example.kqchecker"
+        minSdk = 21
+        targetSdk = 36
+        versionCode = 1
+        versionName = "0.1"
         // default base url (can be overridden by assets/config.json at runtime)
         buildConfigField "String", "BASE_URL", '"http://bkkq.xjtu.edu.cn/attendance-student-pc"'
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
     buildFeatures {
-        compose true
+        compose = true
         // enable generation of BuildConfig so custom buildConfigField is allowed
-        buildConfig true
+        buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.5.3'
+        kotlinCompilerExtensionVersion = '1.5.3'
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+    
+    // Lint优化配置
+    lintOptions {
+        // 禁用不必要的lint检查
+        disable 'TypographyFractions', 'TypographyQuotes'
+        
+        // 启用并行检查（如果可用）
+        checkReleaseBuilds = false
+        
+        // 减少警告数量以提高性能
+        quiet = true
     }
 }
 

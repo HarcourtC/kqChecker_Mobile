@@ -7,7 +7,10 @@ import org.example.kqchecker.repo.MockRepository
 import org.example.kqchecker.util.CalendarHelper
 import java.text.SimpleDateFormat
 
-class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
+/**
+ * 测试用日历写入功能，从assets中的weekly.json读取数据并写入日历
+ */
+class TestWriteCalendar(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val repo = MockRepository(appContext)
 
     override suspend fun doWork(): Result {
@@ -16,18 +19,18 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
             val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
             val calId = CalendarHelper.getDefaultCalendarId(applicationContext)
             if (calId == null) {
-                // no calendar found or permission missing
+                // 未找到日历或缺少权限
                 return Result.failure()
             }
 
             weekly.forEach { (datetime, items) ->
                 val date = fmt.parse(datetime)
                 val startMillis = date.time
-                // assume 90 minutes duration as placeholder
+                // 假设90分钟的持续时间作为占位符
                 val endMillis = startMillis + 90 * 60 * 1000
                 items.forEach { item ->
                     val title = item.course ?: "课程"
-                    // dedupe by exact title + startMillis
+                    // 通过精确的标题和开始时间去重
                     val existing = CalendarHelper.findExistingEvent(applicationContext, title, startMillis)
                     if (existing == null) {
                         CalendarHelper.insertEvent(applicationContext, calId, title, startMillis, endMillis, item.room ?: "")
