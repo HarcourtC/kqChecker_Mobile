@@ -425,10 +425,11 @@ fun AppContent() {
             }
 
             Button(onClick = {
-                // Fetch weekly from API using Retrofit/NetworkModule
+                // Fetch weekly from API via WeeklyRepository (migrated)
                 scope.launch {
-                    events.add("Fetching weekly from API...")
+                    events.add("Fetching weekly from API (via WeeklyRepository)...")
                     try {
+                        // optional: compute and log DNS for debug like previous implementation
                         var baseUrl = "https://api.example.com/"
                         try {
                             context.assets.open("config.json").use { stream ->
@@ -442,228 +443,49 @@ fun AppContent() {
 
                         val path = "attendance-student/rankClass/getWeekSchedule2"
                         val fullUrl = try {
-                            // 使用URI类构建正确的URL
                             val baseUri = java.net.URI(baseUrl)
                             val scheme = baseUri.scheme ?: "http"
                             val host = baseUri.host ?: baseUrl.replace(Regex("https?://"), "").split(":")[0]
                             val portPart = if (baseUri.port != -1) ":${baseUri.port}" else ""
                             "$scheme://$host$portPart/$path"
                         } catch (e: Exception) {
-                            // 简单拼接作为回退
                             baseUrl.trimEnd('/') + "/" + path
                         }
-                        Log.d("FetchWeekly", "baseUrl=$baseUrl fullUrl=$fullUrl")
-
-                        // Resolve host and log IPs for debugging
                         try {
                             val uri = java.net.URI(fullUrl)
                             val host = uri.host ?: fullUrl.replace(Regex("https?://"), "").split(":")[0]
                             val addrs = java.net.InetAddress.getAllByName(host)
                             val ips = addrs.joinToString(",") { it.hostAddress }
-                            Log.d("FetchWeekly", "resolved host=$host ips=$ips")
                             events.add("DNS: ${host ?: "(unknown)"} -> ${ips ?: "(unknown)"}")
                         } catch (e: Exception) {
-                            Log.d("FetchWeekly", "host resolve failed: ${e.message ?: e}")
+                            events.add("Host resolve failed: ${e.message}")
                         }
 
-                        // Perform direct OkHttp GET to the fullUrl using TokenInterceptor to ensure correct headers
-                        try {
-                            val tm = TokenManager(context)
-                            val client = OkHttpClient.Builder()
-                                .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
-                                .build()
-                            // Check config for termNo and week; if present, send POST with constructed payload, else GET
-                            var req: Request
-                            try {
-                                var termNo: Int? = null
-                                var week: Int? = null
-                                try {
-                                    context.assets.open("config.json").use { stream ->
-                                        val text = InputStreamReader(stream, Charsets.UTF_8).readText()
-                                        val obj = JSONObject(text)
-                                        if (obj.has("termNo")) {
-                                            termNo = obj.getInt("termNo")
-                                        }
-                                        if (obj.has("week")) {
-                                            week = obj.getInt("week")
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.d("FetchWeekly", "Error reading config: ${e.message}")
-                                }
+                        // Use WeeklyRepository to fetch and cache the weekly data
+                        val weeklyRepo = WeeklyRepository(context)
+                        val result = withContext(Dispatchers.IO) { weeklyRepo.refreshWeeklyData() }
 
-                                // Construct payload inside the request if both termNo and week are present
-                                if (termNo != null && week != null) {
-                                    // Create payload directly in the request code
-                                    val payloadObj = JSONObject().apply {
-                                        put("termNo", termNo)
-                                        put("week", week)
-                                    }
-                                    val payload = payloadObj.toString()
-                                    
-                                    val mediaType = "application/json; charset=utf-8".toMediaType()
-                                    val body = payload.toRequestBody(mediaType)
-                                    req = Request.Builder().url(fullUrl).post(body).build()
-                                    
-                                    // Log payload snippet
-                                    events.add("Payload: ${payload.take(200)}")
-                                    Log.d("FetchWeekly", "Payload: ${payload}")
-                                } else {
-                                    req = Request.Builder().url(fullUrl).get().build()
-                                }
-
-                                // Log request headers before executing so we can inspect what's sent
-                                try {
-                                    val reqHeaders = req.headers.toString()
-                                    Log.d("FetchWeekly", "Sending request ${req.method} ${req.url}\n$reqHeaders")
-                                    events.add("Req: ${req.method} ${req.url}")
-                                    events.add(reqHeaders.take(800))
-                                } catch (e: Exception) {
-                                    Log.d("FetchWeekly", "failed to stringify request headers: ${e.message}")
-                                }
-                            } catch (e: Exception) {
-                                Log.d("FetchWeekly", "failed to build request: ${e.message}")
-                                throw e
-                            }
-                            // execute request and attempt to read body; if empty, retry a couple times
-                            var resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
-                            var code = resp.code
-                            var contentLength: Long = -1
-                            try {
-                                contentLength = resp.body?.contentLength() ?: -1
-                            } catch (_: Exception) {}
-                            var bodyText: String?
-                            try {
-                                bodyText = resp.body?.string()
-                            } catch (e: Exception) {
-                                Log.d("FetchWeekly", "read body failed: ${e.message}")
-                                bodyText = null
-                            }
-
-                            // If body is empty (null or blank) but server returned 200, retry a couple times
-                            if ((bodyText == null || bodyText.isBlank()) && code == 200) {
-                                Log.d("FetchWeekly", "Empty body received; attempting retries")
-                                events.add("Empty body; retrying...")
-                                for (i in 1..2) {
-                                    try {
-                                        // dispose previous response and issue new call
-                                        resp.close()
-                                    } catch (_: Exception) {}
-                                    kotlinx.coroutines.delay(500L * i)
-                                    val r2 = withContext(Dispatchers.IO) { client.newCall(req).execute() }
-                                    code = r2.code
-                                    try { contentLength = r2.body?.contentLength() ?: contentLength } catch (_: Exception) {}
-                                    try {
-                                        val bt = r2.body?.string()
-                                        if (!bt.isNullOrBlank()) {
-                                            bodyText = bt
-                                            resp = r2
-                                            break
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.d("FetchWeekly", "retry read failed: ${e.message}")
-                                    }
-                                    try { r2.close() } catch (_: Exception) {}
-                                }
-                            }
-
-                            // Log the final request headers (including those added by interceptors)
-                            try {
-                                val sent = resp.request.headers.toString()
-                                Log.d("FetchWeekly", "Sent request headers:\n$sent")
-                                events.add("Sent headers:")
-                                events.add(sent.take(800))
-                            } catch (e: Exception) {
-                                Log.d("FetchWeekly", "failed to read sent request headers: ${e.message}")
-                            }
-
-                            Log.d("FetchWeekly", "code=$code contentLength=$contentLength headers=${resp.headers}\nbody=${bodyText?.take(1000)}")
-                            events.add("Weekly fetch HTTP $code (len=$contentLength)")
-
-                            // Format and save weekly.json for frontend use
-                            try {
-                                val dataArray = if (!bodyText.isNullOrBlank()) {
-                                    try {
-                                        val jo = JSONObject(bodyText)
-                                        jo.optJSONArray("data") ?: org.json.JSONArray()
-                                    } catch (e: Exception) {
-                                        org.json.JSONArray()
-                                    }
-                                } else {
-                                    org.json.JSONArray()
-                                }
-
-                                val out = JSONObject()
-                                out.put("code", 200)
-                                out.put("success", true)
-                                out.put("data", dataArray)
-                                out.put("msg", "操作成功")
-
-                                // date: today; expires: this week's Sunday
-                                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                val now = Calendar.getInstance()
-                                val todayStr = sdf.format(now.time)
-                                val cal = Calendar.getInstance()
-                                // base cal on current time before adjusting
-                                cal.time = now.time
-                                // set to sunday of current week
-                                cal.firstDayOfWeek = Calendar.MONDAY
-                                // move to end of week (Sunday)
-                                cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
-                                val sundayStr = sdf.format(cal.time)
-                                out.put("date", todayStr)
-                                out.put("expires", sundayStr)
-
-                                // write to internal storage (pretty printed) and also save raw response
-                                try {
-                                    // perform file writes on IO dispatcher
-                                    withContext(Dispatchers.IO) {
-                                        val f = File(context.filesDir, "weekly.json")
-                                        f.writeText(out.toString(2))
-
-                                        // Always write raw file (may be empty string)
-                                        val raw = File(context.filesDir, "weekly_raw.json")
-                                        raw.writeText(bodyText ?: "")
-
-                                        // write metadata for diagnostics
-                                        val meta = JSONObject()
-                                        meta.put("http_code", code)
-                                        meta.put("content_length", contentLength)
-                                        meta.put("headers", resp.headers.toString())
-                                        meta.put("fetched_at", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(now.time))
-                                        val metaFile = File(context.filesDir, "weekly_raw_meta.json")
-                                        metaFile.writeText(meta.toString(2))
-                                    }
-
-                                    // update UI state on main
-                                    withContext(Dispatchers.Main) {
-                                        val fpath = File(context.filesDir, "weekly.json").absolutePath
-                                        val rawPath = File(context.filesDir, "weekly_raw.json").absolutePath
-                                        val metaPath = File(context.filesDir, "weekly_raw_meta.json").absolutePath
-                                        Log.d("FetchWeekly", "saved weekly.json to $fpath")
-                                        events.add("Saved weekly.json: $fpath")
-                                        events.add("Saved weekly_raw.json: $rawPath")
-                                        events.add("Saved weekly_raw_meta.json: $metaPath")
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("FetchWeekly", "failed to write weekly files/meta", e)
-                                    withContext(Dispatchers.Main) {
-                                        events.add("Failed to save weekly files: ${e.message}")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Log.e("FetchWeekly", "format/save failed", e)
-                                events.add("Format/save failed: ${e.message}")
-                            }
-
-                            if (!bodyText.isNullOrBlank()) events.add(bodyText.take(800))
-                        } catch (e: Exception) {
-                            Log.e("FetchWeekly", "call failed", e)
-                            events.add("Fetch failed: ${e.message}")
+                        if (result != null) {
+                            events.add("Weekly fetch: success")
+                        } else {
+                            events.add("Weekly fetch: failed or returned invalid data")
                         }
+
+                        // Report saved cache file paths and a snippet of the raw response
+                        val cm = org.example.kqchecker.repository.CacheManager(context)
+                        val weeklyPath = File(context.filesDir, org.example.kqchecker.repository.CacheManager.WEEKLY_CACHE_FILE).absolutePath
+                        val rawPath = File(context.filesDir, org.example.kqchecker.repository.CacheManager.WEEKLY_RAW_CACHE_FILE).absolutePath
+                        val metaPath = File(context.filesDir, org.example.kqchecker.repository.CacheManager.WEEKLY_RAW_META_FILE).absolutePath
+                        events.add("Saved weekly.json: $weeklyPath")
+                        events.add("Saved weekly_raw.json: $rawPath")
+                        events.add("Saved weekly_raw_meta.json: $metaPath")
+
+                        val raw = withContext(Dispatchers.IO) { cm.readFromCache(org.example.kqchecker.repository.CacheManager.WEEKLY_RAW_CACHE_FILE) }
+                        if (!raw.isNullOrBlank()) events.add(raw.take(800))
+
                     } catch (e: Exception) {
-                        Log.e("FetchWeekly", "unexpected", e)
-                        events.add("Unexpected error: ${e.message}")
+                        Log.e("FetchWeekly", "migrated fetch failed", e)
+                        events.add("Fetch failed: ${e.message}")
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
