@@ -390,20 +390,21 @@ fun AppContent() {
                 // Debug: delegate authenticated GET to DebugRepository
                 scope.launch {
                     events.add("Testing authenticated request (via DebugRepository)...")
-                    try {
-                        val debugRepo = RepositoryProvider.getDebugRepository()
-                        val result = withContext(Dispatchers.IO) { debugRepo.performDebugRequest() }
+                        try {
+                            val debugRepo = RepositoryProvider.getDebugRepository()
+                            val result = debugRepo.performDebugRequest()
 
-                        withContext(Dispatchers.Main) {
                             if (result.code >= 0) {
                                 events.add("HTTP ${result.code} — headers logged (see Logcat)")
                                 events.add(result.sentHeaders.take(300))
-                                if (!result.bodyPreview.isNullOrBlank()) events.add(result.bodyPreview.take(200))
+                                val preview = result.bodyPreview ?: ""
+                                if (preview.isNotBlank()) {
+                                    events.add(preview.take(200))
+                                }
                             } else {
                                 events.add("Debug request failed: ${result.bodyPreview}")
                             }
-                        }
-                    } catch (e: Exception) {
+                        } catch (e: Exception) {
                         Log.e("DebugRequest", "Exception during debug request", e)
                         events.add("Debug request failed: ${e.message}")
                     }
@@ -444,7 +445,9 @@ fun AppContent() {
                             val host = uri.host ?: fullUrl.replace(Regex("https?://"), "").split(":")[0]
                             val addrs = java.net.InetAddress.getAllByName(host)
                             val ips = addrs.joinToString(",") { it.hostAddress }
-                            events.add("DNS: ${host ?: "(unknown)"} -> ${ips ?: "(unknown)"}")
+                            val hostStr = host ?: "(unknown)"
+                            val ipsStr = ips ?: "(unknown)"
+                            events.add("DNS: $hostStr -> $ipsStr")
                         } catch (e: Exception) {
                             events.add("Host resolve failed: ${e.message}")
                         }
