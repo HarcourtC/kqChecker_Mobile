@@ -75,6 +75,7 @@ yarn-error.log
 
 # Gradle
 .gradle/
+gradle/
 gradle-app.setting
 
 # Crashlytics (for Android Studio and IntelliJ)
@@ -84,5 +85,4 @@ crashlytics-build.properties
 fabric.properties
 py_config.json
 
-**/app/build/
-build/reports/problems/problems-report.html
+**/build/

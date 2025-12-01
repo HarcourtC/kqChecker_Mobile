@@ -12,6 +12,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.os.Build
 import android.webkit.JavascriptInterface
 import androidx.activity.ComponentActivity
 import android.util.Log
@@ -273,7 +274,17 @@ class WebLoginActivity : ComponentActivity() {
                 }
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: android.webkit.WebResourceError?) {
                     super.onReceivedError(view, request, error)
-                    Log.e("WebLoginActivity", "onReceivedError url=${request?.url} code=${error?.errorCode} desc=${error?.description}")
+                    val errorDesc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        error?.description?.toString() ?: "Unknown error"
+                    } else {
+                        "Unknown error"
+                    }
+                    val errorCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        error?.errorCode?.toString() ?: "unknown"
+                    } else {
+                        "unknown"
+                    }
+                    Log.e("WebLoginActivity", "onReceivedError url=${request?.url} code=$errorCode desc=$errorDesc")
                 }
 
                 override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {

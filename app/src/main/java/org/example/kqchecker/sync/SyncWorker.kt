@@ -5,9 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import org.example.kqchecker.repo.MockRepository
 import org.example.kqchecker.util.CalendarHelper
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
 
 class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val repo = MockRepository(appContext)
@@ -15,7 +13,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
     override suspend fun doWork(): Result {
         return try {
             val weekly = repo.loadWeeklyFromAssets()
-            val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
             val calId = CalendarHelper.getDefaultCalendarId(applicationContext)
             if (calId == null) {
                 // no calendar found or permission missing
@@ -23,8 +21,8 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
             }
 
             weekly.forEach { (datetime, items) ->
-                val ldt = LocalDateTime.parse(datetime, fmt)
-                val startMillis = ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val date = fmt.parse(datetime)
+                val startMillis = date.time
                 // assume 90 minutes duration as placeholder
                 val endMillis = startMillis + 90 * 60 * 1000
                 items.forEach { item ->

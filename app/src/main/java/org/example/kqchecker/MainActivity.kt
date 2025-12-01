@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
@@ -55,16 +56,27 @@ import kotlinx.coroutines.withContext
 import org.example.kqchecker.network.NetworkModule
 import org.example.kqchecker.network.WeeklyResponse
 import androidx.work.OneTimeWorkRequestBuilder
+import org.example.kqchecker.sync.TestWriteCalendar
+import org.example.kqchecker.sync.WriteCalendar
 import androidx.work.WorkManager
 import org.example.kqchecker.sync.SyncWorker
+import org.example.kqchecker.repository.RepositoryProvider
+import org.example.kqchecker.repository.WeeklyRepository
+import org.example.kqchecker.repository.WaterListRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 初始化Repository提供者，为整个应用提供Repository实例
+        RepositoryProvider.initialize(this)
+        
         setContent {
             AppContent()
         }
     }
+    
+    // 缓存检查方法已移至Repository模块，保留注释说明
 }
 
 @Composable
@@ -72,14 +84,129 @@ fun AppContent() {
     val scope = rememberCoroutineScope()
     val events = remember { mutableStateListOf<String>() }
     val context = LocalContext.current
-    val repo = MockRepository(context)
+    val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    fun postEvent(msg: String) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            events.add(msg)
+        } else {
+            mainHandler.post { events.add(msg) }
+        }
+    }
+    
+    // 获取Repository实例
+    val weeklyRepository = RepositoryProvider.getWeeklyRepository()
+    val waterListRepository = RepositoryProvider.getWaterListRepository()
+    
+    // 组件启动时自动检查缓存是否过期并在必要时触发自动刷新
+    LaunchedEffect(key1 = Unit) {
+        postEvent("Checking weekly.json cache expiration...")
+        try {
+            val cacheStatus = weeklyRepository.getCacheStatus()
+            if (!cacheStatus.exists || cacheStatus.isExpired) {
+                postEvent("Weekly cache is expired or not found, triggering automatic refresh...")
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val result = weeklyRepository.refreshWeeklyData()
+                        withContext(Dispatchers.Main) {
+                            if (result != null) {
+                                postEvent("Auto-refreshed and saved weekly.json")
+                                try {
+                                    val updatedCacheStatus = weeklyRepository.getCacheStatus()
+                                    if (updatedCacheStatus.exists && updatedCacheStatus.expiresDate != null) {
+                                        postEvent("Cache will expire on: ${updatedCacheStatus.expiresDate}")
+                                    } else {
+                                        postEvent("Cache expiration date unknown")
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("AutoRefreshWeekly", "Error getting cache status", e)
+                                }
+                            } else {
+                                postEvent("Auto-refresh failed: Repository returned null")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AutoRefreshWeekly", "auto-refresh failed", e)
+                        withContext(Dispatchers.Main) {
+                            postEvent("Auto-refresh failed: ${e.message}")
+                        }
+                    }
+                }
+            } else {
+                // 缓存有效时获取过期时间并显示
+                try {
+                    val f = File(context.filesDir, "weekly.json")
+                    if (f.exists()) {
+                        val jsonStr = f.readText()
+                        val jsonObj = JSONObject(jsonStr)
+                        val expires = jsonObj.optString("expires", "Unknown")
+                        postEvent("Weekly cache is up-to-date, expires on: $expires")
+                        Log.d("AutoRefreshWeekly", "Cache is valid, expires on: $expires")
+                    } else {
+                        postEvent("Weekly cache is up-to-date")
+                    }
+                } catch (e: Exception) {
+                    postEvent("Weekly cache is up-to-date")
+                    Log.e("AutoRefreshWeekly", "Error reading cache expiration time", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AutoRefreshWeekly", "Error checking cache status", e)
+            postEvent("Auto-refresh check failed: ${e.message}")
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions.entries.all { it.value }
         if (granted) {
-            startSync(context)
+            events.add("开始从后端获取数据并写入日历...")
+            scope.launch {
+                try {
+                    val request = androidx.work.OneTimeWorkRequestBuilder<org.example.kqchecker.sync.WriteCalendar>().build()
+
+                    // 在IO线程中执行工作请求的提交
+                    val workId = withContext(Dispatchers.IO) {
+                        androidx.work.WorkManager.getInstance(context).enqueue(request)
+                        request.id
+                    }
+
+                    // 在主线程上监听工作状态变化
+                    withContext(Dispatchers.Main) {
+                        androidx.work.WorkManager.getInstance(context)
+                            .getWorkInfoByIdLiveData(workId)
+                            .observeForever { workInfo ->
+                                if (workInfo != null) {
+                                    val statusMessage = when (workInfo.state) {
+                                        androidx.work.WorkInfo.State.ENQUEUED -> "工作已入队，等待执行..."
+                                        androidx.work.WorkInfo.State.RUNNING -> "工作正在执行中..."
+                                        androidx.work.WorkInfo.State.SUCCEEDED -> "✅ 日历写入成功完成！"
+                                        androidx.work.WorkInfo.State.FAILED -> "❌ 日历写入失败，请查看日志获取详细信息"
+                                        androidx.work.WorkInfo.State.CANCELLED -> "日历写入已取消"
+                                        else -> "工作状态: ${workInfo.state}"
+                                    }
+
+                                    Log.d("WriteCalendarObserver", statusMessage)
+
+                                    if (!events.contains(statusMessage)) events.add(statusMessage)
+
+                                    if (workInfo.state == androidx.work.WorkInfo.State.SUCCEEDED) {
+                                        events.add("📅 日历数据已成功更新，请在系统日历中查看结果")
+                                        events.add("📱 提示：可以通过'Print weekly.json'按钮查看原始数据")
+                                    } else if (workInfo.state == androidx.work.WorkInfo.State.FAILED) {
+                                        events.add("🔍 建议：检查日志获取详细错误信息")
+                                        events.add("💡 提示：确保有有效的weekly数据缓存")
+                                    }
+                                }
+                            }
+                    }
+                } catch (e: Exception) {
+                    Log.e("WriteCalendarButton", "执行writeCalendar时发生异常", e)
+                    withContext(Dispatchers.Main) {
+                        events.add("❌ 执行日历写入时出错: ${e.message}")
+                    }
+                }
+            }
         } else {
             events.add("Calendar permission denied. Cannot sync to calendar.")
         }
@@ -135,6 +262,35 @@ fun AppContent() {
             }
 
             Button(onClick = {
+                events.add("Triggering manual sync...")
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val result = weeklyRepository.refreshWeeklyData()
+                        withContext(Dispatchers.Main) {
+                            if (result != null) {
+                                events.add("Sync completed successfully")
+                                // 更新缓存状态显示
+                                val cacheStatus = weeklyRepository.getCacheStatus()
+                                events.add("Cache status: " + when {
+                                    !cacheStatus.exists -> "No Cache"
+                                    cacheStatus.isExpired -> "Cache Expired"
+                                    else -> "Cache Valid"
+                                })
+                                if (cacheStatus.expiresDate != null) {
+                                    events.add("Cache expires on: ${cacheStatus.expiresDate}")
+                                } else {
+                                    events.add("Cache expiration date unknown")
+                                }
+                            } else {
+                                events.add("Sync failed - null result")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            events.add("Sync exception: ${e.message}")
+                        }
+                    }
+                }
                 val read = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR)
                 val write = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR)
                 if (read == PackageManager.PERMISSION_GRANTED && write == PackageManager.PERMISSION_GRANTED) {
@@ -143,18 +299,93 @@ fun AppContent() {
                     permissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
-                Text(text = "Trigger Sync")
+                Text(text = "Test Write Calendar") // 修改按钮文本
+            }
+
+            // 添加新的按钮，用于从后端获取数据并写入日历
+            Button(onClick = {
+                Log.d("WriteCalendarButton", "Write Calendar按钮被点击")
+                val read = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR)
+                val write = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR)
+                if (read == PackageManager.PERMISSION_GRANTED && write == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("WriteCalendarButton", "已有日历权限，开始执行writeCalendar")
+                    events.add("正在从后端获取数据并写入日历...")
+                    scope.launch {
+                        try {
+                            val request = androidx.work.OneTimeWorkRequestBuilder<org.example.kqchecker.sync.WriteCalendar>().build()
+
+                            // 在IO线程中执行工作请求的提交
+                            val workId = withContext(Dispatchers.IO) {
+                                androidx.work.WorkManager.getInstance(context).enqueue(request)
+                                request.id
+                            }
+
+                            // 在主线程上监听工作状态变化
+                            withContext(Dispatchers.Main) {
+                                androidx.work.WorkManager.getInstance(context)
+                                    .getWorkInfoByIdLiveData(workId)
+                                    .observeForever { workInfo ->
+                                        if (workInfo != null) {
+                                            val statusMessage = when (workInfo.state) {
+                                                androidx.work.WorkInfo.State.ENQUEUED -> "工作已入队，等待执行..."
+                                                androidx.work.WorkInfo.State.RUNNING -> "工作正在执行中..."
+                                                androidx.work.WorkInfo.State.SUCCEEDED -> "✅ 日历写入成功完成！"
+                                                androidx.work.WorkInfo.State.FAILED -> "❌ 日历写入失败，请查看日志获取详细信息"
+                                                androidx.work.WorkInfo.State.CANCELLED -> "日历写入已取消"
+                                                else -> "工作状态: ${workInfo.state}"
+                                            }
+
+                                            Log.d("WriteCalendarObserver", statusMessage)
+
+                                            // 避免重复添加相同的状态信息
+                                            if (!events.contains(statusMessage)) {
+                                                events.add(statusMessage)
+                                            }
+
+                                            // 如果工作已完成，添加更详细的信息
+                                            if (workInfo.state == androidx.work.WorkInfo.State.SUCCEEDED) {
+                                                events.add("📅 日历数据已成功更新，请在系统日历中查看结果")
+                                                events.add("📱 提示：可以通过'Print weekly.json'按钮查看原始数据")
+                                            } else if (workInfo.state == androidx.work.WorkInfo.State.FAILED) {
+                                                events.add("🔍 建议：检查日志获取详细错误信息")
+                                                events.add("💡 提示：确保有有效的weekly数据缓存")
+                                            }
+                                        }
+                                    }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("WriteCalendarButton", "执行writeCalendar时发生异常", e)
+                            withContext(Dispatchers.Main) {
+                                events.add("❌ 执行日历写入时出错: ${e.message}")
+                            }
+                        }
+                    }
+                } else {
+                    Log.d("WriteCalendarButton", "缺少日历权限，请求权限")
+                    events.add("请求日历权限...")
+                    permissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
+                }
+            }, modifier = Modifier.padding(top = 8.dp)) {
+                Text(text = "Write Calendar")
             }
 
             Button(onClick = {
-                scope.launch {
-                    events.clear()
-                    val weekly = repo.loadWeeklyFromAssets()
-                    val periods = repo.loadPeriodsFromAssets()
-                    events.add("Loaded ${weekly.size} datetimes, ${periods.size} periods")
-                    weekly.forEach { (dt, items) ->
-                        items.forEach { item ->
-                            events.add("$dt | ${item.course} @ ${item.room}")
+                events.add("Running experimental sync (API2)...")
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val result = waterListRepository.refreshWaterListData()
+                        withContext(Dispatchers.Main) {
+                            if (result != null) {
+                                events.add("Experimental sync completed successfully")
+                                // 处理API2返回的数据
+                                events.add("API2 data fetched and saved")
+                            } else {
+                                events.add("Experimental sync failed - null result")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            events.add("Experimental sync exception: ${e.message}")
                         }
                     }
                 }
@@ -169,7 +400,7 @@ fun AppContent() {
                     try {
                         val tm = TokenManager(context)
                         val client = OkHttpClient.Builder()
-                            .addInterceptor(org.example.kqchecker.auth.TokenInterceptor(tm))
+                            .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
                             .build()
                         val req = Request.Builder()
                             .url("https://httpbin.org/anything")
@@ -209,21 +440,17 @@ fun AppContent() {
                             // ignore and use default
                         }
 
-                        // ensure trailing slash
-                        if (!baseUrl.endsWith('/')) baseUrl += '/'
-
-                        // Construct the correct full API URL for weekly schedule
-                        // Use only the scheme+host(+port) from baseUrl to avoid duplicating path segments
                         val path = "attendance-student/rankClass/getWeekSchedule2"
                         val fullUrl = try {
-                            val uri = java.net.URI(baseUrl)
-                            val scheme = uri.scheme ?: "http"
-                            val host = uri.host ?: baseUrl.replace(Regex("https?://"), "").split(":")[0]
-                            val portPart = if (uri.port != -1) ":${uri.port}" else ""
+                            // 使用URI类构建正确的URL
+                            val baseUri = java.net.URI(baseUrl)
+                            val scheme = baseUri.scheme ?: "http"
+                            val host = baseUri.host ?: baseUrl.replace(Regex("https?://"), "").split(":")[0]
+                            val portPart = if (baseUri.port != -1) ":${baseUri.port}" else ""
                             "$scheme://$host$portPart/$path"
                         } catch (e: Exception) {
-                            // fallback: naive join
-                            if (baseUrl.endsWith('/')) baseUrl + path else baseUrl + "/" + path
+                            // 简单拼接作为回退
+                            baseUrl.trimEnd('/') + "/" + path
                         }
                         Log.d("FetchWeekly", "baseUrl=$baseUrl fullUrl=$fullUrl")
 
@@ -234,16 +461,16 @@ fun AppContent() {
                             val addrs = java.net.InetAddress.getAllByName(host)
                             val ips = addrs.joinToString(",") { it.hostAddress }
                             Log.d("FetchWeekly", "resolved host=$host ips=$ips")
-                            events.add("DNS: $host -> $ips")
+                            events.add("DNS: ${host ?: "(unknown)"} -> ${ips ?: "(unknown)"}")
                         } catch (e: Exception) {
-                            Log.d("FetchWeekly", "host resolve failed: ${e.message}")
+                            Log.d("FetchWeekly", "host resolve failed: ${e.message ?: e}")
                         }
 
                         // Perform direct OkHttp GET to the fullUrl using TokenInterceptor to ensure correct headers
                         try {
                             val tm = TokenManager(context)
                             val client = OkHttpClient.Builder()
-                                .addInterceptor(org.example.kqchecker.auth.TokenInterceptor(tm))
+                                .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
                                 .build()
                             // Check config for termNo and week; if present, send POST with constructed payload, else GET
                             var req: Request
@@ -305,7 +532,7 @@ fun AppContent() {
                             try {
                                 contentLength = resp.body?.contentLength() ?: -1
                             } catch (_: Exception) {}
-                            var bodyText: String? = null
+                            var bodyText: String?
                             try {
                                 bodyText = resp.body?.string()
                             } catch (e: Exception) {
@@ -377,6 +604,8 @@ fun AppContent() {
                                 val now = Calendar.getInstance()
                                 val todayStr = sdf.format(now.time)
                                 val cal = Calendar.getInstance()
+                                // base cal on current time before adjusting
+                                cal.time = now.time
                                 // set to sunday of current week
                                 cal.firstDayOfWeek = Calendar.MONDAY
                                 // move to end of week (Sunday)
@@ -387,32 +616,40 @@ fun AppContent() {
 
                                 // write to internal storage (pretty printed) and also save raw response
                                 try {
-                                    val f = File(context.filesDir, "weekly.json")
-                                    f.writeText(out.toString(2))
-                                    Log.d("FetchWeekly", "saved weekly.json to ${f.absolutePath}")
-                                    events.add("Saved weekly.json: ${f.absolutePath}")
-                                } catch (e: Exception) {
-                                    Log.e("FetchWeekly", "failed to write weekly.json", e)
-                                    events.add("Failed to save weekly.json: ${e.message}")
-                                }
-                                try {
-                                    // Always write raw file (may be empty string)
-                                    val raw = File(context.filesDir, "weekly_raw.json")
-                                    raw.writeText(bodyText ?: "")
-                                    Log.d("FetchWeekly", "saved weekly_raw.json to ${raw.absolutePath} (len=${(bodyText?:"").length})")
-                                    events.add("Saved weekly_raw.json: ${raw.absolutePath}")
+                                    // perform file writes on IO dispatcher
+                                    withContext(Dispatchers.IO) {
+                                        val f = File(context.filesDir, "weekly.json")
+                                        f.writeText(out.toString(2))
 
-                                    // write metadata for diagnostics
-                                    val meta = JSONObject()
-                                    meta.put("http_code", code)
-                                    meta.put("content_length", contentLength)
-                                    meta.put("headers", resp.headers.toString())
-                                    meta.put("fetched_at", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(now.time))
-                                    val metaFile = File(context.filesDir, "weekly_raw_meta.json")
-                                    metaFile.writeText(meta.toString(2))
-                                    Log.d("FetchWeekly", "saved weekly_raw_meta.json to ${metaFile.absolutePath}")
+                                        // Always write raw file (may be empty string)
+                                        val raw = File(context.filesDir, "weekly_raw.json")
+                                        raw.writeText(bodyText ?: "")
+
+                                        // write metadata for diagnostics
+                                        val meta = JSONObject()
+                                        meta.put("http_code", code)
+                                        meta.put("content_length", contentLength)
+                                        meta.put("headers", resp.headers.toString())
+                                        meta.put("fetched_at", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(now.time))
+                                        val metaFile = File(context.filesDir, "weekly_raw_meta.json")
+                                        metaFile.writeText(meta.toString(2))
+                                    }
+
+                                    // update UI state on main
+                                    withContext(Dispatchers.Main) {
+                                        val fpath = File(context.filesDir, "weekly.json").absolutePath
+                                        val rawPath = File(context.filesDir, "weekly_raw.json").absolutePath
+                                        val metaPath = File(context.filesDir, "weekly_raw_meta.json").absolutePath
+                                        Log.d("FetchWeekly", "saved weekly.json to $fpath")
+                                        events.add("Saved weekly.json: $fpath")
+                                        events.add("Saved weekly_raw.json: $rawPath")
+                                        events.add("Saved weekly_raw_meta.json: $metaPath")
+                                    }
                                 } catch (e: Exception) {
-                                    Log.e("FetchWeekly", "failed to write weekly_raw.json/meta", e)
+                                    Log.e("FetchWeekly", "failed to write weekly files/meta", e)
+                                    withContext(Dispatchers.Main) {
+                                        events.add("Failed to save weekly files: ${e.message}")
+                                    }
                                 }
                             } catch (e: Exception) {
                                 Log.e("FetchWeekly", "format/save failed", e)
@@ -434,140 +671,206 @@ fun AppContent() {
             }
 
             Button(onClick = {
-                // Fetch from api2 with dynamic date payload for water list
-                scope.launch {
-                    events.add("Fetching from api2 (water list) with dynamic date...")
-                    try {
-                        // Use the api2 URL from py_config.json
-                        val api2Url = "http://bkkq.xjtu.edu.cn/attendance-student/waterList/page"
-                        events.add("Using api2 URL: $api2Url")
-
-                        // Get current date in yyyy-MM-dd format
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val today = sdf.format(Calendar.getInstance().time)
-                        events.add("Today's date: $today")
-
-                        // Get termno from config.json (default to 606 if not found)
-                        var termno = 606
+                    // Fetch from api2 with dynamic date payload for water list
+                    scope.launch {
+                        events.add("Fetching from api2 (water list) with dynamic date...")
                         try {
-                            context.assets.open("config.json").use { stream ->
-                                val text = InputStreamReader(stream, Charsets.UTF_8).readText()
-                                val obj = JSONObject(text)
-                                if (obj.has("termNo")) termno = obj.getInt("termNo")
+                            // Use the api2 URL from py_config.json
+                            val api2Url = "http://bkkq.xjtu.edu.cn/attendance-student/waterList/page"
+                            events.add("Using api2 URL: $api2Url")
+
+                            // Get current date in yyyy-MM-dd format
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val today = sdf.format(Calendar.getInstance().time)
+                            events.add("Today's date: $today")
+
+                            // Get termno from config.json (default to 606 if not found)
+                            var termno = 606
+                            try {
+                                context.assets.open("config.json").use { stream ->
+                                    val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                    val obj = JSONObject(text)
+                                    if (obj.has("termNo")) termno = obj.getInt("termNo")
+                                }
+                                events.add("Found termNo in config.json: $termno")
+                            } catch (e: Exception) {
+                                events.add("Failed to read termNo from config.json, using default: 606")
                             }
-                            events.add("Found termNo in config.json: $termno")
+
+                            // Create payload with current date and termno
+                            val payloadObj = JSONObject().apply {
+                                put("calendarBh", termno)  // 使用config中的termno
+                                put("startdate", today)     // 固定为当天
+                                put("enddate", today)       // 固定为当天
+                                put("pageSize", 10)
+                                put("current", 1)
+                            }
+                            val payload = payloadObj.toString()
+                            events.add("Payload: $payload")
+
+                            // Use OkHttpClient with TokenInterceptor
+                            val tm = TokenManager(context)
+                            val client = OkHttpClient.Builder()
+                                .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
+                                .build()
+
+                            // Build POST request
+                            val mediaType = "application/json; charset=utf-8".toMediaType()
+                            val body = payload.toRequestBody(mediaType)
+                            val req = Request.Builder()
+                                .url(api2Url)
+                                .post(body)
+                                .build()
+
+                            // Log request information
+                            Log.d("FetchApi2", "Sending POST request to $api2Url")
+                            events.add("Req: POST $api2Url")
+
+                            // Execute request
+                            val resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
+                            val code = resp.code
+                            val bodyText = resp.body?.string()
+
+                            // Log response
+                            Log.d("FetchApi2", "Response code=$code body=${bodyText?.take(1000)}")
+                            events.add("api2 fetch HTTP $code")
+
+                            // Save response (do IO on background dispatcher)
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    val f = File(context.filesDir, "api2_waterlist_response.json")
+                                    f.writeText(bodyText ?: "")
+                                }
+                                withContext(Dispatchers.Main) {
+                                    events.add("Saved api2_waterlist_response.json: ${File(context.filesDir, "api2_waterlist_response.json").absolutePath}")
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    events.add("Failed to save api2_waterlist_response.json: ${e.message}")
+                                }
+                            }
+
+                            if (!bodyText.isNullOrBlank()) withContext(Dispatchers.Main) { events.add(bodyText.take(800)) }
                         } catch (e: Exception) {
-                            events.add("Failed to read termNo from config.json, using default: 606")
+                            Log.e("FetchApi2", "error", e)
+                            events.add("api2 water list request failed: ${e.message}")
                         }
-
-                        // Create payload with current date and termno
-                        val payloadObj = JSONObject().apply {
-                            put("calendarBh", termno)  // 使用config中的termno
-                            put("startdate", today)     // 固定为当天
-                            put("enddate", today)       // 固定为当天
-                            put("pageSize", 10)
-                            put("current", 1)
-                        }
-                        val payload = payloadObj.toString()
-                        events.add("Payload: $payload")
-
-                        // Use OkHttpClient with TokenInterceptor
-                        val tm = TokenManager(context)
-                        val client = OkHttpClient.Builder()
-                            .addInterceptor(org.example.kqchecker.auth.TokenInterceptor(tm))
-                            .build()
-
-                        // Build POST request
-                        val mediaType = "application/json; charset=utf-8".toMediaType()
-                        val body = payload.toRequestBody(mediaType)
-                        val req = Request.Builder()
-                            .url(api2Url)
-                            .post(body)
-                            .build()
-
-                        // Log request information
-                        Log.d("FetchApi2", "Sending POST request to $api2Url")
-                        events.add("Req: POST $api2Url")
-
-                        // Execute request
-                        val resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
-                        val code = resp.code
-                        val bodyText = resp.body?.string()
-
-                        // Log response
-                        Log.d("FetchApi2", "Response code=$code body=${bodyText?.take(1000)}")
-                        events.add("api2 fetch HTTP $code")
-
-                        // Save response
-                        try {
-                            val f = File(context.filesDir, "api2_waterlist_response.json")
-                            f.writeText(bodyText ?: "")
-                            events.add("Saved api2_waterlist_response.json: ${f.absolutePath}")
-                        } catch (e: Exception) {
-                            events.add("Failed to save api2_waterlist_response.json: ${e.message}")
-                        }
-
-                        if (!bodyText.isNullOrBlank()) events.add(bodyText.take(800))
-                    } catch (e: Exception) {
-                        Log.e("FetchApi2", "error", e)
-                        events.add("api2 water list request failed: ${e.message}")
                     }
+                }, modifier = Modifier.padding(top = 12.dp)) {
+                    Text(text = "Fetch api2 (Water List)")
                 }
-            }, modifier = Modifier.padding(top = 12.dp)) {
-                Text(text = "Fetch api2 (Water List)")
-            }
+                
+                // 测试缓存状态按钮
+                Button(onClick = { 
+                    events.add("Testing cache status...")
+                    scope.launch(Dispatchers.IO) {
+                        val cacheStatus = weeklyRepository.getCacheStatus()
+                        withContext(Dispatchers.Main) {
+                            events.add("Cache exists: ${cacheStatus.exists}")
+                            events.add("Cache expired: ${cacheStatus.isExpired}")
+                            events.add("Expires date: ${cacheStatus.expiresDate ?: "N/A"}")
+                            if (cacheStatus.fileInfo != null) {
+                                events.add("Cache file: ${cacheStatus.fileInfo.path}")
+                                events.add("File size: ${cacheStatus.fileInfo.size / 1024} KB")
+                                events.add("Last modified: ${cacheStatus.fileInfo.getFormattedLastModified()}")
+                            } else {
+                                events.add("No file information available")
+                            }
+                        }
+                    }
+                }, modifier = Modifier.padding(top = 12.dp)) {
+                    Text(text = "测试缓存状态")
+                }
 
             Button(onClick = {
-                // Export weekly.json from internal storage to Downloads
+                // Print weekly.json content to logs
                 scope.launch(Dispatchers.IO) {
+                    suspend fun postEvent(msg: String) {
+                        withContext(Dispatchers.Main) { events.add(msg) }
+                    }
+
                     try {
-                        val filesToExport = listOf("weekly.json", "weekly_raw.json", "weekly_raw_meta.json")
-                        var exportedAny = false
-                        for (filename in filesToExport) {
-                            val src = File(context.filesDir, filename)
+                        Log.d("PrintWeekly", "🔄 开始打印weekly文件内容")
+                        
+                        // 使用Repository获取weekly.json缓存状态和文件信息
+                        Log.d("PrintWeekly", "1. 获取缓存状态...")
+                        val cacheStatus = weeklyRepository.getCacheStatus()
+                        Log.d("PrintWeekly", "   缓存状态: 存在=${cacheStatus.exists}, 过期=${cacheStatus.isExpired}")
+                        
+                        val weeklyJsonFile = if (cacheStatus.exists && cacheStatus.fileInfo != null) {
+                            File(cacheStatus.fileInfo.path)
+                        } else {
+                            File(context.filesDir, "weekly.json") // 回退到直接路径
+                        }
+                        
+                        // 创建要打印的文件映射
+                        val filesToPrint = mutableMapOf<String, File>()
+                        filesToPrint["weekly.json"] = weeklyJsonFile
+                        filesToPrint["weekly_raw.json"] = File(context.filesDir, "weekly_raw.json")
+                        filesToPrint["weekly_raw_meta.json"] = File(context.filesDir, "weekly_raw_meta.json")
+                        
+                        Log.d("PrintWeekly", "2. 准备处理 ${filesToPrint.size} 个文件")
+                        var printedAny = false
+                        
+                        for ((filename, src) in filesToPrint) {
+                            Log.d("PrintWeekly", "3. 处理文件: $filename")
                             if (!src.exists()) {
-                                Log.d("FetchWeekly", "internal file not found: $filename")
+                                Log.d("PrintWeekly", "❌ 文件不存在: $filename")
+                                postEvent("File not found: $filename")
                                 continue
                             }
-                            val bytes = src.readBytes()
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                val resolver = context.contentResolver
-                                val values = ContentValues().apply {
-                                    put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                                    put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
-                                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                            
+                            try {
+                                val fileSize = src.length()
+                                Log.d("PrintWeekly", "   文件大小: ${fileSize} bytes")
+                                
+                                val content = src.readText()
+                                Log.d("PrintWeekly", "   内容长度: ${content.length} 字符")
+                                
+                                // 打印文件内容到日志
+                                Log.d("PrintWeekly", "📄 === Content of $filename ===")
+                                // 对于大文件，分段打印以避免日志截断
+                                if (content.length > 4000) {
+                                    val chunks = content.chunked(4000)
+                                    for ((index, chunk) in chunks.withIndex()) {
+                                        Log.d("PrintWeekly", "📄 块 ${index + 1}/${chunks.size}: $chunk")
+                                    }
+                                } else {
+                                    Log.d("PrintWeekly", "📄 $content")
                                 }
-                                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                                if (uri == null) {
-                                    events.add("Failed to create Downloads file via MediaStore for $filename")
-                                    continue
+                                Log.d("PrintWeekly", "📄 === End of $filename ===")
+                                
+                                // 为了避免日志过长，只显示前200个字符在UI上
+                                val displayContent = if (content.length > 200) {
+                                    content.substring(0, 200) + "... (truncated, full content in logs)"
+                                } else {
+                                    content
                                 }
-                                resolver.openOutputStream(uri).use { os ->
-                                    if (os == null) throw java.io.IOException("Unable to open output stream")
-                                    os.write(bytes)
-                                    os.flush()
-                                }
-                                events.add("Exported $filename to Downloads/$filename")
-                            } else {
-                                // fallback for older devices
-                                val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                                if (!downloads.exists()) downloads.mkdirs()
-                                val outFile = File(downloads, filename)
-                                outFile.writeBytes(bytes)
-                                events.add("Exported $filename to ${outFile.absolutePath}")
+                                
+                                postEvent("✅ Printed $filename ($fileSize bytes) to logs")
+                                postEvent("Preview: $displayContent")
+                                printedAny = true
+                                Log.d("PrintWeekly", "✅ $filename 打印完成")
+                            } catch (fileError: Exception) {
+                                Log.e("PrintWeekly", "❌ 读取文件 $filename 失败: ${fileError.message}", fileError)
+                                events.add("Error reading $filename: ${fileError.message}")
                             }
-                            exportedAny = true
                         }
-                        if (!exportedAny) {
-                            events.add("No weekly files found to export")
+                        
+                        if (!printedAny) {
+                            Log.d("PrintWeekly", "❌ 没有找到可打印的weekly文件")
+                            postEvent("No weekly files found to print")
+                        } else {
+                            Log.d("PrintWeekly", "✅ 所有文件打印操作完成")
+                            postEvent("All files printed to logs")
                         }
                     } catch (e: Exception) {
-                        Log.e("FetchWeekly", "export failed", e)
-                        events.add("Export failed: ${e.message}")
+                        Log.e("PrintWeekly", "❌ 打印操作失败: ${e.message}", e)
+                        postEvent("Print failed: ${e.message}")
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
-                Text(text = "Export weekly.json")
+                Text(text = "Print weekly.json")
             }
 
             LazyColumn(modifier = Modifier.padding(top = 12.dp)) {
@@ -579,16 +882,26 @@ fun AppContent() {
             }
         }
     }
-}
 
-fun startSync() {
-    // Trigger a background sync; placeholder for WorkManager request
-    println("Sync triggered")
 }
 
 fun startSync(context: Context) {
-    val request = OneTimeWorkRequestBuilder<SyncWorker>().build()
+    // 修改为使用TestWriteCalendar（从assets读取数据）
+    val request = OneTimeWorkRequestBuilder<TestWriteCalendar>().build()
     WorkManager.getInstance(context).enqueue(request)
+}
+
+/**
+ * 从后端获取weekly数据并写入日历
+ * @return WorkInfo的Flow，用于监听工作状态
+ */
+fun writeCalendar(context: Context): androidx.work.WorkInfo.State {
+    Log.d("WriteCalendar", "开始创建并执行WriteCalendar工作请求")
+    val request = OneTimeWorkRequestBuilder<WriteCalendar>().build()
+    WorkManager.getInstance(context).enqueue(request)
+    Log.d("WriteCalendar", "WriteCalendar工作请求已提交到WorkManager")
+    // 返回请求的ID，用于后续监听
+    return WorkManager.getInstance(context).getWorkInfoById(request.id).get().state
 }
 
 @Preview(showBackground = true)
