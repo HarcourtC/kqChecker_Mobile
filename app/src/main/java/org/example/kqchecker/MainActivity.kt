@@ -433,10 +433,10 @@ fun AppContent() {
                         val path = "attendance-student/rankClass/getWeekSchedule2"
                         val fullUrl = try {
                             val baseUri = java.net.URI(baseUrl)
-                            val scheme = baseUri.scheme ?: "http"
-                            val host = baseUri.host ?: baseUrl.replace(Regex("https?://"), "").split(":")[0]
+                            val schemeStr = baseUri.scheme ?: "http"
+                            val hostFromBase = baseUri.host ?: baseUrl.replace(Regex("https?://"), "").split(":")[0]
                             val portPart = if (baseUri.port != -1) ":${baseUri.port}" else ""
-                            "$scheme://$host$portPart/$path"
+                            "$schemeStr://$hostFromBase$portPart/$path"
                         } catch (e: Exception) {
                             baseUrl.trimEnd('/') + "/" + path
                         }
@@ -526,7 +526,8 @@ fun AppContent() {
                         withContext(Dispatchers.Main) {
                             events.add("Cache exists: ${cacheStatus.exists}")
                             events.add("Cache expired: ${cacheStatus.isExpired}")
-                            events.add("Expires date: ${cacheStatus.expiresDate ?: "N/A"}")
+                            val expiresStr = cacheStatus.expiresDate ?: "N/A"
+                            events.add("Expires date: $expiresStr")
                             if (cacheStatus.fileInfo != null) {
                                 events.add("Cache file: ${cacheStatus.fileInfo.path}")
                                 events.add("File size: ${cacheStatus.fileInfo.size / 1024} KB")
