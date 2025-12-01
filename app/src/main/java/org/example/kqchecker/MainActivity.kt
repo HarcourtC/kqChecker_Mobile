@@ -39,14 +39,7 @@ import android.content.Context
 import android.util.Log
 import org.json.JSONObject
 import java.io.InputStreamReader
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
-import android.provider.MediaStore
-import android.content.ContentValues
-import android.os.Environment
-import android.os.Build
-import java.io.OutputStream
 import android.provider.MediaStore
 import android.content.ContentValues
 import android.os.Environment
@@ -394,27 +387,22 @@ fun AppContent() {
             }
 
             Button(onClick = {
-                // Debug: issue an authenticated GET and log the outgoing request headers
+                // Debug: delegate authenticated GET to DebugRepository
                 scope.launch {
-                    events.add("Testing authenticated request...")
+                    events.add("Testing authenticated request (via DebugRepository)...")
                     try {
-                        val tm = TokenManager(context)
-                        val client = OkHttpClient.Builder()
-                            .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
-                            .build()
-                        val req = Request.Builder()
-                            .url("https://httpbin.org/anything")
-                            .get()
-                            .build()
-                        val resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
-                        val sentHeaders = resp.request.headers.toString()
-                        val code = resp.code
-                        val body = resp.body?.string()
-                        Log.d("DebugRequest", "Response code=$code")
-                        Log.d("DebugRequest", "Sent request headers:\n$sentHeaders")
-                        events.add("HTTP $code — headers logged (see Logcat)")
-                        events.add(sentHeaders.take(300))
-                        if (body != null) events.add(body.take(200))
+                        val debugRepo = RepositoryProvider.getDebugRepository()
+                        val result = withContext(Dispatchers.IO) { debugRepo.performDebugRequest() }
+
+                        withContext(Dispatchers.Main) {
+                            if (result.code >= 0) {
+                                events.add("HTTP ${result.code} — headers logged (see Logcat)")
+                                events.add(result.sentHeaders.take(300))
+                                if (!result.bodyPreview.isNullOrBlank()) events.add(result.bodyPreview.take(200))
+                            } else {
+                                events.add("Debug request failed: ${result.bodyPreview}")
+                            }
+                        }
                     } catch (e: Exception) {
                         Log.e("DebugRequest", "Exception during debug request", e)
                         events.add("Debug request failed: ${e.message}")

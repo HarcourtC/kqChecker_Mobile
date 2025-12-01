@@ -9,6 +9,7 @@ import android.content.Context
 object RepositoryProvider {
     private var weeklyRepository: WeeklyRepository? = null
     private var waterListRepository: WaterListRepository? = null
+    private var debugRepository: DebugRepository? = null
     private var cacheManager: CacheManager? = null
     
     /**
@@ -21,6 +22,7 @@ object RepositoryProvider {
         cacheManager = CacheManager(appContext)
         weeklyRepository = WeeklyRepository(appContext)
         waterListRepository = WaterListRepository(appContext)
+        debugRepository = DebugRepository(appContext)
     }
     
     /**
@@ -42,6 +44,10 @@ object RepositoryProvider {
      */
     fun getCacheManager(): CacheManager {
         return cacheManager ?: throw IllegalStateException("RepositoryProvider not initialized")
+    }
+
+    fun getDebugRepository(): DebugRepository {
+        return debugRepository ?: throw IllegalStateException("RepositoryProvider not initialized")
     }
     
     /**
