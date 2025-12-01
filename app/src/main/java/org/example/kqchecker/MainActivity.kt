@@ -538,90 +538,47 @@ fun AppContent() {
                 }
 
             Button(onClick = {
-                // Print weekly.json content to logs
-                scope.launch(Dispatchers.IO) {
-                    suspend fun postEvent(msg: String) {
-                        withContext(Dispatchers.Main) { events.add(msg) }
-                    }
-
+                // Delegate printing of weekly cache files to WeeklyRepository
+                scope.launch {
+                    events.add("Printing weekly files...")
                     try {
-                        Log.d("PrintWeekly", "🔄 开始打印weekly文件内容")
-                        
-                        // 使用Repository获取weekly.json缓存状态和文件信息
-                        Log.d("PrintWeekly", "1. 获取缓存状态...")
-                        val cacheStatus = weeklyRepository.getCacheStatus()
-                        Log.d("PrintWeekly", "   缓存状态: 存在=${cacheStatus.exists}, 过期=${cacheStatus.isExpired}")
-                        
-                        val weeklyJsonFile = if (cacheStatus.exists && cacheStatus.fileInfo != null) {
-                            File(cacheStatus.fileInfo.path)
-                        } else {
-                            File(context.filesDir, "weekly.json") // 回退到直接路径
+                        val previews = withContext(Dispatchers.IO) { weeklyRepository.getWeeklyFilePreviews() }
+
+                        if (previews.isEmpty()) {
+                            withContext(Dispatchers.Main) { events.add("No weekly files found to print") }
+                            return@launch
                         }
-                        
-                        // 创建要打印的文件映射
-                        val filesToPrint = mutableMapOf<String, File>()
-                        filesToPrint["weekly.json"] = weeklyJsonFile
-                        filesToPrint["weekly_raw.json"] = File(context.filesDir, "weekly_raw.json")
-                        filesToPrint["weekly_raw_meta.json"] = File(context.filesDir, "weekly_raw_meta.json")
-                        
-                        Log.d("PrintWeekly", "2. 准备处理 ${filesToPrint.size} 个文件")
-                        var printedAny = false
-                        
-                        for ((filename, src) in filesToPrint) {
-                            Log.d("PrintWeekly", "3. 处理文件: $filename")
-                            if (!src.exists()) {
-                                Log.d("PrintWeekly", "❌ 文件不存在: $filename")
-                                postEvent("File not found: $filename")
-                                continue
-                            }
-                            
-                            try {
-                                val fileSize = src.length()
-                                Log.d("PrintWeekly", "   文件大小: ${fileSize} bytes")
-                                
-                                val content = src.readText()
-                                Log.d("PrintWeekly", "   内容长度: ${content.length} 字符")
-                                
-                                // 打印文件内容到日志
-                                Log.d("PrintWeekly", "📄 === Content of $filename ===")
-                                // 对于大文件，分段打印以避免日志截断
-                                if (content.length > 4000) {
-                                    val chunks = content.chunked(4000)
+
+                        // Log full content in IO to avoid blocking UI
+                        withContext(Dispatchers.IO) {
+                            for (p in previews) {
+                                Log.d("PrintWeekly", "📄 === Content of ${p.name} ===")
+                                if (p.preview.length > 4000) {
+                                    val chunks = p.preview.chunked(4000)
                                     for ((index, chunk) in chunks.withIndex()) {
                                         Log.d("PrintWeekly", "📄 块 ${index + 1}/${chunks.size}: $chunk")
                                     }
                                 } else {
-                                    Log.d("PrintWeekly", "📄 $content")
+                                    Log.d("PrintWeekly", p.preview)
                                 }
-                                Log.d("PrintWeekly", "📄 === End of $filename ===")
-                                
-                                // 为了避免日志过长，只显示前200个字符在UI上
-                                val displayContent = if (content.length > 200) {
-                                    content.substring(0, 200) + "... (truncated, full content in logs)"
-                                } else {
-                                    content
-                                }
-                                
-                                postEvent("✅ Printed $filename ($fileSize bytes) to logs")
-                                postEvent("Preview: $displayContent")
-                                printedAny = true
-                                Log.d("PrintWeekly", "✅ $filename 打印完成")
-                            } catch (fileError: Exception) {
-                                Log.e("PrintWeekly", "❌ 读取文件 $filename 失败: ${fileError.message}", fileError)
-                                events.add("Error reading $filename: ${fileError.message}")
+                                Log.d("PrintWeekly", "📄 === End of ${p.name} ===")
                             }
                         }
-                        
-                        if (!printedAny) {
-                            Log.d("PrintWeekly", "❌ 没有找到可打印的weekly文件")
-                            postEvent("No weekly files found to print")
-                        } else {
-                            Log.d("PrintWeekly", "✅ 所有文件打印操作完成")
-                            postEvent("All files printed to logs")
+
+                        // Update UI with summary and previews
+                        withContext(Dispatchers.Main) {
+                            for (p in previews) {
+                                events.add("✅ Printed ${p.name} (${p.size} bytes) to logs")
+                                events.add("Path: ${p.path}")
+                                val display = if (p.preview.length > 200) p.preview.substring(0, 200) + "... (truncated, full content in logs)" else p.preview
+                                events.add("Preview: $display")
+                            }
+                            events.add("All files printed to logs")
                         }
+
                     } catch (e: Exception) {
-                        Log.e("PrintWeekly", "❌ 打印操作失败: ${e.message}", e)
-                        postEvent("Print failed: ${e.message}")
+                        Log.e("PrintWeekly", "Print failed: ${e.message}", e)
+                        withContext(Dispatchers.Main) { events.add("Print failed: ${e.message}") }
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {

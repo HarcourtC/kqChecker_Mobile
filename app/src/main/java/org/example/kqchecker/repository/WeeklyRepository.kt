@@ -245,3 +245,41 @@ data class CacheStatus(
     val expiresDate: String?,
     val fileInfo: CacheFileInfo?
 )
+
+/**
+ * 单个缓存文件的预览信息
+ */
+data class FilePreview(
+    val name: String,
+    val path: String,
+    val size: Long,
+    val lastModified: Long,
+    val preview: String
+)
+
+/**
+ * 获取 weekly 相关缓存文件的预览（用于 UI 打印）
+ */
+suspend fun WeeklyRepository.getWeeklyFilePreviews(): List<FilePreview> {
+    return withContext(Dispatchers.IO) {
+        val files = listOf(
+            CacheManager.WEEKLY_CACHE_FILE,
+            CacheManager.WEEKLY_RAW_CACHE_FILE,
+            CacheManager.WEEKLY_RAW_META_FILE
+        )
+
+        val result = mutableListOf<FilePreview>()
+        for (fname in files) {
+            try {
+                val info = cacheManager.getCacheFileInfo(fname)
+                if (info == null) continue
+                val content = cacheManager.readFromCache(fname) ?: ""
+                val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
+                result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error preparing preview for $fname", e)
+            }
+        }
+        result
+    }
+}
