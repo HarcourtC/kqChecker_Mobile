@@ -97,10 +97,10 @@ class WeeklyRepository(private val context: Context) {
             val jsonContent = cacheManager.readFromCache(CacheManager.WEEKLY_CACHE_FILE)
             Log.d(TAG, "缓存数据存在: ${jsonContent != null}")
             
-            if (jsonContent != null) {
+                if (jsonContent != null) {
                 Log.d(TAG, "缓存数据长度: ${jsonContent.length} 字符")
                 val response = WeeklyResponse.fromJson(jsonContent)
-                Log.d(TAG, "缓存数据解析结果 - success: ${response?.success}, data: ${response?.data != null}")
+                Log.d(TAG, "缓存数据解析结果 - success: ${response.success}, dataCount: ${response.data.length()}")
                 return response
             }
         } catch (e: Exception) {
@@ -136,8 +136,8 @@ class WeeklyRepository(private val context: Context) {
             Log.d(TAG, "解析API响应数据...")
             val response = WeeklyResponse.fromJson(responseString)
             
-            if (response == null || !response.success || response.data == null) {
-                Log.e(TAG, "❌ Invalid API response: success=${response?.success}, data=${response?.data != null}")
+            if (!response.success || response.data.length() == 0) {
+                Log.e(TAG, "❌ Invalid API response: success=${response.success}, dataCount=${response.data.length()}")
                 return null
             }
             
@@ -153,13 +153,20 @@ class WeeklyRepository(private val context: Context) {
                 "{\"expires\":\"$weekendDate\"," 
             )
             
-            // 保存到缓存
+            // 保存到缓存（处理后的响应，包含 expires 字段）
             Log.d(TAG, "开始缓存数据...")
             cacheManager.saveToCache(CacheManager.WEEKLY_CACHE_FILE, jsonWithExpires)
-            
-            // 保存原始响应
-            cacheManager.saveToCache(CacheManager.WEEKLY_RAW_CACHE_FILE, responseString)
-            
+
+            // 保存原始响应（在原始响应中注入 expires 字段，存为 weekly_raw.json）
+            val rawWithExpires = if (responseString.trimStart().startsWith("{")) {
+                // 将 expires 注入到原始 JSON 的开头位置
+                responseString.replaceFirst("{", "{\"expires\":\"$weekendDate\",")
+            } else {
+                // 回退：如果不是 JSON 对象，仍保存原始内容并在 meta 中记录过期
+                responseString
+            }
+            cacheManager.saveToCache(CacheManager.WEEKLY_RAW_CACHE_FILE, rawWithExpires)
+
             // 保存元数据
             val metaData = "{\"last_fetched\":\"${cacheManager.getCurrentDate()}\",\"expires\":\"$weekendDate\"}"
             cacheManager.saveToCache(CacheManager.WEEKLY_RAW_META_FILE, metaData)
@@ -234,6 +241,33 @@ class WeeklyRepository(private val context: Context) {
     fun getWeeklyCacheFilePath(): String {
         return CacheManager.WEEKLY_CACHE_FILE
     }
+
+    /**
+     * 获取 weekly 相关缓存文件的预览（用于 UI 打印）
+     */
+    suspend fun getWeeklyFilePreviews(): List<FilePreview> {
+        return withContext(Dispatchers.IO) {
+            val files = listOf(
+                CacheManager.WEEKLY_CACHE_FILE,
+                CacheManager.WEEKLY_RAW_CACHE_FILE,
+                CacheManager.WEEKLY_RAW_META_FILE
+            )
+
+            val result = mutableListOf<FilePreview>()
+            for (fname in files) {
+                try {
+                    val info = cacheManager.getCacheFileInfo(fname)
+                    if (info == null) continue
+                    val content = cacheManager.readFromCache(fname) ?: ""
+                    val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
+                    result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error preparing preview for $fname", e)
+                }
+            }
+            result
+        }
+    }
 }
 
 /**
@@ -256,30 +290,3 @@ data class FilePreview(
     val lastModified: Long,
     val preview: String
 )
-
-/**
- * 获取 weekly 相关缓存文件的预览（用于 UI 打印）
- */
-suspend fun WeeklyRepository.getWeeklyFilePreviews(): List<FilePreview> {
-    return withContext(Dispatchers.IO) {
-        val files = listOf(
-            CacheManager.WEEKLY_CACHE_FILE,
-            CacheManager.WEEKLY_RAW_CACHE_FILE,
-            CacheManager.WEEKLY_RAW_META_FILE
-        )
-
-        val result = mutableListOf<FilePreview>()
-        for (fname in files) {
-            try {
-                val info = cacheManager.getCacheFileInfo(fname)
-                if (info == null) continue
-                val content = cacheManager.readFromCache(fname) ?: ""
-                val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
-                result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
-            } catch (e: Exception) {
-                Log.e(TAG, "Error preparing preview for $fname", e)
-            }
-        }
-        result
-    }
-}
