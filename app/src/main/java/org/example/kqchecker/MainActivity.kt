@@ -41,12 +41,12 @@ import org.json.JSONObject
 import java.io.InputStreamReader
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import android.provider.MediaStore
+import android.content.ContentValues
+import android.os.Environment
+import android.os.Build
+import java.io.OutputStream
 import android.provider.MediaStore
 import android.content.ContentValues
 import android.os.Environment
@@ -493,90 +493,35 @@ fun AppContent() {
             }
 
             Button(onClick = {
-                    // Fetch from api2 with dynamic date payload for water list
+                    // Migrate: use WaterListRepository to fetch and cache water list (API2)
                     scope.launch {
-                        events.add("Fetching from api2 (water list) with dynamic date...")
+                        events.add("Fetching api2 (water list) via WaterListRepository...")
                         try {
-                            // Use the api2 URL from py_config.json
-                            val api2Url = "http://bkkq.xjtu.edu.cn/attendance-student/waterList/page"
-                            events.add("Using api2 URL: $api2Url")
+                            val result = withContext(Dispatchers.IO) { waterListRepository.refreshWaterListData() }
 
-                            // Get current date in yyyy-MM-dd format
-                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val today = sdf.format(Calendar.getInstance().time)
-                            events.add("Today's date: $today")
-
-                            // Get termno from config.json (default to 606 if not found)
-                            var termno = 606
-                            try {
-                                context.assets.open("config.json").use { stream ->
-                                    val text = InputStreamReader(stream, Charsets.UTF_8).readText()
-                                    val obj = JSONObject(text)
-                                    if (obj.has("termNo")) termno = obj.getInt("termNo")
+                            withContext(Dispatchers.Main) {
+                                if (result != null) {
+                                    events.add("api2 fetch: success")
+                                } else {
+                                    events.add("api2 fetch: failed or returned null")
                                 }
-                                events.add("Found termNo in config.json: $termno")
-                            } catch (e: Exception) {
-                                events.add("Failed to read termNo from config.json, using default: 606")
+
+                                // Report saved cache file path and a preview of the cached response
+                                val cm = org.example.kqchecker.repository.CacheManager(context)
+                                val cachePath = File(context.filesDir, org.example.kqchecker.repository.CacheManager.WATER_LIST_CACHE_FILE).absolutePath
+                                events.add("Saved water list cache: $cachePath")
+
+                                // Read preview from cache on IO dispatcher
+                                val raw = withContext(Dispatchers.IO) { cm.readFromCache(org.example.kqchecker.repository.CacheManager.WATER_LIST_CACHE_FILE) }
+                                if (!raw.isNullOrBlank()) events.add(raw.take(800))
                             }
-
-                            // Create payload with current date and termno
-                            val payloadObj = JSONObject().apply {
-                                put("calendarBh", termno)  // 使用config中的termno
-                                put("startdate", today)     // 固定为当天
-                                put("enddate", today)       // 固定为当天
-                                put("pageSize", 10)
-                                put("current", 1)
-                            }
-                            val payload = payloadObj.toString()
-                            events.add("Payload: $payload")
-
-                            // Use OkHttpClient with TokenInterceptor
-                            val tm = TokenManager(context)
-                            val client = OkHttpClient.Builder()
-                                .addInterceptor(org.example.kqchecker.network.TokenInterceptor(tm))
-                                .build()
-
-                            // Build POST request
-                            val mediaType = "application/json; charset=utf-8".toMediaType()
-                            val body = payload.toRequestBody(mediaType)
-                            val req = Request.Builder()
-                                .url(api2Url)
-                                .post(body)
-                                .build()
-
-                            // Log request information
-                            Log.d("FetchApi2", "Sending POST request to $api2Url")
-                            events.add("Req: POST $api2Url")
-
-                            // Execute request
-                            val resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
-                            val code = resp.code
-                            val bodyText = resp.body?.string()
-
-                            // Log response
-                            Log.d("FetchApi2", "Response code=$code body=${bodyText?.take(1000)}")
-                            events.add("api2 fetch HTTP $code")
-
-                            // Save response (do IO on background dispatcher)
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    val f = File(context.filesDir, "api2_waterlist_response.json")
-                                    f.writeText(bodyText ?: "")
-                                }
-                                withContext(Dispatchers.Main) {
-                                    events.add("Saved api2_waterlist_response.json: ${File(context.filesDir, "api2_waterlist_response.json").absolutePath}")
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    events.add("Failed to save api2_waterlist_response.json: ${e.message}")
-                                }
-                            }
-
-                            if (!bodyText.isNullOrBlank()) withContext(Dispatchers.Main) { events.add(bodyText.take(800)) }
                         } catch (e: Exception) {
                             Log.e("FetchApi2", "error", e)
-                            events.add("api2 water list request failed: ${e.message}")
+                            withContext(Dispatchers.Main) {
+                                events.add("api2 water list request failed: ${e.message}")
+                            }
                         }
+
                     }
                 }, modifier = Modifier.padding(top = 12.dp)) {
                     Text(text = "Fetch api2 (Water List)")
