@@ -245,27 +245,39 @@ fun AppContent() {
                             val client = OkHttpClient.Builder()
                                 .addInterceptor(org.example.kqchecker.auth.TokenInterceptor(tm))
                                 .build()
-                            // Check config for api1_params; if present, send POST with JSON body, else GET
+                            // Check config for termNo and week; if present, send POST with constructed payload, else GET
                             var req: Request
                             try {
-                                var bodyJson: String? = null
+                                var termNo: Int? = null
+                                var week: Int? = null
                                 try {
                                     context.assets.open("config.json").use { stream ->
                                         val text = InputStreamReader(stream, Charsets.UTF_8).readText()
                                         val obj = JSONObject(text)
-                                        if (obj.has("api1_params")) {
-                                            bodyJson = obj.getJSONObject("api1_params").toString()
+                                        if (obj.has("termNo")) {
+                                            termNo = obj.getInt("termNo")
+                                        }
+                                        if (obj.has("week")) {
+                                            week = obj.getInt("week")
                                         }
                                     }
-                                } catch (_: Exception) {
+                                } catch (e: Exception) {
+                                    Log.d("FetchWeekly", "Error reading config: ${e.message}")
                                 }
 
-                                // Copy to an immutable local variable for safe smart-cast
-                                val payload = bodyJson
-                                if (payload != null) {
+                                // Construct payload inside the request if both termNo and week are present
+                                if (termNo != null && week != null) {
+                                    // Create payload directly in the request code
+                                    val payloadObj = JSONObject().apply {
+                                        put("termNo", termNo)
+                                        put("week", week)
+                                    }
+                                    val payload = payloadObj.toString()
+                                    
                                     val mediaType = "application/json; charset=utf-8".toMediaType()
                                     val body = payload.toRequestBody(mediaType)
                                     req = Request.Builder().url(fullUrl).post(body).build()
+                                    
                                     // Log payload snippet
                                     events.add("Payload: ${payload.take(200)}")
                                     Log.d("FetchWeekly", "Payload: ${payload}")
@@ -419,6 +431,90 @@ fun AppContent() {
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
                 Text(text = "Fetch Weekly (API)")
+            }
+
+            Button(onClick = {
+                // Fetch from api2 with dynamic date payload for water list
+                scope.launch {
+                    events.add("Fetching from api2 (water list) with dynamic date...")
+                    try {
+                        // Use the api2 URL from py_config.json
+                        val api2Url = "http://bkkq.xjtu.edu.cn/attendance-student/waterList/page"
+                        events.add("Using api2 URL: $api2Url")
+
+                        // Get current date in yyyy-MM-dd format
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val today = sdf.format(Calendar.getInstance().time)
+                        events.add("Today's date: $today")
+
+                        // Get termno from config.json (default to 606 if not found)
+                        var termno = 606
+                        try {
+                            context.assets.open("config.json").use { stream ->
+                                val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                val obj = JSONObject(text)
+                                if (obj.has("termNo")) termno = obj.getInt("termNo")
+                            }
+                            events.add("Found termNo in config.json: $termno")
+                        } catch (e: Exception) {
+                            events.add("Failed to read termNo from config.json, using default: 606")
+                        }
+
+                        // Create payload with current date and termno
+                        val payloadObj = JSONObject().apply {
+                            put("calendarBh", termno)  // 使用config中的termno
+                            put("startdate", today)     // 固定为当天
+                            put("enddate", today)       // 固定为当天
+                            put("pageSize", 10)
+                            put("current", 1)
+                        }
+                        val payload = payloadObj.toString()
+                        events.add("Payload: $payload")
+
+                        // Use OkHttpClient with TokenInterceptor
+                        val tm = TokenManager(context)
+                        val client = OkHttpClient.Builder()
+                            .addInterceptor(org.example.kqchecker.auth.TokenInterceptor(tm))
+                            .build()
+
+                        // Build POST request
+                        val mediaType = "application/json; charset=utf-8".toMediaType()
+                        val body = payload.toRequestBody(mediaType)
+                        val req = Request.Builder()
+                            .url(api2Url)
+                            .post(body)
+                            .build()
+
+                        // Log request information
+                        Log.d("FetchApi2", "Sending POST request to $api2Url")
+                        events.add("Req: POST $api2Url")
+
+                        // Execute request
+                        val resp = withContext(Dispatchers.IO) { client.newCall(req).execute() }
+                        val code = resp.code
+                        val bodyText = resp.body?.string()
+
+                        // Log response
+                        Log.d("FetchApi2", "Response code=$code body=${bodyText?.take(1000)}")
+                        events.add("api2 fetch HTTP $code")
+
+                        // Save response
+                        try {
+                            val f = File(context.filesDir, "api2_waterlist_response.json")
+                            f.writeText(bodyText ?: "")
+                            events.add("Saved api2_waterlist_response.json: ${f.absolutePath}")
+                        } catch (e: Exception) {
+                            events.add("Failed to save api2_waterlist_response.json: ${e.message}")
+                        }
+
+                        if (!bodyText.isNullOrBlank()) events.add(bodyText.take(800))
+                    } catch (e: Exception) {
+                        Log.e("FetchApi2", "error", e)
+                        events.add("api2 water list request failed: ${e.message}")
+                    }
+                }
+            }, modifier = Modifier.padding(top = 12.dp)) {
+                Text(text = "Fetch api2 (Water List)")
             }
 
             Button(onClick = {

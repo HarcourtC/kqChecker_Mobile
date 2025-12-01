@@ -85,3 +85,4 @@ fabric.properties
 py_config.json
 
 **/app/build/
+build/reports/problems/problems-report.html
