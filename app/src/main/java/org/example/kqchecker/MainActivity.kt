@@ -40,11 +40,7 @@ import android.util.Log
 import org.json.JSONObject
 import java.io.InputStreamReader
 import java.io.File
-import android.provider.MediaStore
-import android.content.ContentValues
-import android.os.Environment
-import android.os.Build
-import java.io.OutputStream
+
 import kotlinx.coroutines.withContext
 import org.example.kqchecker.network.NetworkModule
 import org.example.kqchecker.network.WeeklyResponse
