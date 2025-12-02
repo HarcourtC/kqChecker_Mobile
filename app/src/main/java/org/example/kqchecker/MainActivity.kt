@@ -776,7 +776,7 @@ fun AppContent() {
                     }
                 }
             }, modifier = Modifier.padding(top = 12.dp)) {
-                Text(text = "打印清洗周课表")
+                Text(text = "Print cleaned weekly")
             }
 
             Button(onClick = {
