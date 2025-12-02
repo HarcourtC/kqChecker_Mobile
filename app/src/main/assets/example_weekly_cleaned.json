@@ -1,0 +1,58 @@
+{
+  "2025-12-01 16:10:01": [
+    {
+      "weekday": "Monday",
+      "location": "主楼B-202",
+      "subjectSName": "电子技术与系统",
+      "time_display": "16:10-17:00"
+    }
+  ],
+  "2025-12-03 10:10:01": [
+    {
+      "weekday": "Wednesday",
+      "location": "主楼B-202",
+      "subjectSName": "电子技术与系统",
+      "time_display": "10:10-11:00"
+    }
+  ],
+  "2025-12-02 16:10:01": [
+    {
+      "weekday": "Tuesday",
+      "location": "教2楼-西403",
+      "subjectSName": "毛泽东思想和中国特色社会主义理论体系概论",
+      "time_display": "16:10-17:00"
+    }
+  ],
+  "2025-12-04 08:00:00": [
+    {
+      "weekday": "Thursday",
+      "location": "主楼B-302",
+      "subjectSName": "认知心理学基础",
+      "time_display": "08:00-08:50"
+    }
+  ],
+  "2025-12-02 14:00:00": [
+    {
+      "weekday": "Tuesday",
+      "location": "主楼B-302",
+      "subjectSName": "认知心理学基础",
+      "time_display": "14:00-14:50"
+    }
+  ],
+  "2025-12-03 08:00:00": [
+    {
+      "weekday": "Wednesday",
+      "location": "教2楼-西203",
+      "subjectSName": "现代物理与人工智能I",
+      "time_display": "08:00-08:50"
+    }
+  ],
+  "2025-12-01 08:00:00": [
+    {
+      "weekday": "Monday",
+      "location": "教2楼-西203",
+      "subjectSName": "现代物理与人工智能I",
+      "time_display": "08:00-08:50"
+    }
+  ]
+}

@@ -19,11 +19,19 @@ class TokenInterceptor(private val tokenManager: TokenManager) : Interceptor {
         if (!token.isNullOrEmpty()) {
             try {
                 val normalized = if (token.startsWith("bearer ", true) || token.startsWith("Bearer ", true)) token else "bearer $token"
+                // 脱敏日志：仅记录 token 的末 4 个字符，避免泄露完整凭据
+                val visibleTail = try {
+                    val t = normalized.takeLast(4)
+                    "****$t"
+                } catch (t: Throwable) { "****" }
+                Log.d("TokenInterceptor", "Attaching token: $visibleTail")
                 requestBuilder.header("synjones-auth", normalized)
                 requestBuilder.header("Authorization", normalized)
             } catch (t: Throwable) {
                 Log.w("TokenInterceptor", "Failed to normalize token", t)
             }
+        } else {
+            Log.d("TokenInterceptor", "No access token available (will send unauthenticated request)")
         }
 
         val request = requestBuilder.build()

@@ -126,6 +126,27 @@ fun AppContent() {
                                 postEvent("Auto-refresh failed: Repository returned null")
                             }
                         }
+                    } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                        withContext(Dispatchers.Main) {
+                            postEvent("Authentication required: please login")
+                            // launch WebLoginActivity for re-login
+                            var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                            var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                            try {
+                                context.assets.open("config.json").use { stream ->
+                                    val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                    val obj = JSONObject(text)
+                                    if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
+                                    if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
+                                }
+                            } catch (_: Exception) { }
+                            val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
+                                putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
+                                putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
+                            }
+                            // loginLauncher is declared later in this composable; start activity directly here
+                            context.startActivity(loginIntent)
+                        }
                     } catch (e: Exception) {
                         Log.e("AutoRefreshWeekly", "auto-refresh failed", e)
                         withContext(Dispatchers.Main) {
@@ -326,6 +347,26 @@ fun AppContent() {
                                 events.add("Sync failed - null result")
                             }
                         }
+                    } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                        withContext(Dispatchers.Main) {
+                            events.add("Authentication required: opening login...")
+                            // launch login
+                            var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                            var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                            try {
+                                context.assets.open("config.json").use { stream ->
+                                    val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                    val obj = JSONObject(text)
+                                    if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
+                                    if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
+                                }
+                            } catch (_: Exception) { }
+                            val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
+                                putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
+                                putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
+                            }
+                            loginLauncher.launch(loginIntent)
+                        }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
                             events.add("Sync exception: ${e.message}")
@@ -423,6 +464,25 @@ fun AppContent() {
                             } else {
                                 events.add("Experimental sync failed - null result")
                             }
+                        }
+                    } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                        withContext(Dispatchers.Main) {
+                            events.add("Authentication required: opening login...")
+                            var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                            var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                            try {
+                                context.assets.open("config.json").use { stream ->
+                                    val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                    val obj = JSONObject(text)
+                                    if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
+                                    if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
+                                }
+                            } catch (_: Exception) { }
+                            val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
+                                putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
+                                putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
+                            }
+                            loginLauncher.launch(loginIntent)
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
@@ -579,6 +639,25 @@ fun AppContent() {
                                 // Read preview from cache on IO dispatcher
                                 val raw = withContext(Dispatchers.IO) { cm.readFromCache(org.example.kqchecker.repository.CacheManager.WATER_LIST_CACHE_FILE) }
                                 if (!raw.isNullOrBlank()) events.add(raw.take(800))
+                            }
+                        } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                            withContext(Dispatchers.Main) {
+                                events.add("Authentication required: opening login...")
+                                var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                                var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                                try {
+                                    context.assets.open("config.json").use { stream ->
+                                        val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                                        val obj = JSONObject(text)
+                                        if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
+                                        if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
+                                    }
+                                } catch (_: Exception) { }
+                                val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
+                                    putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
+                                    putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
+                                }
+                                loginLauncher.launch(loginIntent)
                             }
                         } catch (e: Exception) {
                             Log.e("FetchApi2", "error", e)

@@ -142,6 +142,17 @@ class WeeklyRepository(private val context: Context) {
             
             if (!response.success || response.data.length() == 0) {
                 Log.e(TAG, "❌ Invalid API response: success=${response.success}, dataCount=${response.data.length()}")
+                // 若后端提示未登录或返回认证类错误（code 400/401/403 或 msg 包含登录提示），通知用户重新登录
+                try {
+                    val tm = org.example.kqchecker.auth.TokenManager(context)
+                    if (response.code == 400 || response.code == 401 || response.code == 403 || response.msg.contains("请登录") || response.msg.contains("未登录")) {
+                        tm.notifyTokenInvalid()
+                        // 抛出认证异常，交由 UI 层处理（例如弹出登录）
+                        throw org.example.kqchecker.auth.AuthRequiredException(response.msg)
+                    }
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Failed to notify token invalid", t)
+                }
                 return null
             }
             
