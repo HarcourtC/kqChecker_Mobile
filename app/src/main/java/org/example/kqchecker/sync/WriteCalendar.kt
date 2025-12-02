@@ -146,24 +146,32 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                     Log.d(TAG, "🔄 2. 未找到清洗缓存或解析失败，回退到 WeeklyRepository 获取流程")
                     // 优先从缓存获取weekly数据，避免API调用异常
                     val weeklyResponse = weeklyRepository.getWeeklyData(forceRefresh = false)
-                    
+
+                    val resp = weeklyResponse ?: run {
+                        Log.e(TAG, "❌ 获取数据失败：weeklyResponse为null")
+                        Log.e(TAG, "❌ 根据用户要求，不进行API调用，直接尝试使用缓存或清洗文件")
+                        Log.e(TAG, "💡 建议：尝试使用'Print weekly.json'按钮验证缓存数据是否存在")
+                        logWorkResult(Result.failure())
+                        return@withContext Result.failure()
+                    }
+
                     try {
-                        Log.d(TAG, "   - 响应对象不为null，检查success状态...")
-                        if (!weeklyResponse.success) {
+                        Log.d(TAG, "   - 响应对象已获取，检查 success 字段...")
+                        if (!resp.success) {
                             Log.e(TAG, "❌ 获取数据失败：success=false")
                             Log.e(TAG, "💡 建议：检查后端返回的错误信息")
                             logWorkResult(Result.failure())
                             return@withContext Result.failure()
                         }
-                        
+
                         Log.d(TAG, "   - success=true，检查data字段...")
-                        if (weeklyResponse.data == null) {
+                        if (resp.data == null) {
                             Log.e(TAG, "❌ 获取数据失败：data为null")
                             logWorkResult(Result.failure())
                             return@withContext Result.failure()
                         }
 
-                        Log.d(TAG, "✅ 成功获取weekly数据，共${weeklyResponse.data.length()}条记录")
+                        Log.d(TAG, "✅ 成功获取weekly数据，共${resp.data.length()}条记录")
                         
                         try {
                             // 检查日历权限和获取日历ID
