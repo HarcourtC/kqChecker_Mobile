@@ -743,6 +743,43 @@ fun AppContent() {
             }
 
             Button(onClick = {
+                // Print cleaned weekly (weekly_cleaned.json) to Logcat and UI
+                scope.launch {
+                    events.add("Printing cleaned weekly (weekly_cleaned.json) to logs...")
+                    try {
+                        val cm = org.example.kqchecker.repository.CacheManager(context)
+                        val content = withContext(Dispatchers.IO) {
+                            cm.readFromCache(org.example.kqchecker.repository.WeeklyCleaner.CLEANED_WEEKLY_FILE)
+                        }
+
+                        if (content.isNullOrBlank()) {
+                            withContext(Dispatchers.Main) { events.add("No cleaned weekly found in cache") }
+                        } else {
+                            // Log full content in IO to avoid blocking UI and to prevent truncation in Logcat
+                            withContext(Dispatchers.IO) {
+                                val tag = "WeeklyCleaned"
+                                val chunks = content.chunked(4000)
+                                for ((index, chunk) in chunks.withIndex()) {
+                                    Log.d(tag, "Chunk ${index + 1}/${chunks.size}: $chunk")
+                                }
+                            }
+
+                            withContext(Dispatchers.Main) {
+                                events.add("✅ Printed cleaned weekly to logs (${content.length} bytes)")
+                                val preview = if (content.length > 800) content.substring(0, 800) + "... (truncated)" else content
+                                events.add("Preview: $preview")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PrintWeeklyCleaned", "Print cleaned weekly failed", e)
+                        withContext(Dispatchers.Main) { events.add("Print cleaned weekly failed: ${e.message ?: e.toString()}") }
+                    }
+                }
+            }, modifier = Modifier.padding(top = 12.dp)) {
+                Text(text = "Print cleaned weekly")
+            }
+
+            Button(onClick = {
                 // Trigger cleaning and show weekly_cleaned.json path/preview
                 scope.launch {
                     events.add("Generating cleaned weekly (weekly_cleaned.json)...")
