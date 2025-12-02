@@ -89,3 +89,5 @@ py_config.json
 kq/
 *.txt
 problem-report.html
+app/*
+app2/*
