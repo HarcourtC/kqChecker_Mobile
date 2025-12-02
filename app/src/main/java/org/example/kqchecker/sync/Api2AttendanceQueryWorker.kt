@@ -102,14 +102,20 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
                             // optional: include other fields if available
 
                             val requestBody = ApiService.jsonToRequestBody(payload)
-                            val respBody = apiService.getWaterListData(requestBody)
+                            val resp = apiService.getWaterListData(requestBody)
 
-                            if (respBody == null) {
-                                Log.e(TAG, "api2 returned null")
-                                recordQuery(key, datePart, false, "null response")
+                            if (!resp.isSuccessful) {
+                                val httpCode = resp.code()
+                                Log.e(TAG, "api2 http error code: $httpCode")
+                                val err = try { resp.errorBody()?.string() ?: "" } catch (e: Exception) { "" }
+                                if (httpCode == 400 || httpCode == 401 || httpCode == 403) {
+                                    notifyTokenInvalid()
+                                }
+                                recordQuery(key, datePart, false, "http $httpCode: ${if (err.length > 500) err.substring(0,500) + "..." else err}")
                                 false
                             } else {
-                                val respStr = try { respBody.string() } catch (e: Exception) {
+                                val body = resp.body()
+                                val respStr = try { body?.string() } catch (e: Exception) {
                                     Log.e(TAG, "Failed to read api2 response body", e)
                                     recordQuery(key, datePart, false, "read body failed: ${e.message}")
                                     null

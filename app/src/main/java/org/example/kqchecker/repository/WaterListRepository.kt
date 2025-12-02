@@ -53,11 +53,17 @@ class WaterListRepository(private val context: Context) {
                 // 从API获取数据
                 Log.d(TAG, "Fetching water list data from API (API2)")
                 return@withContext getWaterListDataFromApi(termno)
-                
+
             } catch (e: SocketTimeoutException) {
                 Log.e(TAG, "Network timeout when fetching water list data", e)
                 throw e
             } catch (e: Exception) {
+                // 如果是认证失败异常，向上抛出以便 UI/调用方做登录处理
+                if (e is org.example.kqchecker.auth.AuthRequiredException) {
+                    Log.w(TAG, "Authentication required while fetching water list: rethrowing AuthRequiredException")
+                    throw e
+                }
+
                 Log.e(TAG, "Error fetching water list data from API", e)
                 // 如果有缓存，尝试从缓存读取
                 if (!forceRefresh) {
@@ -109,11 +115,51 @@ class WaterListRepository(private val context: Context) {
             // 转换为RequestBody
             val requestBody = ApiService.jsonToRequestBody(requestData)
             
-            // 调用API
-            val respBody = apiService.getWaterListData(requestBody)
+            // 调用API，使用 Retrofit Response 来能够检查 HTTP 状态码和错误体
+            val resp = apiService.getWaterListData(requestBody)
 
+            if (!resp.isSuccessful) {
+                val httpCode = resp.code()
+                Log.e(TAG, "api2 http error code: $httpCode")
+                // 尝试读取错误体中的信息
+                val errBodyStr = try { resp.errorBody()?.string() ?: "" } catch (e: Exception) { "" }
+                Log.d(TAG, "api2 error body: ${errBodyStr.length}")
+
+                // 依据HTTP状态判断是否为认证相关错误；对认证错误立即清理本地 Token 并通知
+                val tm = org.example.kqchecker.auth.TokenManager(context)
+                if (httpCode == 400 || httpCode == 401 || httpCode == 403) {
+                    try {
+                        tm.clear()
+                    } catch (_: Throwable) { }
+                    try {
+                        tm.notifyTokenInvalid()
+                    } catch (_: Throwable) { }
+                    throw org.example.kqchecker.auth.AuthRequiredException("HTTP $httpCode: authentication required")
+                }
+
+                // 有时后端会在 errorBody 中返回 JSON 包含 code/msg，尝试解析并处理
+                if (errBodyStr.isNotEmpty()) {
+                    try {
+                        val maybe = WaterListResponse.fromJson(errBodyStr)
+                        if (!maybe.success) {
+                            if (maybe.code == 400 || maybe.code == 401 || maybe.code == 403 || maybe.msg.contains("请登录") || maybe.msg.contains("未登录")) {
+                                try { tm.clear() } catch (_: Throwable) {}
+                                try { tm.notifyTokenInvalid() } catch (_: Throwable) {}
+                                throw org.example.kqchecker.auth.AuthRequiredException(maybe.msg)
+                            }
+                        }
+                    } catch (_: Exception) {
+                        // ignore parse errors
+                    }
+                }
+
+                // 非认证类的HTTP错误或未能处理，回退尝试使用缓存
+                return null
+            }
+
+            val respBody = resp.body()
             if (respBody == null) {
-                Log.e(TAG, "api2 returned null")
+                Log.e(TAG, "api2 returned empty body despite successful HTTP response")
                 return null
             }
 
@@ -123,22 +169,21 @@ class WaterListRepository(private val context: Context) {
             }
 
             Log.d(TAG, "api2 resp length: ${respStr.length}")
-            val wr = WaterListResponse.fromJson(respStr)
+            val wr = try { WaterListResponse.fromJson(respStr) } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse api2 json response", e)
+                null
+            }
 
-            if (wr == null || wr.data == null || !wr.success) {
+            if (wr == null || !wr.success) {
                 Log.e(TAG, "Invalid API2 response: code=${wr?.code}, success=${wr?.success}, data=${wr?.data}")
-                // 若后端认为未登录或返回认证失败，通知用户
-                try {
-                    val tm = org.example.kqchecker.auth.TokenManager(context)
-                    if (wr != null) {
-                        if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
-                            tm.notifyTokenInvalid()
-                            // 抛出认证异常，交由 UI 层处理（例如弹出登录）
-                            throw org.example.kqchecker.auth.AuthRequiredException(wr.msg)
-                        }
+                // 认证类错误：立即清理本地 token，通知用户并抛出异常交由上层处理
+                if (wr != null) {
+                    if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                        val tm = org.example.kqchecker.auth.TokenManager(context)
+                        try { tm.clear() } catch (_: Throwable) {}
+                        try { tm.notifyTokenInvalid() } catch (_: Throwable) {}
+                        throw org.example.kqchecker.auth.AuthRequiredException(wr.msg)
                     }
-                } catch (t: Throwable) {
-                    Log.w(TAG, "Failed to notify token invalid", t)
                 }
                 return null
             }

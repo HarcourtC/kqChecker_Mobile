@@ -151,11 +151,46 @@ class WeeklyCleaner(private val context: Context) {
                     else -> wk
                 }
 
+                // 计算完整的打卡时间字符串 watertime（优先使用 startFull，否则尝试从 accountJtNo 映射到节次时间）
+                var watertime = ""
+                try {
+                    if (startFull.isNotBlank()) {
+                        // startFull 可能形如 08:00 或 08:00:00，保证包含秒
+                        val startNormalized = if (startFull.matches(Regex("^\\d{1,2}:\\d{2}"))) startFull + ":00" else startFull
+                        watertime = "$dateStr $startNormalized"
+                    } else {
+                        // 尝试根据节次号映射到默认时间（与 WriteCalendar 保持一致）
+                        val periodMap = mapOf(
+                            1 to "08:00",
+                            2 to "08:55",
+                            3 to "10:10",
+                            4 to "11:05",
+                            5 to "13:30",
+                            6 to "14:25",
+                            7 to "15:40",
+                            8 to "16:35",
+                            9 to "18:30",
+                            10 to "19:25"
+                        )
+                        if (accountJtNo.isNotBlank()) {
+                            val firstNum = try { accountJtNo.split(Regex("\\D+"))[0].toInt() } catch (_: Exception) { -1 }
+                            if (firstNum > 0 && periodMap.containsKey(firstNum)) {
+                                val t = periodMap[firstNum]!!
+                                watertime = "$dateStr ${t}:00".replace("::", ":")
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    // ignore
+                }
+
                 val out = JSONObject()
                 out.put("weekday", weekdayLabel)
                 out.put("location", location)
+                out.put("eqno", location) // 兼容 WriteCalendar 中的 eqno 字段名
                 out.put("subjectSName", subject)
                 out.put("time_display", displayTime)
+                if (watertime.isNotBlank()) out.put("watertime", watertime)
 
                 try {
                     if (cleanedObj.has(key)) {

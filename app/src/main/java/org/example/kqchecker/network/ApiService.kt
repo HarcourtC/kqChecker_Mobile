@@ -7,6 +7,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -20,13 +21,13 @@ interface ApiService {
      * 获取周课表数据（API1）
      */
     @POST("attendance-student/rankClass/getWeekSchedule2")
-    suspend fun getWeeklyData(@Body requestBody: RequestBody): ResponseBody?
+    suspend fun getWeeklyData(@Body requestBody: RequestBody): Response<ResponseBody>
     
     /**
      * 获取水课表数据（API2）
      */
     @POST("attendance-student/waterList/page")
-    suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?
+    suspend fun getWaterListData(@Body requestBody: RequestBody): Response<ResponseBody>
     
     companion object {
         /**

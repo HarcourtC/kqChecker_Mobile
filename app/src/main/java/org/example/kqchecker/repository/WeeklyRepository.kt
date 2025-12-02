@@ -120,11 +120,40 @@ class WeeklyRepository(private val context: Context) {
             val requestBody = createWeeklyRequest()
             
             Log.d(TAG, "发送API请求到: ${getBaseUrl()}attendance-student/rankClass/getWeekSchedule2")
-            val respBody = apiService.getWeeklyData(requestBody)
+            val resp = apiService.getWeeklyData(requestBody)
 
-            // 验证响应
+            // 处理非2xx响应
+            if (!resp.isSuccessful) {
+                val httpCode = resp.code()
+                Log.e(TAG, "API returned HTTP error code: $httpCode")
+                val errBody = try { resp.errorBody()?.string() ?: "" } catch (e: Exception) { "" }
+                Log.d(TAG, "API error body length: ${errBody.length}")
+                try {
+                    val tm = org.example.kqchecker.auth.TokenManager(context)
+                    if (httpCode == 400 || httpCode == 401 || httpCode == 403) {
+                        tm.notifyTokenInvalid()
+                        throw org.example.kqchecker.auth.AuthRequiredException("HTTP $httpCode: authentication required")
+                    }
+                    if (errBody.isNotEmpty()) {
+                        try {
+                            val maybe = WeeklyResponse.fromJson(errBody)
+                            if (!maybe.success) {
+                                if (maybe.code == 400 || maybe.code == 401 || maybe.code == 403 || maybe.msg.contains("请登录") || maybe.msg.contains("未登录")) {
+                                    tm.notifyTokenInvalid()
+                                    throw org.example.kqchecker.auth.AuthRequiredException(maybe.msg)
+                                }
+                            }
+                        } catch (_: Exception) { }
+                    }
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Failed to notify token invalid on http error", t)
+                }
+                return null
+            }
+
+            val respBody = resp.body()
             if (respBody == null) {
-                Log.e(TAG, "❌ API returned null response")
+                Log.e(TAG, "❌ API returned empty body despite successful HTTP response")
                 return null
             }
 
@@ -134,24 +163,25 @@ class WeeklyRepository(private val context: Context) {
             }
 
             Log.d(TAG, "API响应内容长度: ${responseString.length} 字符")
-            Log.d(TAG, "API响应内容预览: ${responseString.take(100)}...")
+            Log.d(TAG, "API响应内容预览: ${if (responseString.length > 100) responseString.substring(0,100) else responseString}...")
 
             // 转换为WeeklyResponse
             Log.d(TAG, "解析API响应数据...")
-            val response = WeeklyResponse.fromJson(responseString)
-            
-            if (!response.success || response.data.length() == 0) {
-                Log.e(TAG, "❌ Invalid API response: success=${response.success}, dataCount=${response.data.length()}")
-                // 若后端提示未登录或返回认证类错误（code 400/401/403 或 msg 包含登录提示），通知用户重新登录
-                try {
-                    val tm = org.example.kqchecker.auth.TokenManager(context)
+            val response = try { WeeklyResponse.fromJson(responseString) } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse weekly response JSON", e)
+                null
+            }
+
+            if (response == null || !response.success || response.data.length() == 0) {
+                Log.e(TAG, "❌ Invalid API response: success=${response?.success}, dataCount=${response?.data?.let { try { it.length() } catch (_: Exception) { 0 } } ?: 0}")
+                // 若后端提示未登录或返回认证类错误（code 400/401/403 或 msg 包含登录提示），立即清理 token 并抛出异常
+                if (response != null) {
                     if (response.code == 400 || response.code == 401 || response.code == 403 || response.msg.contains("请登录") || response.msg.contains("未登录")) {
-                        tm.notifyTokenInvalid()
-                        // 抛出认证异常，交由 UI 层处理（例如弹出登录）
+                        val tm = org.example.kqchecker.auth.TokenManager(context)
+                        try { tm.clear() } catch (_: Throwable) {}
+                        try { tm.notifyTokenInvalid() } catch (_: Throwable) {}
                         throw org.example.kqchecker.auth.AuthRequiredException(response.msg)
                     }
-                } catch (t: Throwable) {
-                    Log.w(TAG, "Failed to notify token invalid", t)
                 }
                 return null
             }

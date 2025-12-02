@@ -61,73 +61,82 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                     val it = arr.optJSONObject(i) ?: continue
                                     val obj = JSONObject()
                                     // 使用清洗数据填充必要字段：eqname, eqno, watertime
-                                    val subj = it.optString("subjectSName", "").trim()
+                                    // 尝试多个可能的课程名字段，按优先级选择第一个非空值
+                                    val subjCandidates = listOf(
+                                        it.optString("subjectSName", ""),
+                                        it.optString("subjectName", ""),
+                                        it.optString("kcmc", ""),
+                                        it.optString("name", ""),
+                                        it.optString("courseName", "")
+                                    ).map { it.trim() }
+                                    val subj = subjCandidates.firstOrNull { it.isNotBlank() } ?: ""
                                     val eqNameVal = if (subj.isNotBlank()) subj else "未命名打卡"
                                     obj.put("eqname", eqNameVal)
+                                    // 优先使用清洗结果中已存在的字段 eqno 与 watertime（WeeklyCleaner 已输出）
+                                    val eqnoFromClean = it.optString("eqno", "").trim()
                                     val loc = it.optString("location", "").trim()
-                                    val eqNoVal = if (loc.isNotBlank()) loc else ""
+                                    val eqNoVal = when {
+                                        eqnoFromClean.isNotBlank() -> eqnoFromClean
+                                        loc.isNotBlank() -> loc
+                                        else -> ""
+                                    }
                                     obj.put("eqno", eqNoVal)
-                                    // 调试日志（仅在需要时开启）
-                                    // Log.d(TAG, "Converted cleaned entry -> eqname=${eqNameVal}, eqno=${eqNoVal}, key=$key")
-                                    // 优先从 key（cleaned JSON 的键）提取开始时间，格式通常为 "yyyy-MM-dd HH:mm:ss" 或 "yyyy-MM-dd <timePart>"
-                                    var watertimeVal = ""
-                                    try {
-                                        val keyTrim = key.trim()
-                                        // 如果 key 已经是完整的 yyyy-MM-dd HH:mm:ss，直接使用
-                                        val fullDtRegex = Regex("^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
-                                        if (fullDtRegex.matches(keyTrim)) {
-                                            watertimeVal = keyTrim
-                                        } else {
-                                            val parts = keyTrim.split(Regex("\\s+"))
-                                            val datePart = if (parts.isNotEmpty()) parts[0] else ""
 
-                                            // 尝试在 key 的剩余部分中查找时间（HH:mm 或 HH:mm:ss）
-                                            if (parts.size >= 2) {
-                                                val rest = parts.subList(1, parts.size).joinToString(" ")
-                                                val timeMatch = Regex("(\\d{1,2}:\\d{2}(?::\\d{2})?)").find(rest)
-                                                if (timeMatch != null) {
-                                                    var t = timeMatch.value
-                                                    if (t.matches(Regex("^\\d{1,2}:\\d{2}$"))) t += ":00"
-                                                    if (datePart.isNotBlank()) watertimeVal = "$datePart $t"
-                                                }
-                                            }
-
-                                            // 如果 key 中未包含时间，则回退使用 time_display 显示字段（取起始时间）
-                                            if (watertimeVal.isBlank()) {
-                                                var startTime = it.optString("time_display", "").trim()
-                                                if (startTime.isNotBlank()) {
-                                                    if (startTime.contains("-")) startTime = startTime.split("-")[0].trim()
-                                                    // 若为节次字符串（如 "7-8"），映射到默认节次时间
-                                                    if (startTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
-                                                        val firstNum = startTime.split(Regex("\\D+"))[0]
-                                                        val period = firstNum.toIntOrNull()
-                                                        val periodMap = mapOf(
-                                                            1 to "08:00",
-                                                            2 to "08:55",
-                                                            3 to "10:10",
-                                                            4 to "11:05",
-                                                            5 to "13:30",
-                                                            6 to "14:25",
-                                                            7 to "15:40",
-                                                            8 to "16:35",
-                                                            9 to "18:30",
-                                                            10 to "19:25"
-                                                        )
-                                                        if (period != null && periodMap.containsKey(period)) startTime = periodMap[period]!!
+                                    // watertime 优先来自清洗器输出，否则回退到 key/time_display 解析
+                                    var watertimeVal = it.optString("watertime", "").trim()
+                                    if (watertimeVal.isBlank()) {
+                                        try {
+                                            val keyTrim = key.trim()
+                                            val fullDtRegex = Regex("^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
+                                            if (fullDtRegex.matches(keyTrim)) {
+                                                watertimeVal = keyTrim
+                                            } else {
+                                                val parts = keyTrim.split(Regex("\\s+"))
+                                                val datePart = if (parts.isNotEmpty()) parts[0] else ""
+                                                if (parts.size >= 2) {
+                                                    val rest = parts.subList(1, parts.size).joinToString(" ")
+                                                    val timeMatch = Regex("(\\d{1,2}:\\d{2}(?::\\d{2})?)").find(rest)
+                                                    if (timeMatch != null) {
+                                                        var t = timeMatch.value
+                                                        if (t.matches(Regex("^\\d{1,2}:\\d{2}$"))) t += ":00"
+                                                        if (datePart.isNotBlank()) watertimeVal = "$datePart $t"
                                                     }
-                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) startTime += ":00"
-                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
-                                                        watertimeVal = "$datePart $startTime"
+                                                }
+                                                if (watertimeVal.isBlank()) {
+                                                    var startTime = it.optString("time_display", "").trim()
+                                                    if (startTime.isNotBlank()) {
+                                                        if (startTime.contains("-")) startTime = startTime.split("-")[0].trim()
+                                                        if (startTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
+                                                            val firstNum = startTime.split(Regex("\\D+"))[0]
+                                                            val period = firstNum.toIntOrNull()
+                                                            val periodMap = mapOf(
+                                                                1 to "08:00",
+                                                                2 to "08:55",
+                                                                3 to "10:10",
+                                                                4 to "11:05",
+                                                                5 to "13:30",
+                                                                6 to "14:25",
+                                                                7 to "15:40",
+                                                                8 to "16:35",
+                                                                9 to "18:30",
+                                                                10 to "19:25"
+                                                            )
+                                                            if (period != null && periodMap.containsKey(period)) startTime = periodMap[period]!!
+                                                        }
+                                                        if (startTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) startTime += ":00"
+                                                        if (startTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
+                                                            watertimeVal = "$datePart $startTime"
+                                                        }
                                                     }
                                                 }
                                             }
+                                        } catch (_: Exception) {
                                         }
-                                    } catch (_: Exception) {
                                     }
                                     obj.put("watertime", watertimeVal)
                                     // 生成唯一事件ID（基于 key + index）
                                     obj.put("bh", "cleaned_${key}_${i}")
-                                    obj.put("isdone", "0")
+                                    // removed isdone field per request
                                     converted.put(obj)
                                 }
                             }
@@ -275,7 +284,19 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                 try {
                     // 从新数据结构中解析关键字段
                     val bh = item.optString("bh", "") // 唯一标识，用于事件匹配
-                    val eqname = item.optString("eqname", "未命名打卡") // 设备名称，作为标题
+                    // 标题字段可能出现在不同的键名中：优先使用 eqname，其次尝试常见字段
+                    var eqname = item.optString("eqname", "").trim()
+                    if (eqname.isBlank()) {
+                        val candidates = listOf(
+                            item.optString("subjectSName", ""),
+                            item.optString("subjectName", ""),
+                            item.optString("kcmc", ""),
+                            item.optString("name", ""),
+                            item.optString("courseName", "")
+                        ).map { it.trim() }
+                        eqname = candidates.firstOrNull { it.isNotBlank() } ?: ""
+                    }
+                    if (eqname.isBlank()) eqname = "未命名打卡"
                     val eqno = item.optString("eqno", "") // 设备位置
                     var watertime = item.optString("watertime", "") // 打卡时间
                     // 回退解析：如果后端没有直接提供时间字段，但提供了节次/星期信息（如accountJtNo/accountWeeknum），
@@ -329,14 +350,12 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                             }
                         }
                     }
-                    val isdone = item.optString("isdone", "0") // 是否完成
                     val fromtype = item.optString("fromtype", "") // 来源类型
-                    
+
                     Log.d(TAG, "   - 事件ID: $bh")
                     Log.d(TAG, "   - 标题: $eqname")
                     Log.d(TAG, "   - 时间: $watertime")
                     Log.d(TAG, "   - 地点: $eqno")
-                    Log.d(TAG, "   - 状态: ${if (isdone == "1") "已完成" else "未完成"}")
                     
                     if (watertime.isNotEmpty()) {
                         val date = try {
@@ -352,14 +371,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                         val endMillis = startMillis + 30 * 60 * 1000
                         
                         // 构建事件标题，包含状态信息
-                        val eventTitle = buildString {
-                            append(eqname)
-                            if (isdone == "1") {
-                                append(" (已完成)")
-                            } else {
-                                append(" (未完成)")
-                            }
-                        }
+                        val eventTitle = eqname
                         
                         // 构建详细描述信息
                         val description = buildString {
@@ -367,7 +379,6 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                             if (bh.isNotEmpty()) append("- 事件ID: $bh\n")
                             append("- 设备位置: $eqno\n")
                             append("- 打卡时间: $watertime\n")
-                            append("- 完成状态: ${if (isdone == "1") "已完成" else "未完成"}\n")
                             if (fromtype.isNotEmpty()) append("- 来源类型: $fromtype\n")
                         }
                         
