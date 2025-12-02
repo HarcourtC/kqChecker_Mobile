@@ -61,8 +61,14 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                     val it = arr.optJSONObject(i) ?: continue
                                     val obj = JSONObject()
                                     // 使用清洗数据填充必要字段：eqname, eqno, watertime
-                                    obj.put("eqname", it.optString("subjectSName", "未命名课程"))
-                                    obj.put("eqno", it.optString("location", ""))
+                                    val subj = it.optString("subjectSName", "").trim()
+                                    val eqNameVal = if (subj.isNotBlank()) subj else "未命名打卡"
+                                    obj.put("eqname", eqNameVal)
+                                    val loc = it.optString("location", "").trim()
+                                    val eqNoVal = if (loc.isNotBlank()) loc else ""
+                                    obj.put("eqno", eqNoVal)
+                                    // 调试日志（仅在需要时开启）
+                                    // Log.d(TAG, "Converted cleaned entry -> eqname=${eqNameVal}, eqno=${eqNoVal}, key=$key")
                                     // 优先从 key（cleaned JSON 的键）提取开始时间，格式通常为 "yyyy-MM-dd HH:mm:ss" 或 "yyyy-MM-dd <timePart>"
                                     var watertimeVal = ""
                                     try {
