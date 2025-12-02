@@ -3,6 +3,9 @@ package org.example.kqchecker.auth
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.os.Bundle
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -16,6 +19,7 @@ import android.os.Build
 import android.webkit.JavascriptInterface
 import androidx.activity.ComponentActivity
 import android.util.Log
+import android.webkit.CookieManager
 
 class WebLoginActivity : ComponentActivity() {
     companion object {
@@ -26,6 +30,8 @@ class WebLoginActivity : ComponentActivity() {
 
     private lateinit var tokenManager: TokenManager
     private var redirectPrefix: String = ""
+    private var webViewInstance: WebView? = null
+    private var tokenClearedReceiver: BroadcastReceiver? = null
 
     inner class JsBridge {
         @JavascriptInterface
@@ -121,6 +127,7 @@ class WebLoginActivity : ComponentActivity() {
             Log.i("WebLoginActivity", "loginUrl=$loginUrl redirectPrefix=$redirectPrefix")
 
             val webView = WebView(this)
+            webViewInstance = webView
             webView.setBackgroundColor(Color.WHITE)
             val settings = webView.settings
             settings.javaScriptEnabled = true
@@ -223,7 +230,10 @@ class WebLoginActivity : ComponentActivity() {
                         // 3) 如果 native 端已有 token，注入到页面 localStorage（写入 raw token without 'bearer ' 前缀）
                         try {
                             val nativeToken = tokenManager.getAccessToken()
-                            if (nativeToken != null) {
+                            val savedAt = tokenManager.getTokenSavedAt()
+                            val clearedAt = tokenManager.getTokenClearedAt()
+                            // Only inject native token into page if it was saved after the last cleared timestamp
+                            if (nativeToken != null && savedAt > clearedAt) {
                                 // remove optional bearer prefix
                                 var tokenPlain = nativeToken
                                 if (tokenPlain.startsWith("bearer ", true)) tokenPlain = tokenPlain.substring(7)
@@ -232,6 +242,8 @@ class WebLoginActivity : ComponentActivity() {
                                 val setScript = "(function(){try{localStorage.setItem('access_token', '$tokenPlain');}catch(e){console.log('set localStorage failed', e);} })();"
                                 view?.evaluateJavascript(setScript, null)
                                 Log.d("WebLoginActivity", "injected native token into localStorage (len=${tokenPlain.length})")
+                            } else {
+                                Log.d("WebLoginActivity", "skip injecting native token: savedAt=$savedAt clearedAt=$clearedAt")
                             }
                         } catch (t: Throwable) {
                             Log.e("WebLoginActivity", "failed to inject native token into localStorage", t)
@@ -358,10 +370,42 @@ class WebLoginActivity : ComponentActivity() {
             setContentView(webView)
             Log.d("WebLoginActivity", "loading url: $loginUrl")
             webView.loadUrl(loginUrl)
+            // register receiver to clear WebView storage when token cleared
+            try {
+                tokenClearedReceiver = object : BroadcastReceiver() {
+                    override fun onReceive(ctx: Context?, intent: Intent?) {
+                        try {
+                            Log.d("WebLoginActivity", "received token cleared broadcast, clearing WebView storage")
+                            webView.evaluateJavascript("(function(){try{localStorage.removeItem('access_token');localStorage.removeItem('token');localStorage.removeItem('auth_token');}catch(e){} })();", null)
+                            try {
+                                CookieManager.getInstance().removeAllCookies(null)
+                                CookieManager.getInstance().flush()
+                            } catch (_: Throwable) {}
+                        } catch (t: Throwable) {
+                            Log.e("WebLoginActivity", "failed to clear WebView storage on broadcast", t)
+                        }
+                    }
+                }
+                registerReceiver(tokenClearedReceiver, IntentFilter(TokenManager.ACTION_TOKEN_CLEARED))
+            } catch (_: Throwable) {}
         } catch (t: Throwable) {
             Log.e("WebLoginActivity", "onCreate failed", t)
             // ensure we finish so system doesn't keep a bad activity around
             finish()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            if (tokenClearedReceiver != null) {
+                try { unregisterReceiver(tokenClearedReceiver) } catch (_: Throwable) {}
+                tokenClearedReceiver = null
+            }
+        } catch (_: Throwable) {}
+        try {
+            webViewInstance?.destroy()
+            webViewInstance = null
+        } catch (_: Throwable) {}
     }
 }

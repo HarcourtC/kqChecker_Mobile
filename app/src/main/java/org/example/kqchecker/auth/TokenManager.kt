@@ -6,6 +6,8 @@ import androidx.security.crypto.MasterKey
 import android.util.Log
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
+import android.webkit.CookieManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 
@@ -23,8 +25,16 @@ class TokenManager(private val context: Context) {
         )
     }
 
+    companion object {
+        const val ACTION_TOKEN_CLEARED = "org.example.kqchecker.ACTION_TOKEN_CLEARED"
+    }
+
     fun saveAccessToken(accessToken: String) {
         prefs.edit().putString("access_token", accessToken).apply()
+        // record when token was saved and clear any cleared marker
+        try {
+            prefs.edit().putLong("token_saved_at", System.currentTimeMillis()).putLong("token_cleared_at", 0L).apply()
+        } catch (_: Throwable) {}
         try {
             val len = accessToken.length
             Log.d("TokenManager", "saveAccessToken: saved access token (length=$len)")
@@ -48,7 +58,23 @@ class TokenManager(private val context: Context) {
     fun getRefreshToken(): String? = prefs.getString("refresh_token", null)
 
     fun clear() {
-        prefs.edit().clear().apply()
+        try {
+            // remove tokens but keep a cleared timestamp to signal WebView and other components
+            val now = System.currentTimeMillis()
+            prefs.edit().remove("access_token").remove("refresh_token").putLong("token_cleared_at", now).apply()
+            // also try to clear cookies (best-effort)
+            try {
+                CookieManager.getInstance().removeAllCookies(null)
+                CookieManager.getInstance().flush()
+            } catch (_: Throwable) {}
+            // broadcast an intent so activities (WebLoginActivity) can clear WebView localStorage
+            try {
+                val intent = Intent(ACTION_TOKEN_CLEARED)
+                context.sendBroadcast(intent)
+            } catch (_: Throwable) {}
+        } catch (e: Throwable) {
+            try { Log.e("TokenManager", "clear failed", e) } catch (_: Throwable) {}
+        }
     }
 
     /**
@@ -72,5 +98,13 @@ class TokenManager(private val context: Context) {
         } catch (e: Throwable) {
             try { Log.e("TokenManager", "notifyTokenInvalid failed", e) } catch (_: Throwable) {}
         }
+    }
+
+    fun getTokenSavedAt(): Long {
+        return try { prefs.getLong("token_saved_at", 0L) } catch (_: Throwable) { 0L }
+    }
+
+    fun getTokenClearedAt(): Long {
+        return try { prefs.getLong("token_cleared_at", 0L) } catch (_: Throwable) { 0L }
     }
 }
