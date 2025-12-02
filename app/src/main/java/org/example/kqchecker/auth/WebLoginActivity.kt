@@ -25,6 +25,7 @@ class WebLoginActivity : ComponentActivity() {
     companion object {
         const val EXTRA_LOGIN_URL = "extra_login_url"
         const val EXTRA_REDIRECT_PREFIX = "extra_redirect_prefix"
+        const val EXTRA_FORCE_CLEAR = "extra_force_clear"
         const val RESULT_TOKEN = "result_token"
     }
 
@@ -117,6 +118,19 @@ class WebLoginActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("WebLoginActivity", "onCreate intent=${intent?.action} extras=${intent?.extras}")
         tokenManager = TokenManager(this)
+
+        // Debug: if started with EXTRA_FORCE_CLEAR=true, perform a token clear (simulate expiry) and finish.
+        try {
+            val doClear = intent?.getBooleanExtra(EXTRA_FORCE_CLEAR, false) ?: false
+            if (doClear) {
+                try {
+                    Log.d("WebLoginActivity", "EXTRA_FORCE_CLEAR received — calling TokenManager.clear()")
+                } catch (_: Throwable) {}
+                try { tokenManager.clear() } catch (_: Throwable) {}
+                finish()
+                return
+            }
+        } catch (_: Throwable) {}
 
         try {
             val loginUrl = intent.getStringExtra(EXTRA_LOGIN_URL)

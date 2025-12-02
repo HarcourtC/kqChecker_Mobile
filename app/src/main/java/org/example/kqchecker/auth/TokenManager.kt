@@ -62,18 +62,15 @@ class TokenManager(private val context: Context) {
             // remove tokens but keep a cleared timestamp to signal WebView and other components
             val now = System.currentTimeMillis()
             prefs.edit().remove("access_token").remove("refresh_token").putLong("token_cleared_at", now).apply()
-            try { Log.d("TokenManager", "clear(): tokens removed, token_cleared_at=$now") } catch (_: Throwable) {}
             // also try to clear cookies (best-effort)
             try {
                 CookieManager.getInstance().removeAllCookies(null)
                 CookieManager.getInstance().flush()
-                try { Log.d("TokenManager", "clear(): cleared cookies") } catch (_: Throwable) {}
             } catch (_: Throwable) {}
             // broadcast an intent so activities (WebLoginActivity) can clear WebView localStorage
             try {
                 val intent = Intent(ACTION_TOKEN_CLEARED)
                 context.sendBroadcast(intent)
-                try { Log.d("TokenManager", "clear(): broadcasted ACTION_TOKEN_CLEARED") } catch (_: Throwable) {}
             } catch (_: Throwable) {}
         } catch (e: Throwable) {
             try { Log.e("TokenManager", "clear failed", e) } catch (_: Throwable) {}
@@ -85,7 +82,6 @@ class TokenManager(private val context: Context) {
      */
     fun notifyTokenInvalid() {
         try {
-            try { Log.d("TokenManager", "notifyTokenInvalid(): called") } catch (_: Throwable) {}
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channelId = "auth_invalid_channel"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
