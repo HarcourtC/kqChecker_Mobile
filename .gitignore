@@ -75,7 +75,6 @@ yarn-error.log
 
 # Gradle
 .gradle/
-gradle/
 gradle-app.setting
 
 # Crashlytics (for Android Studio and IntelliJ)
