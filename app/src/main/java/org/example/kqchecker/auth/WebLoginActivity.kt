@@ -27,6 +27,7 @@ class WebLoginActivity : ComponentActivity() {
         const val EXTRA_REDIRECT_PREFIX = "extra_redirect_prefix"
         const val EXTRA_FORCE_CLEAR = "extra_force_clear"
         const val RESULT_TOKEN = "result_token"
+        const val RESULT_TOKEN_SOURCE = "result_token_source"
     }
 
     private lateinit var tokenManager: TokenManager
@@ -54,13 +55,13 @@ class WebLoginActivity : ComponentActivity() {
                             }
                         }
 
-                        if (token != null) {
+                            if (token != null) {
                             val tokenVal = token!!
                             val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                             try {
                                 try { Log.d("WebLoginActivity", "JsBridge detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
                                 tokenManager.saveAccessToken(bearer)
-                                try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from JsBridge") } catch (_: Throwable) {}
+                                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from JsBridge (source=url)") } catch (_: Throwable) {}
                             } catch (e: Throwable) {
                                 Log.e("WebLoginActivity", "JsBridge failed to save token", e)
                             }
@@ -76,6 +77,7 @@ class WebLoginActivity : ComponentActivity() {
 
                             val data = Intent()
                             data.putExtra(RESULT_TOKEN, bearer)
+                            data.putExtra(RESULT_TOKEN_SOURCE, "url")
                             setResult(Activity.RESULT_OK, data)
                             runOnUiThread {
                                 finish()
@@ -99,13 +101,14 @@ class WebLoginActivity : ComponentActivity() {
                 val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                 try {
                     tokenManager.saveAccessToken(bearer)
-                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from postToken") } catch (_: Throwable) {}
+                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from postToken (source=local)") } catch (_: Throwable) {}
                 } catch (e: Throwable) {
                     Log.e("WebLoginActivity", "postToken failed to save token", e)
                 }
                 // also set result and finish
                 val data = Intent()
                 data.putExtra(RESULT_TOKEN, bearer)
+                data.putExtra(RESULT_TOKEN_SOURCE, "local")
                 setResult(Activity.RESULT_OK, data)
                 runOnUiThread { finish() }
             } catch (t: Throwable) {
@@ -208,7 +211,7 @@ class WebLoginActivity : ComponentActivity() {
                                             try {
                                                 try { Log.d("WebLoginActivity", "evaluateJavascript detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
                                                 tokenManager.saveAccessToken(bearer)
-                                                try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from evaluateJavascript") } catch (_: Throwable) {}
+                                                try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from evaluateJavascript (source=url)") } catch (_: Throwable) {}
                                             } catch (e: Throwable) {
                                                 Log.e("WebLoginActivity", "evaluateJavascript failed to save token", e)
                                             }
@@ -223,6 +226,7 @@ class WebLoginActivity : ComponentActivity() {
                                             tokenManager.saveRefreshToken(refresh)
                                             val data = Intent()
                                             data.putExtra(RESULT_TOKEN, bearer)
+                                            data.putExtra(RESULT_TOKEN_SOURCE, "url")
                                             setResult(Activity.RESULT_OK, data)
                                             finish()
                                             return@evaluateJavascript
@@ -346,13 +350,13 @@ class WebLoginActivity : ComponentActivity() {
                                 }
                             }
 
-                                            if (token != null) {
+                                                if (token != null) {
                                                 val tokenVal = token!!
                                                 val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                                                 try {
                                                     try { Log.d("WebLoginActivity", "handleUrl detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
                                                     tokenManager.saveAccessToken(bearer)
-                                                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from handleUrl") } catch (_: Throwable) {}
+                                                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from handleUrl (source=url)") } catch (_: Throwable) {}
                                                 } catch (e: Throwable) {
                                                     Log.e("WebLoginActivity", "handleUrl failed to save token", e)
                                                 }
@@ -369,6 +373,7 @@ class WebLoginActivity : ComponentActivity() {
 
                                 val data = Intent()
                                 data.putExtra(RESULT_TOKEN, bearer)
+                                data.putExtra(RESULT_TOKEN_SOURCE, "url")
                                 setResult(Activity.RESULT_OK, data)
                                 finish()
                                 return true

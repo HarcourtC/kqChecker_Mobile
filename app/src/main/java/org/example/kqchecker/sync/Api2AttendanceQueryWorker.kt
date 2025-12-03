@@ -23,6 +23,7 @@ import java.util.*
 private const val TAG = "Api2AttendanceQuery"
 private const val NOTIF_CHANNEL_ID = "api2_att_query_channel"
 private const val WEEKLY_CLEANED_FILE = "weekly_cleaned.json"
+private const val ACTION_NO_ATTENDANCE = "org.example.kqchecker.ACTION_NO_ATTENDANCE"
 
 /**
  * Worker: 定期扫描 weekly_cleaned.json，在课程开始前5分钟到开始后10分钟窗口内
@@ -88,6 +89,13 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
                     }
                     if (eventDate == null) continue
 
+                    // 规则: 若课程不在当日，则直接跳过匹配
+                    val dateOnlySdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val todayStr = dateOnlySdf.format(now)
+                    if (datePart != todayStr) {
+                        continue
+                    }
+
                     val diffMs = eventDate.time - now.time
                     val diffMinutes = diffMs / 60000
 
@@ -131,9 +139,50 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
                                     } else {
                                         val code = respJson.optInt("code", -1)
                                         if (code == 0) {
-                                            recordQuery(key, datePart, true, respJson.toString())
-                                            true
-                                        } else {
+                                                        // 先按时间匹配，再按地点匹配：遍历 data.list，寻找 intime/watertime 与事件时间在 ±30 分钟内的记录，且 eqno 与预期地点匹配
+                                                        val listArr = try { respJson.getJSONObject("data").optJSONArray("list") } catch (_: Exception) { null }
+                                                        var matched = false
+                                                        if (listArr != null && listArr.length() > 0) {
+                                                            // 从 cleanedObj 获取预期地点（若存在）
+                                                            var expectedLoc: String? = null
+                                                            try {
+                                                                if (cleanedObj.has(key)) {
+                                                                    val arr = cleanedObj.optJSONArray(key)
+                                                                    if (arr != null && arr.length() > 0) {
+                                                                        val o = arr.optJSONObject(0)
+                                                                        expectedLoc = if (o.has("location")) o.optString("location") else null
+                                                                    }
+                                                                }
+                                                            } catch (_: Exception) { }
+
+                                                            for (i in 0 until listArr.length()) {
+                                                                try {
+                                                                    val item = listArr.optJSONObject(i) ?: continue
+                                                                    if (isAttendanceMatch(item, expectedLoc, eventDate, sdf)) {
+                                                                        matched = true
+                                                                        break
+                                                                    }
+                                                                } catch (_: Exception) { }
+                                                            }
+                                                        }
+
+                                                        if (!matched) {
+                                                            // 没有匹配到考勤记录 — 记录并通知 UI，返回失败以便上层告警
+                                                            recordQuery(key, datePart, false, "no attendance found: ${respJson.toString()}")
+                                                            try {
+                                                                val intent = android.content.Intent(ACTION_NO_ATTENDANCE)
+                                                                intent.putExtra("key", key)
+                                                                intent.putExtra("date", datePart)
+                                                                context.sendBroadcast(intent)
+                                                            } catch (t: Throwable) {
+                                                                Log.w(TAG, "Failed to send no-attendance broadcast", t)
+                                                            }
+                                                            false
+                                                        } else {
+                                                            recordQuery(key, datePart, true, respJson.toString())
+                                                            true
+                                                        }
+                                            } else {
                                             if (code == 400 || code == 401 || code == 403) {
                                                 notifyTokenInvalid()
                                             }
@@ -161,7 +210,7 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
                 Result.success()
             } catch (e: AuthRequiredException) {
                 try {
-                    Log.w(TAG, "Authentication required in worker: clearing token and notifying user")
+                    Log.w(TAG, "AuthRequiredException caught in Api2AttendanceQueryWorker.doWork(): clearing token and notifying user", e)
                     val tm = TokenManager(context)
                     tm.clear()
                     tm.notifyTokenInvalid()
@@ -235,4 +284,37 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
     }
 
     // periods mapping removed: cleaned weekly keys must contain explicit time
+
+    private fun isAttendanceMatch(item: JSONObject, expectedLoc: String?, eventDate: Date?, sdf: SimpleDateFormat): Boolean {
+        try {
+            if (eventDate == null) return false
+
+            // 获取返回项中的地点和时间字段
+            val eqno = item.optString("eqno", "").trim()
+            val intimeStr = item.optString("intime", item.optString("watertime", "")).trim()
+            if (intimeStr.isBlank()) return false
+
+            val intime = try { sdf.parse(intimeStr) } catch (_: Exception) { null }
+            if (intime == null) return false
+
+            // 先按时间匹配：允许 ±15 分钟
+            val diffMin = Math.abs((eventDate.time - intime.time) / 60000)
+            if (diffMin > 15) return false
+
+            // 再按地点匹配（如果提供了预期地点）
+            if (!expectedLoc.isNullOrBlank()) {
+                val a = expectedLoc.replace("\u00A0", " ").replace(" ", "").lowercase(Locale.getDefault())
+                val b = eqno.replace("\u00A0", " ").replace(" ", "").lowercase(Locale.getDefault())
+                if (a.isNotBlank() && b.isNotBlank()) {
+                    if (a.contains(b) || b.contains(a)) return true
+                    return false
+                }
+            }
+
+            // 如果没有提供预期地点，则时间匹配即认为匹配
+            return true
+        } catch (_: Exception) {
+            return false
+        }
+    }
 }

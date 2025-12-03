@@ -162,25 +162,31 @@ class WeeklyRepository(private val context: Context) {
             val weekendDate = cacheManager.getCurrentWeekendDate()
             Log.d(TAG, "设置缓存过期时间: $weekendDate")
             
-            val cacheJson = response.toJson().toString()
-            val jsonWithExpires = cacheJson.replace(
-                "{", 
-                "{\"expires\":\"$weekendDate\"," 
-            )
-            
-            // 保存到缓存（处理后的响应，包含 expires 字段）
-            Log.d(TAG, "开始缓存数据...")
-            cacheManager.saveToCache(CacheManager.WEEKLY_CACHE_FILE, jsonWithExpires)
+            // 构建可修改的 JSON 对象，并确保覆盖/设置 expires 字段，避免字符串替换导致的重复 key 问题
+            try {
+                val parsedObj = JSONObject(response.toJson())
+                parsedObj.put("expires", weekendDate)
+                val jsonWithExpires = parsedObj.toString()
+                Log.d(TAG, "开始缓存数据 (json object) ...")
+                cacheManager.saveToCache(CacheManager.WEEKLY_CACHE_FILE, jsonWithExpires)
 
-            // 保存原始响应（在原始响应中注入 expires 字段，存为 weekly_raw.json）
-            val rawWithExpires = if (responseString.trimStart().startsWith("{")) {
-                // 将 expires 注入到原始 JSON 的开头位置
-                responseString.replaceFirst("{", "{\"expires\":\"$weekendDate\",")
-            } else {
-                // 回退：如果不是 JSON 对象，仍保存原始内容并在 meta 中记录过期
-                responseString
+                // 对原始响应也尝试解析并设置 expires，若解析失败则回退保存原始字符串
+                val rawWithExpires = try {
+                    if (responseString.trimStart().startsWith("{")) {
+                        val rawObj = JSONObject(responseString)
+                        rawObj.put("expires", weekendDate)
+                        rawObj.toString()
+                    } else {
+                        responseString
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "原始响应解析失败，保存原始字符串作为 raw", e)
+                    responseString
+                }
+                cacheManager.saveToCache(CacheManager.WEEKLY_RAW_CACHE_FILE, rawWithExpires)
+            } catch (e: Exception) {
+                Log.w(TAG, "设置 expires 到缓存时发生异常", e)
             }
-            cacheManager.saveToCache(CacheManager.WEEKLY_RAW_CACHE_FILE, rawWithExpires)
 
             // 保存元数据
             val metaData = "{\"last_fetched\":\"${cacheManager.getCurrentDate()}\",\"expires\":\"$weekendDate\"}"
