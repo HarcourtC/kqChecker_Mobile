@@ -58,12 +58,7 @@ jobs:
             echo "ERROR: one of the keystore secrets is empty"
             exit 1
           fi
-          cat > keystore.properties <<EOF
-storeFile=release-keystore.jks
-storePassword=${KEYSTORE_PASSWORD}
-keyAlias=${KEY_ALIAS}
-keyPassword=${KEY_PASSWORD}
-EOF
+          printf 'storeFile=release-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
           chmod 600 keystore.properties
 
       - name: Build Release APK
