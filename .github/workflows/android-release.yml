@@ -51,7 +51,7 @@ jobs:
           sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-36" "build-tools;33.0.2"
           echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
 
-      - name: Debug: list sync sources and show gradle version
+      - name: "Debug: list sync sources and show gradle version"
         run: |
           echo "Listing sync sources in app/src/main/java..."
           ls -la app/src/main/java/org/example/kqchecker/sync || true
