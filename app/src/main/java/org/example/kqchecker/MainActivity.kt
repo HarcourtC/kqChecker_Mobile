@@ -2,6 +2,7 @@ package org.example.kqchecker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+
 import androidx.activity.compose.setContent
 import androidx.compose.material.Button
 import androidx.compose.material.Text
@@ -12,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.padding
@@ -1009,7 +1012,8 @@ fun AppContent() {
         }
     }
 
-}
+    }
+    }
 
 // Top-level helper: integration flow to ensure cleaned weekly exists and then write calendar
 fun startIntegrationFlow(
