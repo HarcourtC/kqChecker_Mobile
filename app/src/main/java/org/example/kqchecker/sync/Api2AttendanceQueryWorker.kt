@@ -15,6 +15,8 @@ import org.example.kqchecker.network.ApiService
 import org.example.kqchecker.repository.CacheManager
 import org.json.JSONArray
 import org.json.JSONObject
+import org.example.kqchecker.auth.AuthRequiredException
+import org.example.kqchecker.auth.TokenManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -157,6 +159,16 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
 
                 Log.d(TAG, "Worker finished, queries executed: ${queryResults.size}")
                 Result.success()
+            } catch (e: AuthRequiredException) {
+                try {
+                    Log.w(TAG, "Authentication required in worker: clearing token and notifying user")
+                    val tm = TokenManager(context)
+                    tm.clear()
+                    tm.notifyTokenInvalid()
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Failed to clear/token notify in worker", ex)
+                }
+                Result.failure()
             } catch (e: Exception) {
                 Log.e(TAG, "Worker failed", e)
                 Result.retry()

@@ -18,6 +18,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Calendar
 import android.util.Log
+import org.example.kqchecker.auth.AuthRequiredException
+import org.example.kqchecker.auth.TokenManager
 import kotlinx.coroutines.flow.collect
 
 private const val TAG = "WriteCalendar"
@@ -235,6 +237,17 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                     Result.failure()
                 }
             }
+        } catch (e: AuthRequiredException) {
+            try {
+                Log.w(TAG, "Authentication required while running WriteCalendar: clearing token and notifying user")
+                val tm = TokenManager(applicationContext)
+                tm.clear()
+                tm.notifyTokenInvalid()
+            } catch (ex: Exception) {
+                Log.e(TAG, "Failed to clear/token notify in WriteCalendar", ex)
+            }
+            logWorkResult(Result.failure())
+            Result.failure()
         } catch (e: Exception) {
             Log.e(TAG, "❌ 执行过程发生异常: ${e.message}")
             Log.e(TAG, "❌ 错误详情: ${e.javaClass.simpleName}")
