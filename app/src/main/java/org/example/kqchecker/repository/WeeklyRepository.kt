@@ -197,6 +197,52 @@ class WeeklyRepository(private val context: Context) {
             null
         }
     }
+
+    /**
+     * 直接从API获取原始响应字符串（不进行缓存写入），用于调试/打印原始返回结果
+     */
+    suspend fun fetchWeeklyRawFromApi(): String? {
+        Log.d(TAG, "fetchWeeklyRawFromApi() called")
+        return withContext(Dispatchers.IO) {
+            try {
+                val requestBody = createWeeklyRequest()
+                Log.d(TAG, "Sending raw API request to: ${getBaseUrl()}attendance-student/rankClass/getWeekSchedule2")
+                val respBody = apiService.getWeeklyData(requestBody)
+                if (respBody == null) {
+                    Log.e(TAG, "❌ API returned null response (raw)")
+                    return@withContext null
+                }
+
+                val responseString = try { respBody.string() } catch (e: Exception) {
+                    Log.e(TAG, "Failed to read raw response body", e)
+                    return@withContext null
+                }
+
+                // 尝试解析以检测认证类错误（保持与 getWeeklyDataFromApi 中一致的认证检测行为）
+                try {
+                    val parsed = WeeklyResponse.fromJson(responseString)
+                    if (parsed.code == 400 || parsed.code == 401 || parsed.code == 403 || parsed.msg.contains("请登录") || parsed.msg.contains("未登录")) {
+                        try {
+                            val tm = org.example.kqchecker.auth.TokenManager(context)
+                            tm.notifyTokenInvalid()
+                        } catch (t: Throwable) {
+                            Log.w(TAG, "Failed to notify token invalid while fetching raw", t)
+                        }
+                        throw org.example.kqchecker.auth.AuthRequiredException(parsed.msg)
+                    }
+                } catch (e: Exception) {
+                    // 如果解析失败，则忽略解析错误，仅返回原始字符串
+                    Log.d(TAG, "Raw response could not be parsed as WeeklyResponse (this may be fine for raw printing)")
+                }
+
+                Log.d(TAG, "Fetched raw response length: ${responseString.length}")
+                return@withContext responseString
+            } catch (e: Exception) {
+                Log.e(TAG, "fetchWeeklyRawFromApi failed", e)
+                null
+            }
+        }
+    }
     
     /**
      * 创建周课表请求体

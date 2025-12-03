@@ -83,7 +83,6 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-py_config.json
 
 **/build/
 kq/
@@ -91,3 +90,4 @@ kq/
 problem-report.html
 app/*
 app2/*
+*.json
