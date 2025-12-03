@@ -312,7 +312,9 @@ fun AppContent() {
 
     Surface(color = MaterialTheme.colors.background, modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            if (currentPage == 0) {
+            // 页面内容区域：使用 weight(1f) 以保证下方的全局日志区始终可见
+            Column(modifier = Modifier.weight(1f)) {
+                if (currentPage == 0) {
                 // 简洁首页
                 Text(text = "kqChecker", style = MaterialTheme.typography.h5)
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(6.dp))
@@ -953,14 +955,8 @@ fun AppContent() {
 
                 }
 
-                // 日志区域：固定为可见的一半高度并可滚动
-                LazyColumn(modifier = Modifier.fillMaxHeight(0.5f).padding(top = 12.dp)) {
-                    items(events) { e ->
-                        Card(modifier = Modifier.padding(4.dp)) {
-                            Text(text = e, modifier = Modifier.padding(8.dp))
-                        }
-                    }
-                }
+                // 日志区域已移至页面底部的全局显示区，供所有页面复用
+                // (避免在工具页内重复渲染)
             } else {
                 // 集成页
                 androidx.compose.foundation.layout.Row {
@@ -987,7 +983,7 @@ fun AppContent() {
                             permissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
                         }
                     }, modifier = Modifier.padding(top = 12.dp)) {
-                        Text(text = "运行集成测试")
+                        Text(text = "运行集成指令一-写入日历")
                     }
 
                     Button(onClick = {
@@ -996,6 +992,18 @@ fun AppContent() {
                     }, modifier = Modifier.padding(top = 8.dp)) {
                         Text(text = "显示集成状态")
                     }
+                }
+
+                // 全局日志区域已移动到文件底部统一渲染位置
+            }
+        }
+        
+        // 全局日志区域：在页面内容下方统一显示，适用于首页/工具页/集成页
+        // 使用固定高度确保不会被上方内容推离屏幕
+        LazyColumn(modifier = Modifier.fillMaxWidth().height(260.dp).padding(top = 12.dp)) {
+            items(events) { e ->
+                Card(modifier = Modifier.padding(4.dp)) {
+                    Text(text = e, modifier = Modifier.padding(8.dp))
                 }
             }
         }
