@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import org.example.kqchecker.repo.MockRepository
+import org.example.kqchecker.auth.AuthRequiredException
+import org.example.kqchecker.auth.TokenManager
 import org.example.kqchecker.util.CalendarHelper
 import java.text.SimpleDateFormat
 
@@ -36,6 +38,15 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
             }
 
             Result.success()
+        } catch (e: AuthRequiredException) {
+            try {
+                val tm = TokenManager(applicationContext)
+                tm.clear()
+                tm.notifyTokenInvalid()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+            Result.failure()
         } catch (e: Exception) {
             e.printStackTrace()
             Result.retry()

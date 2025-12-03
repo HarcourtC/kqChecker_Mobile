@@ -55,6 +55,36 @@
   - `WATER_LIST_CACHE_FILE = "api2_waterlist_response.json"`
 - 仓库会在成功获取 API 响应后写入缓存文件（并在 raw meta 中写入 `expires`）
 
+**新增/调试命令与行为（2025-12 更新）**
+- 新增仓库方法: `WeeklyRepository.fetchWeeklyRawFromApi()` — 直接向 `getWeekSchedule2` 发起请求并返回原始响应字符串（不写入缓存），用于调试与打印原始返回。调用点见 `MainActivity` 的“Fetch Weekly (API)”按钮。
+- 新增 UI 按钮（工具页）:
+  - `Print weekly.json`：打印并把 `weekly.json` 的预览写入 UI 日志（并把完整内容在 Logcat 中分块打印）。
+  - `Print cleaned weekly`：打印并把 `weekly_cleaned.json` 的预览写入 UI 日志（完整内容写入 Logcat）。
+  - `打印 API2 原始响应`：读取并打印 `api2_query_log.json`（如果存在）到 Logcat 与 UI 事件区。
+
+**清理 / 回退行为**
+- `WeeklyCleaner.generateCleanedWeekly()` 的行为：优先读取缓存 `weekly_raw.json`；若不存在，则会回退读取 APK 内 `assets/example_weekly.json`（内置示例），再基于该数据生成 `weekly_cleaned.json`。因此即便一次网络请求失败，只要示例存在，Cleaner 仍然可能生成 cleaned 文件。
+- 若需要明确区分示例数据和真实后端数据：检查 `weekly_raw.json`（存在则为真实响应），或在日志/事件区查找 `Using example_weekly.json fallback`（如已启用更显眼的回退日志）。
+
+**调试与日志收集（实用命令）**
+- 列出并读取缓存文件（在可调试 APK 下可用 `run-as`）：
+  ```powershell
+  adb shell run-as org.example.kqchecker ls -l /data/data/org.example.kqchecker/files
+  adb shell run-as org.example.kqchecker cat /data/data/org.example.kqchecker/files/weekly_raw.json
+  adb shell run-as org.example.kqchecker cat /data/data/org.example.kqchecker/files/weekly.json
+  ```
+- 删除缓存以强制从网络拉取（用于复现）：
+  ```powershell
+  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly.json
+  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly_raw.json
+  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly_cleaned.json
+  ```
+- 抓取过滤后的 Logcat（捕获 `WeeklyRepository` / `WeeklyCleaner` / 调试标签）：
+  ```powershell
+  adb logcat -v time WeeklyRepository:* WeeklyCleaner:* FetchWeeklyRaw:* MainActivity:* *:S > fetch_weekly_debug_log.txt
+  ```
+
+
 **后台任务（Worker）**
 - `Api2AttendanceQueryWorker` 会读取 `weekly_cleaned.json`（由 `WeeklyCleaner` 生成，键为具体时间字符串 `YYYY-MM-DD HH:MM[:SS]`）并在事件前5分钟到后10分钟窗口内发起 API2 查询。
 - Worker 使用 `WaterListRepository` 调用 API2，并将查询记录保存到 `api2_query_log.json`（仅当实际执行查询时写入）。

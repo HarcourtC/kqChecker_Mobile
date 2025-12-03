@@ -66,8 +66,8 @@ class WeeklyCleaner(private val context: Context) {
                 }
 
             if (raw.isNullOrBlank()) {
-                Log.w(TAG, "没有可用的周课表原始数据，跳过清洗")
-                return false
+                Log.w(TAG, "没有可用的周课表原始数据，抛出异常以通知上层")
+                throw IllegalStateException("原始周课表数据缺失：cache and assets both empty")
             }
 
             val rawObj = try {

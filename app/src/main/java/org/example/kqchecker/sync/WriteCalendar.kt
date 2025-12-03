@@ -8,6 +8,8 @@ import androidx.work.WorkInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.example.kqchecker.repository.WeeklyRepository
+import org.example.kqchecker.repository.WeeklyCleaner
+import org.example.kqchecker.repository.CacheManager
 import org.example.kqchecker.util.CalendarHelper
 import org.json.JSONArray
 import org.json.JSONObject
@@ -16,6 +18,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Calendar
 import android.util.Log
+import org.example.kqchecker.auth.AuthRequiredException
+import org.example.kqchecker.auth.TokenManager
 import kotlinx.coroutines.flow.collect
 
 private const val TAG = "WriteCalendar"
@@ -28,6 +32,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
     
     private val weeklyRepository = WeeklyRepository(applicationContext)
+    private val cacheManager = CacheManager(applicationContext)
 
     override suspend fun doWork(): Result {
         // 生成唯一的工作ID用于日志追踪
@@ -41,37 +46,140 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
         return try {
             withContext(Dispatchers.IO) {
                 try {
+                    // 优先尝试使用清洗后的缓存文件 weekly_cleaned.json（运行时 filesDir）
+                    Log.d(TAG, "🔄 1. 优先检查运行时缓存: ${WeeklyCleaner.CLEANED_WEEKLY_FILE}")
+                    val cleanedText = cacheManager.readFromCache(WeeklyCleaner.CLEANED_WEEKLY_FILE)
+                    if (!cleanedText.isNullOrBlank()) {
+                        Log.d(TAG, "✅ 找到清洗后的缓存，准备解析并写入日历")
+                        try {
+                            val cleanedObj = JSONObject(cleanedText)
+                            // 转换为 processWeeklyData 可接受的 JSONArray 格式
+                            val converted = org.json.JSONArray()
+                            val keys = cleanedObj.keys()
+                            while (keys.hasNext()) {
+                                val key = keys.next() // 格式: "yyyy-MM-dd HH:mm:ss" 或 "yyyy-MM-dd <timePart>"
+                                val arr = cleanedObj.optJSONArray(key) ?: continue
+                                for (i in 0 until arr.length()) {
+                                    val it = arr.optJSONObject(i) ?: continue
+                                    val obj = JSONObject()
+                                    // 使用清洗数据填充必要字段：eqname, eqno, watertime
+                                    val subj = it.optString("subjectSName", "").trim()
+                                    val eqNameVal = if (subj.isNotBlank()) subj else "未命名打卡"
+                                    obj.put("eqname", eqNameVal)
+                                    val loc = it.optString("location", "").trim()
+                                    val eqNoVal = if (loc.isNotBlank()) loc else ""
+                                    obj.put("eqno", eqNoVal)
+                                    // 调试日志（仅在需要时开启）
+                                    // Log.d(TAG, "Converted cleaned entry -> eqname=${eqNameVal}, eqno=${eqNoVal}, key=$key")
+                                    // 优先从 key（cleaned JSON 的键）提取开始时间，格式通常为 "yyyy-MM-dd HH:mm:ss" 或 "yyyy-MM-dd <timePart>"
+                                    var watertimeVal = ""
+                                    try {
+                                        val keyTrim = key.trim()
+                                        // 如果 key 已经是完整的 yyyy-MM-dd HH:mm:ss，直接使用
+                                        val fullDtRegex = Regex("^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
+                                        if (fullDtRegex.matches(keyTrim)) {
+                                            watertimeVal = keyTrim
+                                        } else {
+                                            val parts = keyTrim.split(Regex("\\s+"))
+                                            val datePart = if (parts.isNotEmpty()) parts[0] else ""
+
+                                            // 尝试在 key 的剩余部分中查找时间（HH:mm 或 HH:mm:ss）
+                                            if (parts.size >= 2) {
+                                                val rest = parts.subList(1, parts.size).joinToString(" ")
+                                                val timeMatch = Regex("(\\d{1,2}:\\d{2}(?::\\d{2})?)").find(rest)
+                                                if (timeMatch != null) {
+                                                    var t = timeMatch.value
+                                                    if (t.matches(Regex("^\\d{1,2}:\\d{2}$"))) t += ":00"
+                                                    if (datePart.isNotBlank()) watertimeVal = "$datePart $t"
+                                                }
+                                            }
+
+                                            // 如果 key 中未包含时间，则回退使用 time_display 显示字段（取起始时间）
+                                            if (watertimeVal.isBlank()) {
+                                                var startTime = it.optString("time_display", "").trim()
+                                                if (startTime.isNotBlank()) {
+                                                    if (startTime.contains("-")) startTime = startTime.split("-")[0].trim()
+                                                    // 若为节次字符串（如 "7-8"），映射到默认节次时间
+                                                    if (startTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
+                                                        val firstNum = startTime.split(Regex("\\D+"))[0]
+                                                        val period = firstNum.toIntOrNull()
+                                                        val periodMap = mapOf(
+                                                            1 to "08:00",
+                                                            2 to "08:55",
+                                                            3 to "10:10",
+                                                            4 to "11:05",
+                                                            5 to "13:30",
+                                                            6 to "14:25",
+                                                            7 to "15:40",
+                                                            8 to "16:35",
+                                                            9 to "18:30",
+                                                            10 to "19:25"
+                                                        )
+                                                        if (period != null && periodMap.containsKey(period)) startTime = periodMap[period]!!
+                                                    }
+                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) startTime += ":00"
+                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
+                                                        watertimeVal = "$datePart $startTime"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (_: Exception) {
+                                    }
+                                    obj.put("watertime", watertimeVal)
+                                    // 生成唯一事件ID（基于 key + index）
+                                    obj.put("bh", "cleaned_${key}_${i}")
+                                    obj.put("isdone", "0")
+                                    converted.put(obj)
+                                }
+                            }
+
+                            // 获取日历ID并写入
+                            val calId = CalendarHelper.getDefaultCalendarId(applicationContext)
+                            if (calId == null) {
+                                Log.e(TAG, "❌ 未找到日历或缺少权限（写入清洗数据）")
+                                logWorkResult(Result.failure())
+                                return@withContext Result.failure()
+                            }
+                            processWeeklyData(converted, calId)
+                            Log.d(TAG, "✅ 清洗数据写日历完成")
+                            logWorkResult(Result.success())
+                            return@withContext Result.success()
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "❌ 解析或写入清洗缓存失败，回退到原有获取流程", t)
+                        }
+                    }
+
+                    // 若无清洗缓存或解析失败，回退到原有仓库读取逻辑
+                    Log.d(TAG, "🔄 2. 未找到清洗缓存或解析失败，回退到 WeeklyRepository 获取流程")
                     // 优先从缓存获取weekly数据，避免API调用异常
-                    Log.d(TAG, "🔄 1. 优先从缓存获取weekly数据...")
                     val weeklyResponse = weeklyRepository.getWeeklyData(forceRefresh = false)
-                    
-                    Log.d(TAG, "🔄 2. 数据获取完成，响应状态检查中...")
-                    if (weeklyResponse == null) {
+
+                    val resp = weeklyResponse ?: run {
                         Log.e(TAG, "❌ 获取数据失败：weeklyResponse为null")
-                        Log.e(TAG, "❌ 根据用户要求，不进行API调用，直接尝试使用缓存")
-                        Log.e(TAG, "❌ 缓存数据可能不存在或已损坏")
+                        Log.e(TAG, "❌ 根据用户要求，不进行API调用，直接尝试使用缓存或清洗文件")
                         Log.e(TAG, "💡 建议：尝试使用'Print weekly.json'按钮验证缓存数据是否存在")
                         logWorkResult(Result.failure())
                         return@withContext Result.failure()
                     }
-                    
+
                     try {
-                        Log.d(TAG, "   - 响应对象不为null，检查success状态...")
-                        if (!weeklyResponse.success) {
+                        Log.d(TAG, "   - 响应对象已获取，检查 success 字段...")
+                        if (!resp.success) {
                             Log.e(TAG, "❌ 获取数据失败：success=false")
                             Log.e(TAG, "💡 建议：检查后端返回的错误信息")
                             logWorkResult(Result.failure())
                             return@withContext Result.failure()
                         }
-                        
+
                         Log.d(TAG, "   - success=true，检查data字段...")
-                        if (weeklyResponse.data == null) {
+                        if (resp.data == null) {
                             Log.e(TAG, "❌ 获取数据失败：data为null")
                             logWorkResult(Result.failure())
                             return@withContext Result.failure()
                         }
 
-                        Log.d(TAG, "✅ 成功获取weekly数据，共${weeklyResponse.data.length()}条记录")
+                        Log.d(TAG, "✅ 成功获取weekly数据，共${resp.data.length()}条记录")
                         
                         try {
                             // 检查日历权限和获取日历ID
@@ -129,6 +237,17 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                     Result.failure()
                 }
             }
+        } catch (e: AuthRequiredException) {
+            try {
+                Log.w(TAG, "Authentication required while running WriteCalendar: clearing token and notifying user")
+                val tm = TokenManager(applicationContext)
+                tm.clear()
+                tm.notifyTokenInvalid()
+            } catch (ex: Exception) {
+                Log.e(TAG, "Failed to clear/token notify in WriteCalendar", ex)
+            }
+            logWorkResult(Result.failure())
+            Result.failure()
         } catch (e: Exception) {
             Log.e(TAG, "❌ 执行过程发生异常: ${e.message}")
             Log.e(TAG, "❌ 错误详情: ${e.javaClass.simpleName}")

@@ -127,6 +127,19 @@ class WaterListRepository(private val context: Context) {
 
             if (wr == null || wr.data == null || !wr.success) {
                 Log.e(TAG, "Invalid API2 response: code=${wr?.code}, success=${wr?.success}, data=${wr?.data}")
+                // 若后端认为未登录或返回认证失败，通知用户
+                try {
+                    val tm = org.example.kqchecker.auth.TokenManager(context)
+                    if (wr != null) {
+                        if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                            tm.notifyTokenInvalid()
+                            // 抛出认证异常，交由 UI 层处理（例如弹出登录）
+                            throw org.example.kqchecker.auth.AuthRequiredException(wr.msg)
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Failed to notify token invalid", t)
+                }
                 return null
             }
 
