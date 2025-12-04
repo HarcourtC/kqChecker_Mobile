@@ -90,3 +90,5 @@ problem-report.html
 app/*
 app2/*
 *.json
+release-keystore.jks
+keystore.properties
