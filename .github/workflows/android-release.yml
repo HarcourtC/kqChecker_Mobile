@@ -28,7 +28,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           sdk-platform: 'platforms;android-36'
-          sdk-build-tools: 'build-tools;36.0.0'
+          sdk-build-tools: 'build-tools;29.0.3,build-tools;36.0.0'
     
 
       - name: Prepare keystore from secrets
@@ -93,11 +93,11 @@ jobs:
         with:
           # 指向构建生成的APK所在目录
           releaseDirectory: app/build/outputs/apk/release
-          # 引用你在GitHub设置的Secrets
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          # 使用 action 要求的输入名
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Verify and Upload release APK
         run: |
