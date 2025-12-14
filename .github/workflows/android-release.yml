@@ -45,6 +45,10 @@ jobs:
         with:
           gradle-version: wrapper
           cache-disabled: false
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Verify Gradle Environment Explicitly
         run: |
           echo "=== 检查 Gradle Wrapper 文件 ==="
@@ -55,9 +59,7 @@ jobs:
           echo ""
           echo "=== 检查 JAVA_HOME ==="
           echo $JAVA_HOME
-          
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+
 
       - name: Verify Gradle Version in CI
         run: ./gradlew --version | grep "Gradle"
