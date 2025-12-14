@@ -27,8 +27,7 @@ jobs:
       - name: Install Android SDK 
         uses: android-actions/setup-android@v3
         with:
-          sdk-platform: 'platforms;android-36'
-          sdk-build-tools: 'build-tools;29.0.3,build-tools;34.0.0'
+          packages: 'platforms;android-36 build-tools;34.0.0'
     
 
       - name: Prepare keystore from secrets
@@ -98,6 +97,9 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
 
       - name: Verify and Upload release APK
         run: |
