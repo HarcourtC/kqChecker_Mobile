@@ -50,8 +50,8 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=push&status=success")
           
-          # Find build workflow run (assuming your build workflow is named "Build APK")
-          run_id=$(echo "$runs" | jq -r '.workflow_runs[] | select(.name == "Build APK" or .path == ".github/workflows/build.yml") | .id' | head -1)
+          # Find build workflow run (assuming your build workflow is named "Build signed APK on tag")
+          run_id=$(echo "$runs" | jq -r '.workflow_runs[] | select(.name == "Build signed APK on tag" or .path == ".github/workflows/android-release.yml") | .id' | head -1)
           
           if [ -z "$run_id" ]; then
             echo "Error: No successful build runs found!"
@@ -66,9 +66,10 @@ jobs:
       uses: dawidd6/action-download-artifact@v6
       with:
         # If you know your build workflow name, specify it:
-        # workflow: build.yml
+        workflow: android-release.yml
         run_id: ${{ steps.get-run-id.outputs.run_id }}
-        name: app-apk  # 你的 artifact 名称
+        name: app-release-v*
+  # 你的 artifact 名称
         path: ./artifacts
     
     - name: List downloaded files
