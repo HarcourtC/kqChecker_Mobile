@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'     # 或你需要的 tag 规则，例如 v1.*, v*
+  workflow_dispatch:
 
 jobs:
   build:
@@ -49,6 +50,9 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Verify Gradle Version in CI
+        run: ./gradlew --version | grep "Gradle"
 
       - name: Build Release APK
         run: |
