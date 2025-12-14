@@ -47,7 +47,11 @@ jobs:
             echo "sdkmanager not found; ensure android sdk cmdline-tools are installed"
             exit 1
           fi
-          yes | "$SDKMANAGER" "build-tools;29.0.3"
+          # install build-tools non-interactively (avoid broken pipe failures)
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          "$SDKMANAGER" --install "build-tools;29.0.3" || true
+          # accept licenses non-interactively (may print Broken pipe but ignore errors)
+          yes | "$SDKMANAGER" --licenses || true
           export PATH="$ANDROID_SDK_ROOT/build-tools/29.0.3:$PATH"
           echo "zipalign -> $(command -v zipalign || echo 'not found')"
           ls -la "$ANDROID_SDK_ROOT/build-tools/29.0.3" || true
