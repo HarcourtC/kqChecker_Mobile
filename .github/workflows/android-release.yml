@@ -29,6 +29,29 @@ jobs:
         with:
           sdk-platform: 'platforms;android-36'
           sdk-build-tools: 'build-tools;36.0.0'
+      
+      - name: Prepare keystore from secrets
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "No keystore secret provided, skipping keystore setup"
+            exit 0
+          fi
+          # decode base64 keystore to file
+          echo "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
+          # create keystore.properties expected by build.gradle
+          printf '%s\n' \
+            "storeFile=release-keystore.jks" \
+            "storePassword=${KEYSTORE_PASSWORD}" \
+            "keyAlias=${KEY_ALIAS}" \
+            "keyPassword=${KEY_PASSWORD}" > keystore.properties
+          ls -la release-keystore.jks keystore.properties || true
 
       - name: "Debug: list sync sources and show gradle version"
         run: |
@@ -39,7 +62,7 @@ jobs:
           echo "Android SDK location:"
           cat local.properties || true
           ls -la gradle/wrapper || true
-
+      
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
