@@ -28,33 +28,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           sdk-platform: 'platforms;android-36'
-          sdk-build-tools: 'build-tools;29.0.3,build-tools;36.0.0'
-      
-      - name: Ensure build-tools 29.0.3 and zipalign
-        run: |
-          set -euo pipefail
-          echo "Detecting sdkmanager..."
-          SDKMANAGER="$(command -v sdkmanager || true)"
-          if [ -z "$SDKMANAGER" ]; then
-            if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
-              SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-            elif [ -x "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" ]; then
-              SDKMANAGER="$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
-            fi
-          fi
-          echo "sdkmanager: ${SDKMANAGER:-not-found}"
-          if [ -z "${SDKMANAGER:-}" ]; then
-            echo "sdkmanager not found; ensure android sdk cmdline-tools are installed"
-            exit 1
-          fi
-          # install build-tools non-interactively (avoid broken pipe failures)
-          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
-          "$SDKMANAGER" --install "build-tools;29.0.3" || true
-          # accept licenses non-interactively (may print Broken pipe but ignore errors)
-          yes | "$SDKMANAGER" --licenses || true
-          export PATH="$ANDROID_SDK_ROOT/build-tools/29.0.3:$PATH"
-          echo "zipalign -> $(command -v zipalign || echo 'not found')"
-          ls -la "$ANDROID_SDK_ROOT/build-tools/29.0.3" || true
+          sdk-build-tools: 'build-tools;29.0.3,build-tools;34.0.0'
     
 
       - name: Prepare keystore from secrets
