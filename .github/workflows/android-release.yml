@@ -24,32 +24,12 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: "${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
-      - name: Install Android SDK command-line tools and packages
-        env:
-          ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
+
+      - name: Install Android SDK 
         run: |
-          set -euo pipefail
-          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
-          mkdir -p "${ANDROID_SDK_ROOT}"
-          cd "${ANDROID_SDK_ROOT}"
-          curl -sSfLo commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools.zip -d cmdline-tools
-          mkdir -p cmdline-tools/latest
-          mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/ || true
-          export PATH="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${PATH}"
-          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses || true
-          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-36" "build-tools;33.0.2"
-          echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+          yes | sdkmanager --licenses  
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" 
 
       - name: "Debug: list sync sources and show gradle version"
         run: |
@@ -60,40 +40,33 @@ jobs:
           echo "Android SDK location:"
           cat local.properties || true
           ls -la gradle/wrapper || true
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
 
-      - name: Decode keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KEYSTORE_BASE64:-}" ]; then
-            echo "ERROR: KEYSTORE_BASE64 secret is empty"
-            exit 1
-          fi
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
-          chmod 600 release-keystore.jks
-          echo "Created keystore at release-keystore.jks"
-
-      - name: Create keystore.properties
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KEYSTORE_PASSWORD:-}" ] || [ -z "${KEY_ALIAS:-}" ] || [ -z "${KEY_PASSWORD:-}" ]; then
-            echo "ERROR: one of the keystore secrets is empty"
-            exit 1
-          fi
-          printf 'storeFile=release-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
-          chmod 600 keystore.properties
 
       - name: Build Release APK
         run: |
           set -euo pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace -Pandroid.injected.testOnly=false
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Verify and Upload release APK
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          # 指向构建生成的APK所在目录
+          releaseDirectory: app/build/outputs/apk/release
+          # 引用你在GitHub设置的Secrets
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Verify and Upload release APK`
         run: |
           set -euo pipefail
           APK_PATH="app/build/outputs/apk/release/app-release.apk"

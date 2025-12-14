@@ -92,3 +92,4 @@ app2/*
 *.json
 release-keystore.jks
 keystore.properties
+new-release-key.jks
