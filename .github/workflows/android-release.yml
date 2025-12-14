@@ -27,9 +27,10 @@ jobs:
 
 
       - name: Install Android SDK 
-        run: |
-          yes | sdkmanager --licenses  
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" 
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-platform: 'platforms;android-36'
+          sdk-build-tools: 'build-tools;36.0.0'
 
       - name: "Debug: list sync sources and show gradle version"
         run: |
