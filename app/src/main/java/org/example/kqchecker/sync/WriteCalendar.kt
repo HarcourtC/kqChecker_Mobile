@@ -239,7 +239,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
             }
         } catch (e: AuthRequiredException) {
             try {
-                Log.w(TAG, "Authentication required while running WriteCalendar: clearing token and notifying user")
+                Log.w(TAG, "AuthRequiredException caught in WriteCalendar.doWork(): clearing token and notifying user", e)
                 val tm = TokenManager(applicationContext)
                 tm.clear()
                 tm.notifyTokenInvalid()

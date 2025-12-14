@@ -8,7 +8,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId = "org.example.kqchecker"
+        applicationId = "org.xjtuai.kqchecker"
         minSdk = 21
         targetSdk = 36
         versionCode = 1

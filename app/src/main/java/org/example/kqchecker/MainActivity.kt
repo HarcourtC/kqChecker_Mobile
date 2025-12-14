@@ -38,9 +38,17 @@ import org.example.kqchecker.auth.TokenManager
 import android.Manifest
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.DisposableEffect
 import org.example.kqchecker.repo.MockRepository
 import androidx.compose.material.Card
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +72,7 @@ import org.example.kqchecker.sync.WriteCalendar
 import androidx.work.WorkManager
 import org.example.kqchecker.sync.SyncWorker
 import org.example.kqchecker.sync.Api2AttendanceQueryWorker
+import org.example.kqchecker.sync.Api2QueryTestWorker
 import org.example.kqchecker.repository.RepositoryProvider
 import org.example.kqchecker.repository.WeeklyRepository
 import org.example.kqchecker.repository.WaterListRepository
@@ -130,8 +139,9 @@ fun AppContent() {
                             }
                         }
                     } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                        android.util.Log.w("AutoRefreshWeekly", "AuthRequiredException caught in AppContent LaunchedEffect auto-refresh: launching login", e)
                         withContext(Dispatchers.Main) {
-                            postEvent("Authentication required: please login")
+                            postEvent("Authentication required (caught in AutoRefreshWeekly): please login")
                             // launch WebLoginActivity for re-login
                             var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
                             var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
@@ -181,12 +191,117 @@ fun AppContent() {
             }
     }
 
+    // 注册接收器：当 Api2 查询未发现考勤记录时，由 Worker 广播 ACTION_NO_ATTENDANCE，UI 在此接收并提醒用户（并发送系统通知）
+    val noAttendanceReceiver = remember {
+        object : BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                try {
+                    val k = intent?.getStringExtra("key") ?: "?"
+                    val date = intent?.getStringExtra("date") ?: "?"
+                    val subj = intent?.getStringExtra("subject")
+                    val td = intent?.getStringExtra("time_display")
+                    val loc = intent?.getStringExtra("location")
+
+                    val display = if (!subj.isNullOrBlank()) {
+                        val parts = listOfNotNull(subj, td, loc).joinToString(" • ")
+                        "⚠️ 未检测到考勤记录：$parts"
+                    } else {
+                        "⚠️ 未检测到考勤记录：$k；请手动检查或联系教务。"
+                    }
+
+                    postEvent(display)
+
+                    // 发出系统通知，提示用户注意
+                    val ctx = context ?: return
+                    val channelId = "api2_no_attendance_channel"
+                    val channelName = "API2 无考勤提醒"
+                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val ch = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
+                        nm.createNotificationChannel(ch)
+                    }
+
+                    val launchIntent = Intent(ctx, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    val pending = PendingIntent.getActivity(ctx, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+                    val title = subj ?: "没有匹配到考勤记录"
+                    val content = listOfNotNull(td, loc).joinToString(" @ ")
+
+                    val notification = NotificationCompat.Builder(ctx, channelId)
+                        .setSmallIcon(android.R.drawable.stat_notify_more)
+                        .setContentTitle(title)
+                        .setContentText(if (content.isBlank()) "时间: $date" else content)
+                        .setContentIntent(pending)
+                        .setAutoCancel(true)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .build()
+
+                    // 使用 key 的 hashCode 作为通知 id，确保每个 key 的通知可替换
+                    val nid = (k + date).hashCode()
+                    try {
+                        nm.notify(nid, notification)
+                    } catch (nex: Throwable) {
+                        android.util.Log.w("MainActivity", "notify failed", nex)
+                    }
+                } catch (t: Throwable) {
+                    android.util.Log.w("MainActivity", "noAttendanceReceiver failed", t)
+                }
+            }
+        }
+    }
+
+    DisposableEffect(key1 = Unit) {
+        val filter = IntentFilter("org.example.kqchecker.ACTION_NO_ATTENDANCE")
+        try {
+            context.registerReceiver(noAttendanceReceiver, filter)
+        } catch (t: Throwable) { android.util.Log.w("MainActivity", "registerReceiver failed", t) }
+        onDispose {
+            try { context.unregisterReceiver(noAttendanceReceiver) } catch (_: Throwable) {}
+        }
+    }
+
     // 页面切换: 0 = 首页, 1 = 工具页(原有按钮+日志)
     var currentPage by remember { mutableStateOf(0) }
 
     // --- 自动查询开关相关 (SharedPreferences 保存) ---
     val prefs = context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE)
     var api2AutoEnabled by remember { mutableStateOf(prefs.getBoolean("api2_auto_enabled", false)) }
+    var api2ForegroundEnabled by remember { mutableStateOf(prefs.getBoolean("api2_foreground_enabled", false)) }
+
+    fun startForegroundPolling(intervalMin: Int = 5) {
+        try {
+            // save pref
+            prefs.edit().putBoolean("api2_foreground_enabled", true).putInt("api2_foreground_interval_min", intervalMin).apply()
+            val svc = Intent(context, org.example.kqchecker.sync.Api2PollingService::class.java)
+            svc.putExtra(org.example.kqchecker.sync.Api2PollingService.EXTRA_INTERVAL_MIN, intervalMin)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(svc)
+            } else {
+                context.startService(svc)
+            }
+            api2ForegroundEnabled = true
+            postEvent("Foreground polling started (interval ${intervalMin}m). Note: this will increase battery use.")
+        } catch (e: Exception) {
+            Log.e("Api2Polling", "Failed to start foreground polling", e)
+            postEvent("Failed to start foreground polling: ${e.message}")
+        }
+    }
+
+    fun stopForegroundPolling() {
+        try {
+            prefs.edit().putBoolean("api2_foreground_enabled", false).apply()
+            val svc = Intent(context, org.example.kqchecker.sync.Api2PollingService::class.java)
+            // stop via context
+            context.stopService(svc)
+            api2ForegroundEnabled = false
+            postEvent("Foreground polling stopped")
+        } catch (e: Exception) {
+            Log.e("Api2Polling", "Failed to stop foreground polling", e)
+            postEvent("Failed to stop foreground polling: ${e.message}")
+        }
+    }
 
     fun enableApi2Periodic() {
         try {
@@ -218,6 +333,10 @@ fun AppContent() {
     LaunchedEffect(key1 = Unit) {
         if (api2AutoEnabled) {
             enableApi2Periodic()
+        }
+        // 如果 prefs 标记前台轮询已启用，则不自动启动服务（用户需要确认），但我们同步状态
+        if (prefs.getBoolean("api2_foreground_enabled", false)) {
+            api2ForegroundEnabled = true
         }
     }
 
@@ -296,16 +415,23 @@ fun AppContent() {
     ) { result ->
         val data = result.data
         val token = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN)
+        val tokenSource = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN_SOURCE)
         if (token != null) {
             Toast.makeText(context, "Login success", Toast.LENGTH_SHORT).show()
-            events.add("Token: ${token.take(40)}...")
+            val srcLabel = when (tokenSource) {
+                "url" -> "URL parameter"
+                "local" -> "LocalStorage"
+                else -> (tokenSource ?: "unknown")
+            }
+            events.add("Token: ${token.take(40)}... (source: $srcLabel)")
+            android.util.Log.d("MainActivity", "Login success, token source=$tokenSource")
         } else {
             // fallback: read from TokenManager
             val tm = TokenManager(context)
             val saved = tm.getAccessToken()
             if (saved != null) {
                 Toast.makeText(context, "Login success (saved)", Toast.LENGTH_SHORT).show()
-                events.add("Token: ${saved.take(40)}...")
+                events.add("Token: ${saved.take(40)}... (source: saved)")
             } else {
                 Toast.makeText(context, "Login canceled or failed", Toast.LENGTH_SHORT).show()
                 events.add("Login canceled or failed")
@@ -321,12 +447,32 @@ fun AppContent() {
                 // 简洁首页
                 Text(text = "kqChecker", style = MaterialTheme.typography.h5)
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(6.dp))
-                Text(text = "欢迎使用 kqChecker。此页为简洁首页。点击下面进入工具页或集成页。")
+                Text(text = "欢迎使用 kqChecker。此页为简洁首页。若您是用户，请直接在登陆后进入集成页使用。")
                 Button(onClick = { currentPage = 1 }, modifier = Modifier.padding(top = 12.dp)) {
                     Text(text = "打开工具页")
                 }
                 Button(onClick = { currentPage = 2 }, modifier = Modifier.padding(top = 8.dp)) {
                     Text(text = "打开集成页")
+                }
+                Button(onClick = {
+                    var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                    var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                    try {
+                        context.assets.open("config.json").use { stream ->
+                            val text = InputStreamReader(stream, Charsets.UTF_8).readText()
+                            val obj = JSONObject(text)
+                            if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
+                            if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
+                        }
+                    } catch (_: Exception) { }
+
+                    val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
+                        putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
+                        putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
+                    }
+                    loginLauncher.launch(loginIntent)
+                }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text(text = "登录")
                 }
                 Button(onClick = {
                     // 快速触发一次缓存检查作为示例操作
@@ -356,30 +502,6 @@ fun AppContent() {
                     .fillMaxHeight(0.5f)
                     .verticalScroll(buttonsScroll)) {
                 Text(text = "kqChecker - Android Skeleton")
-
-                Button(onClick = {
-                    var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
-                    var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
-                    try {
-                        context.assets.open("config.json").use { stream ->
-                            val text = InputStreamReader(stream, Charsets.UTF_8).readText()
-                            val obj = JSONObject(text)
-                            if (obj.has("auth_login_url")) loginUrl = obj.getString("auth_login_url")
-                            if (obj.has("auth_redirect_prefix")) redirectPrefix = obj.getString("auth_redirect_prefix")
-                        }
-                    } catch (e: Exception) {
-                            Log.i("MainActivity", "No config.json or parse error, using defaults: ${e.message ?: e.toString()}")
-                    }
-
-                    val loginIntent = Intent(context, WebLoginActivity::class.java).apply {
-                        putExtra(WebLoginActivity.EXTRA_LOGIN_URL, loginUrl)
-                        putExtra(WebLoginActivity.EXTRA_REDIRECT_PREFIX, redirectPrefix)
-                    }
-                    loginLauncher.launch(loginIntent)
-                }, modifier = Modifier.padding(top = 12.dp)) {
-                    Text(text = "登录")
-                }
-
                 Button(onClick = {
                     events.add("Triggering manual sync...")
                     scope.launch(Dispatchers.IO) {
@@ -402,8 +524,9 @@ fun AppContent() {
                                 }
                             }
                         } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                            android.util.Log.w("SyncButton", "AuthRequiredException caught in Tools->Sync button handler: requesting login", e)
                             withContext(Dispatchers.Main) {
-                                events.add("Authentication required: opening login...")
+                                events.add("Authentication required: opening login... [caught in Tools: Sync]")
                                 // launch login
                                 var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
                                 var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
@@ -520,8 +643,9 @@ fun AppContent() {
                                 }
                             }
                         } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                            android.util.Log.w("ExperimentalSync", "AuthRequiredException caught in Experimental Sync handler: requesting login", e)
                             withContext(Dispatchers.Main) {
-                                events.add("Authentication required: opening login...")
+                                events.add("Authentication required: opening login... [caught in Experimental Sync]")
                                 var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
                                 var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
                                 try {
@@ -563,6 +687,42 @@ fun AppContent() {
                     }
                 }, modifier = Modifier.padding(top = 8.dp)) {
                     Text(text = "Manual Api2 Query")
+                }
+
+                // 新增：手动触发 Api2 测试（使用 assets/example_weekly_cleaned.json）
+                // 默认测试按钮：不传 force，遵循时间窗口过滤
+                Button(onClick = {
+                    events.add("Manual api2 TEST triggered")
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val req = OneTimeWorkRequestBuilder<Api2QueryTestWorker>().build()
+                            WorkManager.getInstance(context).enqueue(req)
+                            withContext(Dispatchers.Main) { postEvent("Manual api2 TEST enqueued (no force)") }
+                        } catch (e: Exception) {
+                            Log.e("ManualApi2Test", "Failed to enqueue api2 test", e)
+                            withContext(Dispatchers.Main) { postEvent("Failed to enqueue api2 test: ${e.message}") }
+                        }
+                    }
+                }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text(text = "Run Api2 Test (example_weekly_cleaned.json)")
+                }
+
+                // 强制测试按钮：传入 force=true，强制对所有条目发起查询（用于调试）
+                Button(onClick = {
+                    events.add("Manual api2 FORCE TEST triggered")
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val data = androidx.work.Data.Builder().putBoolean("force", true).build()
+                            val req = OneTimeWorkRequestBuilder<Api2QueryTestWorker>().setInputData(data).build()
+                            WorkManager.getInstance(context).enqueue(req)
+                            withContext(Dispatchers.Main) { postEvent("Manual api2 FORCE TEST enqueued") }
+                        } catch (e: Exception) {
+                            Log.e("ManualApi2Test", "Failed to enqueue api2 force test", e)
+                            withContext(Dispatchers.Main) { postEvent("Failed to enqueue api2 force test: ${e.message}") }
+                        }
+                    }
+                }, modifier = Modifier.padding(top = 8.dp)) {
+                    Text(text = "Force Api2 Test (example_weekly_cleaned.json)")
                 }
 
                 // 自动查询开关
@@ -676,8 +836,9 @@ fun AppContent() {
                                     if (!raw.isNullOrBlank()) events.add(raw.take(800))
                                 }
                             } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                                android.util.Log.w("FetchWeekly", "AuthRequiredException caught during raw fetch in MainActivity: requesting login", e)
                                 withContext(Dispatchers.Main) {
-                                    events.add("Authentication required during raw fetch: ${e.message}")
+                                    events.add("Authentication required during raw fetch: ${e.message} [caught in FetchWeekly]")
                                     var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
                                     var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
                                     try {
@@ -729,8 +890,9 @@ fun AppContent() {
                                     if (!raw.isNullOrBlank()) events.add(raw.take(800))
                                 }
                             } catch (e: org.example.kqchecker.auth.AuthRequiredException) {
+                                android.util.Log.w("FetchApi2", "AuthRequiredException caught in FetchApi2 (WaterList) handler: requesting login", e)
                                 withContext(Dispatchers.Main) {
-                                    events.add("Authentication required: opening login...")
+                                    events.add("Authentication required: opening login... [caught in FetchApi2]")
                                     var loginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
                                     var redirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
                                     try {
@@ -994,6 +1156,38 @@ fun AppContent() {
                         events.add("[集成] 当前集成状态：正常（模拟）")
                     }, modifier = Modifier.padding(top = 8.dp)) {
                         Text(text = "显示集成状态")
+                    }
+
+                    // 自动 api2 查询开关（集成页）
+                    androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                        Text(text = "启用自动 API2 查询（每 15 分钟）", modifier = Modifier.weight(1f))
+                        Switch(checked = api2AutoEnabled, onCheckedChange = { checked ->
+                            if (checked) {
+                                enableApi2Periodic()
+                            } else {
+                                disableApi2Periodic()
+                            }
+                        })
+                    }
+
+                    // 前台轮询开关（集成页），与周期任务并列展示并标注区别
+                    androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                        Text(text = "启用前台轮询（常驻通知，实时）", modifier = Modifier.weight(1f))
+                        Switch(checked = api2ForegroundEnabled, onCheckedChange = { checked ->
+                            if (checked) {
+                                Toast.makeText(context, "前台轮询会持续运行并增加电量消耗。如需停止请返回此处关闭。", Toast.LENGTH_LONG).show()
+                                startForegroundPolling(5)
+                            } else {
+                                stopForegroundPolling()
+                            }
+                        })
+                    }
+
+                    // 简短说明两者区别
+                    androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text(text = "区别：", style = MaterialTheme.typography.subtitle2)
+                        Text(text = "1) 前台轮询：实时性高、常驻通知、更高电量消耗；适用于需要接近实时检测的场景。")
+                        Text(text = "2) 周期任务（WorkManager）：更省电、受系统 Doze/最低间隔限制（最短 ~15 分钟），适用于低频定期检查。")
                     }
                 }
 

@@ -75,7 +75,6 @@ yarn-error.log
 
 # Gradle
 .gradle/
-gradle/
 gradle-app.setting
 
 # Crashlytics (for Android Studio and IntelliJ)
@@ -83,11 +82,13 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-
+app/debug/
 **/build/
 kq/
 *.txt
 problem-report.html
-app/*
 app2/*
 *.json
+release-keystore.jks
+keystore.properties
+new-release-key.jks

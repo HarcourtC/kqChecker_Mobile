@@ -40,6 +40,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
             Result.success()
         } catch (e: AuthRequiredException) {
             try {
+                android.util.Log.w("SyncWorker", "AuthRequiredException caught in SyncWorker.doWork(): clearing token and notifying user", e)
                 val tm = TokenManager(applicationContext)
                 tm.clear()
                 tm.notifyTokenInvalid()
