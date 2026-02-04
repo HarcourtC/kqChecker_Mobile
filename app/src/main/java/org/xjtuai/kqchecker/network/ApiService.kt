@@ -9,6 +9,7 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 import java.nio.charset.StandardCharsets
 
@@ -27,6 +28,12 @@ interface ApiService {
      */
     @POST("attendance-student/waterList/page")
     suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?
+
+    /**
+     * 获取竞赛数据
+     */
+    @GET("xjtudean")
+    suspend fun getCompetitionData(): ResponseBody?
     
     companion object {
         /**

@@ -1,82 +1,84 @@
-**Summary**
-<analysis>
-[Chronological Review: The conversation began with the user requesting an analysis of the codebase to generate or update the `.github/copilot-instructions.md` file. The user emphasized the need to focus on the architecture, developer workflows, project-specific conventions, and integration points. The user then requested the implementation of this analysis. The conversation has been focused on understanding the codebase and creating actionable instructions for AI coding agents.]
+# Origin_Mobile Codebase Instructions
 
-[Intent Mapping: 
-1. "Analyze this codebase to generate or update `.github/copilot-instructions.md` for guiding AI coding agents." - The user wants to create or update documentation for AI agents to work effectively with the codebase.
-2. "implement this." - The user requested the implementation of the analysis and documentation.]
+You are an expert AI assistant working on the "Origin_Mobile" (kqChecker) Android project. This document outlines the project's architecture, conventions, and workflows to ensure consistent and high-quality code generation.
 
-[Technical Inventory: 
-- Technologies: Kotlin, Android development.
-- Key files: `MainActivity.kt`, `.github/copilot-instructions.md`.
-- Concepts: Codebase architecture, developer workflows, project conventions, integration points.]
+## 1. Project Overview
+- **Type**: Android Mobile Application
+- **Language**: Kotlin 1.9.10
+- **UI Framework**: Jetpack Compose 1.5.3 (Material 3)
+- **Architecture**: MVVM (Model-View-ViewModel) + Repository Pattern
+- **Network**: Retrofit 2.9.0 + OkHttp 4.11.0 + Moshi
+- **Async**: Kotlin Coroutines 1.7.0 + Flow
+- **Background**: WorkManager 2.8.1
 
-[Code Archaeology: 
-- File: `MainActivity.kt`
-  - Purpose: Main entry point for the Android application.
-  - Current State: The user is currently working in this file.
-  - Key Code Segments: Not specified in the conversation.
-  - Dependencies: Not specified in the conversation.]
+## 2. Key Directories & Structure
+- `app/src/main/java/org/example/kqchecker/`: Root package
+  - `ui/`: Compose UI components and Screens (Activity is thin).
+  - `viewmodel/`: ViewModels managing UI state.
+  - `repository/`: Data layer, managing API calls and caching.
+  - `network/`: Retrofit services, interceptors, and DTOs.
+  - `auth/`: Token management and login logic.
+  - `model/`: Domain data models.
+  - `util/`: Helper classes (Date, JSON, etc.).
+  - `sync/`: Background workers and services.
 
-[Progress Assessment: 
-- Completed Tasks: User has outlined the requirements for the `.github/copilot-instructions.md`.
-- Partially Complete Work: The analysis and documentation are in the process of being implemented.]
+## 3. Architecture & Conventions
 
-[Context Validation: All critical information for continuation is captured, including user requests and the focus on the codebase analysis.]
+### UI Layer (Jetpack Compose)
+- **State Management**: Use `ViewModel` with `StateFlow` or `Compose State` (`mutableStateOf`).
+- **Components**: Prefer small, reusable Composable functions.
+- **Side Effects**: Use `LaunchedEffect` or `DisposableEffect` for side effects.
+- **Threading**: UI code runs on `Main` thread. Long operations MUST be offloaded to `IO` dispatcher via Coroutines.
 
-[Recent Commands Analysis: 
-- Last Agent Commands: The user requested to "implement this" after outlining the requirements for the `.github/copilot-instructions.md`.
-- Tool Results Summary: No specific tool results were generated as the focus was on user requests.
-- Pre-Summary State: The agent was preparing to implement the analysis of the codebase for documentation purposes.
-- Operation Context: The commands were executed to fulfill the user's goal of creating actionable instructions for AI agents working with the codebase.]
+### Data Layer (Repository Pattern)
+- **Single Source of Truth**: Repositories arbitrate between Remote (API) and Local (Cache) data.
+- **Caching**: 
+  - JSON files are used for caching (managed by `CacheManager`).
+  - Key files: `weekly_raw.json` (API1), `api2_waterlist_response.json` (API2), `competition_data.json` (Harco API).
+- **Error Handling**: Catch exceptions in Repository and return `Result` or nullable types to ViewModel.
 
-</analysis>
+### Network API
+- **Client**: `OkHttpClient` with `TokenInterceptor` for authenticated requests.
+- **Endpoints**:
+  - **API1**: Weekly Schedule (`/attendance-student/rankClass/getWeekSchedule2`).
+  - **API2**: Water List (`/attendance-student/waterList/page`).
+  - **Competition**: Harco API (`https://api.harco.top/xjtudean`).
+- **Authorization**:
+  - Internal APIs use `synjones-auth` and `Authorization` headers (Bearer Token).
+  - Harco API uses `X-API-KEY`.
+- **Response Handling**: Raw `ResponseBody` is often used to avoid JSON parsing issues with some endpoints, then parsed manually using `org.json` or `Moshi`.
 
-<summary>
-1. Conversation Overview:
-- Primary Objectives: 
-  - "Analyze this codebase to generate or update `.github/copilot-instructions.md` for guiding AI coding agents."
-  - "implement this."
-- Session Context: The user is focused on creating documentation that will help AI agents understand and work with the codebase effectively.
-- User Intent Evolution: The user initially sought an analysis of the codebase and then requested the implementation of that analysis.
+## 4. Feature Implementation Guidelines
 
-2. Technical Foundation:
-- Kotlin: Used for Android application development.
-- Android Development: The project is structured as an Android app with specific conventions and workflows.
+### Adding a New API Endpoint
+1.  Define the endpoint in `ApiService.kt`.
+2.  Create a Response model in `network/` or use `ResponseBody` if dynamic.
+3.  Add a method in the corresponding `Repository` (or create a new one).
+4.  Implement caching logic in the Repository if needed.
+5.  Expose data via a suspend function to the ViewModel.
 
-3. Codebase Status:
-- File Name: `MainActivity.kt`
-  - Purpose: Main entry point for the Android application.
-  - Current State: The user is actively working in this file.
-  - Key Code Segments: Not specified.
-  - Dependencies: Not specified.
+### Working with Authentication
+- Access tokens are stored in `TokenStore`.
+- `TokenManager` handles retrieval and refreshing.
+- `TokenInterceptor` automatically attaches tokens to requests.
+- **DO NOT** manually add headers in UI code; let the interceptor handle it.
 
-4. Problem Resolution:
-- Issues Encountered: No specific issues were mentioned.
-- Solutions Implemented: The user is working on creating documentation for AI agents.
-- Debugging Context: No ongoing troubleshooting efforts were noted.
-- Lessons Learned: Not specified.
+### Background Tasks
+- Use `WorkManager` for periodic syncs (e.g., `WeeklyRefreshWorker`).
+- Ensure logic is idempotent and handles network failures gracefully.
 
-5. Progress Tracking:
-- Completed Tasks: User has outlined the requirements for the documentation.
-- Partially Complete Work: The analysis and documentation are in progress.
+## 5. Coding Standards
+- **Kotlin Style**: Follow official Kotlin coding conventions.
+- **Coroutines**: Use `suspend` functions for I/O operations. Avoid `GlobalScope`.
+- **Logging**: Use standard `Log.d/e` with consistent tags. The UI also has an event log feature; consider logging important user-facing events there.
+- **Comments**: Document complex logic, especially for manual JSON parsing or data cleaning heuristics (`WeeklyCleaner`).
 
-6. Active Work State:
-- Current Focus: The user is focused on implementing the analysis for the `.github/copilot-instructions.md`.
-- Recent Context: The user requested the implementation of the analysis after outlining the requirements.
-- Working Code: The user is currently in `MainActivity.kt`.
-- Immediate Context: The user is preparing to create actionable instructions for AI agents.
+## 6. Debugging & Tools
+- **Logs**: The app writes logs to `Logcat` and an in-app console.
+- **Raw Data**: Use "Print weekly.json" or "Fetch Weekly (API)" in the app to inspect raw server responses.
+- **Mock Data**: `assets/example_weekly.json` acts as a fallback/mock when the network is unavailable.
 
-7. Recent Operations:
-- Last Agent Commands: The user requested to "implement this."
-- Tool Results Summary: No specific tool results were generated.
-- Pre-Summary State: The agent was preparing to implement the analysis for documentation.
-- Operation Context: The commands were executed to fulfill the user's goal of creating actionable instructions for AI agents.
-
-8. Continuation Plan:
-- Pending Task 1: Implement the analysis of the codebase for `.github/copilot-instructions.md`.
-- Pending Task 2: Review and refine the documentation based on the analysis.
-- Priority Information: The documentation is a priority for guiding AI agents.
-- Next Action: Begin the implementation of the analysis as requested by the user.
-
-</summary>
+## 7. Documentation
+- Refer to `docs/API说明.md` for detailed API specs.
+- Refer to `docs/COMPETITION_FEATURE_GUIDE.md` for the competition module.
+- `CLAUDE.md` contains additional developer notes.
