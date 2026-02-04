@@ -8,14 +8,14 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:name="org.example.kqchecker.KqApplication"
+        android:name="org.xjtuai.kqchecker.KqApplication"
         android:allowBackup="true"
         android:label="kqChecker"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
-        <activity android:name="org.example.kqchecker.MainActivity"
+        <activity android:name="org.xjtuai.kqchecker.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,15 +25,15 @@
 
         <!-- WebView login activity; must be declared so ActivityManager can resolve it -->
         <activity
-            android:name="org.example.kqchecker.auth.WebLoginActivity"
+            android:name="org.xjtuai.kqchecker.auth.WebLoginActivity"
             android:exported="true"
             android:label="Web Login" />
 
         <!-- Foreground polling service (optional) -->
-        <service android:name="org.example.kqchecker.sync.Api2PollingService" android:exported="false" />
+        <service android:name="org.xjtuai.kqchecker.sync.Api2PollingService" android:exported="false" />
 
         <!-- Restart polling service after device boot if user enabled it -->
-        <receiver android:name="org.example.kqchecker.sync.BootReceiver" android:exported="true">
+        <receiver android:name="org.xjtuai.kqchecker.sync.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

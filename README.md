@@ -121,5 +121,5 @@ Origin_Mobile/
 
 如有任何问题或建议，请通过以下方式联系我们：
 - 项目维护者：[项目团队]
-- 技术支持：[support@example.com]
+- 技术支持：[harcourtzzz@outlook.com]
 

@@ -92,3 +92,52 @@ app2/*
 release-keystore.jks
 keystore.properties
 new-release-key.jks
+
+# Claude/AI Agent Related Files
+#
+.claude/
+.agent/
+*.agent
+*.memory
+.mem/
+
+# VS Code Extensions
+#
+.vscode-server/
+.vscode/extensions/
+
+# IDE Local Settings
+#
+.vscode/settings.local.json
+.idea/local.xml
+*.iws
+.project
+.classpath
+
+# System and Editor Files
+#
+.DS_Store
+.env.local
+.env.*.local
+*.swp
+*.swo
+*~
+.viminfo
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+
+# Temporary and Cache Files
+#
+*.tmp
+*.temp
+*.cache
+.cache/
+tmp/
+temp/
+
+# Logs
+#
+logs/
+*.log
