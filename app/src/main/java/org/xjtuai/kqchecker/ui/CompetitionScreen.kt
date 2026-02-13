@@ -232,11 +232,23 @@ fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = item.date,
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                )
+                Column {
+                    Text(
+                        text = "发布: ${item.date}",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                    )
+                    
+                    if (!item.deadline.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "截止: ${item.deadline}",
+                            style = MaterialTheme.typography.caption,
+                            color = MaterialTheme.colors.error.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
                 
                 Text(
                     text = item.type.uppercase(),

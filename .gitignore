@@ -39,7 +39,7 @@ local.properties
 node_modules/
 npm-debug.log
 yarn-error.log
-
+test_dean/
 # fastlane
 #
 # It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
@@ -141,3 +141,4 @@ temp/
 #
 logs/
 *.log
+app/release

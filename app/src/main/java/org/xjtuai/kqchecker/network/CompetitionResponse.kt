@@ -68,6 +68,7 @@ data class CompetitionItem(
     val title: String,
     val url: String,
     val date: String,
+    val deadline: String?,
     val isNew: Boolean
 ) {
     companion object {
@@ -82,6 +83,7 @@ data class CompetitionItem(
                 title = jsonObject.optString("title"),
                 url = jsonObject.optString("url"),
                 date = jsonObject.optString("date"),
+                deadline = jsonObject.optString("deadline", null),
                 isNew = jsonObject.optBoolean("isNew")
             )
         }
