@@ -39,6 +39,37 @@
     - 支持 `code`、`success`、`data`（包含 `records`, `total`, `pages` 等字段）
     - 仓库当前接受 `success == true` 为成功（后端返回 `code==200` 时也可成功）
 
+- 获取竞赛数据（新增）
+  - 端点: `https://api.harco.top/xjtudean`
+  - 注解路径: `GET xjtudean`
+  - Retrofit 方法: `suspend fun getCompetitionData(): ResponseBody?`
+  - 调用方: `CompetitionRepository`（`app/src/main/java/.../repository/CompetitionRepository.kt`）
+  - 请求方法: GET（无请求体）
+  - 请求头: `X-API-KEY: HarcoSecret2026XJTUDeanApi`（由 `CompetitionApiInterceptor` 自动添加）
+  - 返回: 服务端返回 JSON
+    ```json
+    {
+      "status": "success",
+      "meta": {
+        "updateTime": "2026-02-04T05:46:44.151Z",
+        "total": 27,
+        "method": "WAF Reverse Engineering"
+      },
+      "data": [
+        {
+          "id": "9731",
+          "type": "jsap",
+          "category": "竞赛安排",
+          "title": "[竞赛安排]关于组织参加第九届中国高校智能机器人创意大赛的通知",
+          "url": "https://jwc.xjtu.edu.cn/info/1172/9731.htm",
+          "date": "2026-01-29",
+          "isNew": false
+        }
+      ]
+    }
+    ```
+  - 特点: 使用独立的 OkHttpClient，base URL 与其他 API 不同，不需要 token 认证
+
 **关于 Retrofit 返回类型**
 - 由于项目使用 `org.json` 手工解析，接口定义为 `ResponseBody?`，调用方负责调用 `respBody.string()` 并转换为 `JSONObject` 或自定义数据类（`WeeklyResponse`, `WaterListResponse`）。
 - 原先将方法声明为 `JSONObject` 会触发运行时异常：`Unable to create converter for class org.json.JSONObject`，因此统一使用 `ResponseBody`。
@@ -53,6 +84,7 @@
   - `WEEKLY_RAW_CACHE_FILE = "weekly_raw.json"`
   - `WEEKLY_RAW_META_FILE = "weekly_raw_meta.json"`（包含 `http_code`、`fetched_at`、`expires` 等元信息）
   - `WATER_LIST_CACHE_FILE = "api2_waterlist_response.json"`
+  - `COMPETITION_CACHE_FILE = "competition_data.json"`（竞赛数据缓存，2025-02 新增）
 - 仓库会在成功获取 API 响应后写入缓存文件（并在 raw meta 中写入 `expires`）
 
 **新增/调试命令与行为（2025-12 更新）**
@@ -126,7 +158,10 @@
 - `ApiService.kt` — Retrofit 接口和 `jsonToRequestBody`
 - `ApiClient.kt` — OkHttp client 创建与 `TokenInterceptor` 注入
 - `TokenInterceptor.kt` — 将 token 写入请求头
+- `CompetitionApiInterceptor.kt` — 将 X-API-KEY 写入竞赛 API 请求头（2025-02 新增）
 - `WeeklyRepository.kt` — API1 调用、缓存、cleaner 调用点
 - `WaterListRepository.kt` — API2 调用、缓存、响应解析
+- `CompetitionRepository.kt` — 竞赛数据 API 调用、缓存、响应解析（2025-02 新增）
 - `Api2AttendanceQueryWorker.kt` — 后台扫描并发起 API2 查询的 Worker
 - `WeeklyCleaner.kt` — 将原始 weekly 转成 `weekly_cleaned.json`（以时间为键）
+- `CompetitionResponse.kt` — 竞赛数据模型定义（2025-02 新增）

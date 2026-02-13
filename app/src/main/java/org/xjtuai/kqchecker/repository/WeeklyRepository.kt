@@ -8,6 +8,7 @@ import okhttp3.RequestBody
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WeeklyResponse
+import org.xjtuai.kqchecker.util.ConfigHelper
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 
@@ -20,28 +21,8 @@ class WeeklyRepository(private val context: Context) {
     }
     
     private val apiClient = ApiClient(context)
-    private val apiService = apiClient.createService(getBaseUrl())
-    
-    private fun getBaseUrl(): String {
-        // 默认基础URL
-        var baseUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
-        try {
-            context.assets.open("config.json").use { stream ->
-                val text = stream.bufferedReader().readText()
-                val json = org.json.JSONObject(text)
-                if (json.has("base_url")) {
-                    baseUrl = json.getString("base_url")
-                    // 确保URL以/结尾
-                    if (!baseUrl.endsWith("/")) {
-                        baseUrl += '/'
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "No valid config.json, using default base URL")
-        }
-        return baseUrl
-    }
+    private val baseUrl: String = ConfigHelper.getBaseUrl(context)
+    private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
     
     /**
@@ -119,7 +100,7 @@ class WeeklyRepository(private val context: Context) {
             Log.d(TAG, "准备请求参数...")
             val requestBody = createWeeklyRequest()
             
-            Log.d(TAG, "发送API请求到: ${getBaseUrl()}attendance-student/rankClass/getWeekSchedule2")
+            Log.d(TAG, "发送API请求到: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
             val respBody = apiService.getWeeklyData(requestBody)
 
             // 验证响应
@@ -212,7 +193,7 @@ class WeeklyRepository(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val requestBody = createWeeklyRequest()
-                Log.d(TAG, "Sending raw API request to: ${getBaseUrl()}attendance-student/rankClass/getWeekSchedule2")
+                Log.d(TAG, "Sending raw API request to: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
                 val respBody = apiService.getWeeklyData(requestBody)
                 if (respBody == null) {
                     Log.e(TAG, "❌ API returned null response (raw)")

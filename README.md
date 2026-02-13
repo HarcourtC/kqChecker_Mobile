@@ -37,6 +37,7 @@ Origin_Mobile/
 
 ### 核心功能
 - 考勤数据同步与检查
+- 竞赛信息获取与本地缓存（支持从 https://api.harco.top/xjtudean 获取竞赛数据）
 - 网络请求与响应处理
 - 数据缓存管理
 - 事件日志记录与显示
@@ -95,6 +96,15 @@ Origin_Mobile/
 
 ### 日志查看
 应用界面底部的日志区域会显示所有操作事件和错误信息，方便调试和监控。
+
+### 竞赛数据获取
+应用支持获取竞赛信息（来自 https://api.harco.top/xjtudean），并自动缓存到本地：
+- 首次加载从 API 获取数据并缓存
+- 后续加载优先从本地缓存读取
+- 支持强制刷新跳过缓存直接从 API 获取
+- 缓存文件：`competition_data.json`
+
+详见 [COMPETITION_FEATURE_GUIDE.md](COMPETITION_FEATURE_GUIDE.md) 获取详细使用说明。
 
 ## 开发指南
 

@@ -17,6 +17,8 @@ object NotificationHelper {
   private const val TAG = "NotificationHelper"
   private const val NO_ATTENDANCE_CHANNEL_ID = "api2_no_attendance_channel"
   private const val NO_ATTENDANCE_CHANNEL_NAME = "API2 Attendance Reminder"
+  private const val DEADLINE_CHANNEL_ID = "competition_deadline_channel"
+  private const val DEADLINE_CHANNEL_NAME = "Competition Deadline Reminder"
 
   fun createNotificationChannels(context: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -28,9 +30,52 @@ object NotificationHelper {
       ).apply {
         description = "Alerts when no attendance record is detected"
       }
-      nm.createNotificationChannel(channel)
+      val deadlineChannel = NotificationChannel(
+              DEADLINE_CHANNEL_ID,
+              DEADLINE_CHANNEL_NAME,
+              NotificationManager.IMPORTANCE_DEFAULT
+      ).apply {
+          description = "Alerts when a competition deadline is approaching"
+      }
+      nm.createNotificationChannels(listOf(channel, deadlineChannel))
       Log.d(TAG, "Notification channels created")
     }
+  }
+
+  /**
+   * Sends a notification for competition deadline
+   */
+  fun sendDeadlineNotification(
+      context: Context,
+      title: String,
+      deadlineDate: String,
+      url: String
+  ) {
+      try {
+          createNotificationChannels(context)
+
+          val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+          val launchIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+              flags = Intent.FLAG_ACTIVITY_NEW_TASK
+          }
+          val pendingIntent = PendingIntent.getActivity(
+              context, url.hashCode(), launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+          )
+
+          val notification = NotificationCompat.Builder(context, DEADLINE_CHANNEL_ID)
+              .setSmallIcon(android.R.drawable.ic_dialog_info)
+              .setContentTitle("竞赛截止提醒: $title")
+              .setContentText("截止日期: $deadlineDate (明天)")
+              .setContentIntent(pendingIntent)
+              .setAutoCancel(true)
+              .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+              .build()
+
+          nm.notify(url.hashCode(), notification)
+          Log.d(TAG, "Deadline notification sent: $title")
+      } catch (e: Exception) {
+          Log.e(TAG, "Failed to send deadline notification", e)
+      }
   }
 
   /**

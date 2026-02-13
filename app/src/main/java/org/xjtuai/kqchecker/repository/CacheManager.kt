@@ -19,6 +19,7 @@ class CacheManager(private val context: Context) {
         const val WEEKLY_RAW_CACHE_FILE = "weekly_raw.json"
         const val WEEKLY_RAW_META_FILE = "weekly_raw_meta.json"
         const val WATER_LIST_CACHE_FILE = "api2_waterlist_response.json"
+        const val COMPETITION_CACHE_FILE = "competition_data.json"
     }
     
     /**

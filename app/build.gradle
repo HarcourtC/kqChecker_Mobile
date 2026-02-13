@@ -12,7 +12,7 @@ android {
         minSdk = 21
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1"
+        versionName = "1.0"
         // default base url (can be overridden by assets/config.json at runtime)
         buildConfigField "String", "BASE_URL", '"http://bkkq.xjtu.edu.cn/attendance-student-pc"'
     }

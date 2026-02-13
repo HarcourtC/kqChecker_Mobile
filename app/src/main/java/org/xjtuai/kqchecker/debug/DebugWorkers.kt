@@ -1,6 +1,7 @@
 package org.xjtuai.kqchecker.debug
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import org.xjtuai.kqchecker.util.CalendarHelper
@@ -11,6 +12,9 @@ import java.text.SimpleDateFormat
  * Loads data from assets/weekly.json and writes to calendar
  */
 class TestWriteCalendar(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
+    companion object {
+        private const val TAG = "TestWriteCalendar"
+    }
     private val mockRepo = MockRepository(appContext)
 
     override suspend fun doWork(): Result {
@@ -37,13 +41,13 @@ class TestWriteCalendar(appContext: Context, params: WorkerParameters) : Corouti
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(TAG, "Error writing calendar event", e)
                 }
             }
 
             Result.success()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error in doWork", e)
             Result.retry()
         }
     }

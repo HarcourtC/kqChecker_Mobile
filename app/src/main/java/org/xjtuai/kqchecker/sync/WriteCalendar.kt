@@ -30,7 +30,23 @@ private const val TAG = "WriteCalendar"
  */
 class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
-    
+
+    companion object {
+        // 节次->时间映射常量（消除重复代码）
+        val PERIOD_TO_TIME = mapOf(
+            1 to "08:00",
+            2 to "08:55",
+            3 to "10:10",
+            4 to "11:05",
+            5 to "13:30",
+            6 to "14:25",
+            7 to "15:40",
+            8 to "16:35",
+            9 to "18:30",
+            10 to "19:25"
+        )
+    }
+
     private val weeklyRepository = WeeklyRepository(applicationContext)
     private val cacheManager = CacheManager(applicationContext)
 
@@ -103,19 +119,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                                     if (startTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
                                                         val firstNum = startTime.split(Regex("\\D+"))[0]
                                                         val period = firstNum.toIntOrNull()
-                                                        val periodMap = mapOf(
-                                                            1 to "08:00",
-                                                            2 to "08:55",
-                                                            3 to "10:10",
-                                                            4 to "11:05",
-                                                            5 to "13:30",
-                                                            6 to "14:25",
-                                                            7 to "15:40",
-                                                            8 to "16:35",
-                                                            9 to "18:30",
-                                                            10 to "19:25"
-                                                        )
-                                                        if (period != null && periodMap.containsKey(period)) startTime = periodMap[period]!!
+                                                        if (period != null && PERIOD_TO_TIME.containsKey(period)) startTime = PERIOD_TO_TIME[period]!!
                                                     }
                                                     if (startTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) startTime += ":00"
                                                     if (startTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
@@ -302,22 +306,8 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                 val firstPart = accountJt.split(Regex("\\D+"))[0]
                                 val startPeriod = firstPart.toIntOrNull()
 
-                                // 默认的节次->时间映射（可根据学校实际课表调整）
-                                val periodToTime = mapOf(
-                                    1 to "08:00",
-                                    2 to "08:55",
-                                    3 to "10:10",
-                                    4 to "11:05",
-                                    5 to "13:30",
-                                    6 to "14:25",
-                                    7 to "15:40",
-                                    8 to "16:35",
-                                    9 to "18:30",
-                                    10 to "19:25"
-                                )
-
-                                if (startPeriod != null && periodToTime.containsKey(startPeriod)) {
-                                    val timeStr = periodToTime[startPeriod]!!
+                                if (startPeriod != null && PERIOD_TO_TIME.containsKey(startPeriod)) {
+                                    val timeStr = PERIOD_TO_TIME[startPeriod]!!
                                     val parts = timeStr.split(":")
                                     val hour = parts[0].toIntOrNull() ?: 8
                                     val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0

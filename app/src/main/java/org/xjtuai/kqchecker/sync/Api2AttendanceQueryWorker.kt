@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.repository.CacheManager
+import org.xjtuai.kqchecker.util.ConfigHelper
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xjtuai.kqchecker.auth.AuthRequiredException
@@ -225,22 +226,7 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
         }
     }
 
-    private fun getBaseUrl(): String {
-        var baseUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
-        try {
-            context.assets.open("config.json").use { stream ->
-                val text = stream.bufferedReader().readText()
-                val json = JSONObject(text)
-                if (json.has("base_url")) {
-                    baseUrl = json.getString("base_url")
-                    if (!baseUrl.endsWith("/")) baseUrl += "/"
-                }
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "No config.json, using default base URL")
-        }
-        return baseUrl
-    }
+    private fun getBaseUrl(): String = ConfigHelper.getBaseUrl(context)
 
     private fun notifyTokenInvalid() {
         try {
