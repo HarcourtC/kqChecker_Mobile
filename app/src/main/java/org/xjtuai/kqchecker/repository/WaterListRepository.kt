@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WaterListResponse
+import org.xjtuai.kqchecker.util.ConfigHelper
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 
@@ -19,28 +20,8 @@ class WaterListRepository(private val context: Context) {
     }
     
     private val apiClient = ApiClient(context)
-    private val apiService = apiClient.createService(getBaseUrl())
-    
-    private fun getBaseUrl(): String {
-        // 默认基础URL
-        var baseUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
-        try {
-            context.assets.open("config.json").use { stream ->
-                val text = stream.bufferedReader().readText()
-                val json = org.json.JSONObject(text)
-                if (json.has("base_url")) {
-                    baseUrl = json.getString("base_url")
-                    // 确保URL以/结尾
-                    if (!baseUrl.endsWith("/")) {
-                        baseUrl += '/'
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "No valid config.json, using default base URL")
-        }
-        return baseUrl
-    }
+    private val baseUrl: String = ConfigHelper.getBaseUrl(context)
+    private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
     
     /**

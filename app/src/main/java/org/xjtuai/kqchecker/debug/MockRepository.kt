@@ -1,6 +1,7 @@
 package org.xjtuai.kqchecker.debug
 
 import android.content.Context
+import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import org.xjtuai.kqchecker.model.EventItem
@@ -12,6 +13,9 @@ import org.xjtuai.kqchecker.model.PeriodItem
  * Used for debugging and testing without live API calls
  */
 class MockRepository(private val context: Context) {
+    companion object {
+        private const val TAG = "MockRepository"
+    }
     private val moshi = Moshi.Builder().build()
 
     fun loadWeeklyFromAssets(): Map<String, List<EventItem>> {
@@ -34,7 +38,7 @@ class MockRepository(private val context: Context) {
                 return adapter.fromJson(reader.readText()) ?: emptyList()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error loading periods", e)
         }
         return emptyList()
     }

@@ -12,11 +12,27 @@ object ConfigHelper {
   private const val TAG = "ConfigHelper"
   private const val CONFIG_FILE = "config.json"
 
+  // 统一的默认 Base URL（消除硬编码重复）
+  const val DEFAULT_BASE_URL = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
+
   private var cachedConfig: Config? = null
 
   fun getConfig(context: Context): Config {
     return cachedConfig ?: readConfig(context).also { cachedConfig = it }
   }
+
+  /**
+   * 获取 Base URL，确保以 / 结尾
+   */
+  fun getBaseUrl(context: Context): String {
+    val baseUrl = getConfig(context).baseUrl
+    return if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+  }
+
+  /**
+   * 获取默认 Base URL（不读取配置文件）
+   */
+  fun getDefaultBaseUrl(): String = DEFAULT_BASE_URL
 
   fun clearCache() {
     cachedConfig = null
@@ -24,9 +40,9 @@ object ConfigHelper {
 
   private fun readConfig(context: Context): Config {
     val defaults = Config(
-      baseUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc",
-      authLoginUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login",
-      authRedirectPrefix = "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home",
+      baseUrl = DEFAULT_BASE_URL,
+      authLoginUrl = "$DEFAULT_BASE_URL/#/login",
+      authRedirectPrefix = "$DEFAULT_BASE_URL/#/home",
       termNo = null,
       week = null
     )

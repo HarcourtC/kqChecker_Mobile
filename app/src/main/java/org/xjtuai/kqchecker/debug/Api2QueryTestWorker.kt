@@ -18,6 +18,7 @@ import org.xjtuai.kqchecker.MainActivity
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.repository.CacheManager
+import org.xjtuai.kqchecker.util.ConfigHelper
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,7 +42,9 @@ class Api2QueryTestWorker(appContext: Context, params: WorkerParameters) : Corou
                 try {
                     val f = java.io.File(context.filesDir, fname)
                     if (f.exists()) cleanedText = f.readText()
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to read $fname from files", e)
+                }
 
                 if (cleanedText.isNullOrBlank()) {
                     try {
@@ -197,20 +200,7 @@ class Api2QueryTestWorker(appContext: Context, params: WorkerParameters) : Corou
         }
     }
 
-    private fun getBaseUrl(): String {
-        var baseUrl = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
-        try {
-            context.assets.open("config.json").use { stream ->
-                val text = stream.bufferedReader().readText()
-                val json = JSONObject(text)
-                if (json.has("base_url")) {
-                    baseUrl = json.getString("base_url")
-                    if (!baseUrl.endsWith("/")) baseUrl += "/"
-                }
-            }
-        } catch (_: Exception) {}
-        return baseUrl
-    }
+    private fun getBaseUrl(): String = ConfigHelper.getBaseUrl(context)
 
     private fun isAttendanceMatch(item: JSONObject, expectedLoc: String?, eventDate: Date?, sdf: SimpleDateFormat): Boolean {
         try {

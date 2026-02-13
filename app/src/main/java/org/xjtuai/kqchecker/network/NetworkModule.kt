@@ -8,18 +8,19 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import org.xjtuai.kqchecker.auth.TokenAuthenticator
 import org.xjtuai.kqchecker.network.TokenInterceptor
 import org.xjtuai.kqchecker.auth.TokenManager
+import org.xjtuai.kqchecker.util.ConfigHelper
 import java.util.concurrent.TimeUnit
 
 object NetworkModule {
     private val moshi = Moshi.Builder().build()
 
-    // default base url (replace with your API endpoint when initializing)
-    private const val DEFAULT_BASE_URL = "http://bkkq.xjtu.edu.cn/attendance-student-pc"
+    // 使用 ConfigHelper 中的统一默认 URL
+    private val defaultBaseUrl: String get() = ConfigHelper.getDefaultBaseUrl()
 
     @Volatile
     private var retrofit: Retrofit? = null
 
-    fun init(context: Context, baseUrl: String = DEFAULT_BASE_URL) {
+    fun init(context: Context, baseUrl: String = defaultBaseUrl) {
         if (retrofit != null) return
 
         // Ensure baseUrl ends with a '/' because Retrofit requires it
@@ -41,7 +42,7 @@ object NetworkModule {
             .build()
     }
 
-    fun apiService(context: Context, baseUrl: String = DEFAULT_BASE_URL): ApiService {
+    fun apiService(context: Context, baseUrl: String = defaultBaseUrl): ApiService {
         init(context, baseUrl)
         return retrofit!!.create(ApiService::class.java)
     }
