@@ -121,7 +121,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/app-release.apk
-          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean up keystore
