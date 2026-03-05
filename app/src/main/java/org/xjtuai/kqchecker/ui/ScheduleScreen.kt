@@ -210,7 +210,6 @@ fun ScheduleItemCard(item: ScheduleItem) {
                 Text(
                     text = "@${item.location}",
                     style = MaterialTheme.typography.overline.copy(fontSize = 8.sp),
-                    maxLines = 1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )

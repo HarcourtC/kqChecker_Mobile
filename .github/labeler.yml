@@ -1,0 +1,84 @@
+# PR Labeler 配置
+# 根据 PR 修改的文件自动添加标签
+
+# UI 相关
+ui:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/ui/**/*'
+
+# Repository 层
+repository:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/repository/**/*'
+
+# Network 层
+network:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/network/**/*'
+
+# Util 工具类
+util:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/util/**/*'
+
+# Sync 后台同步
+sync:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/sync/**/*'
+
+# Auth 认证模块
+auth:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/auth/**/*'
+
+# CI/CD
+ci:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**/*'
+  - changed-files:
+      - any-glob-to-any-file: '*.gradle*'
+  - changed-files:
+      - any-glob-to-any-file: 'gradle/**/*'
+
+# 文档
+docs:
+  - changed-files:
+      - any-glob-to-any-file: '*.md'
+  - changed-files:
+      - any-glob-to-any-file: 'docs*/**/*'
+
+# 构建配置
+build:
+  - changed-files:
+      - any-glob-to-any-file: 'app/build.gradle*'
+  - changed-files:
+      - any-glob-to-any-file: 'build.gradle*'
+  - changed-files:
+      - any-glob-to-any-file: 'gradle.properties'
+
+# 重构
+refactor:
+  - changed-files:
+      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/**/*'
+    all-globs-to-all-files:
+      - '!**/ui/**/*'
+      - '!**/repository/**/*'
+      - '!**/network/**/*'
+      - '!**/util/**/*'
+      - '!**/sync/**/*'
+      - '!**/auth/**/*'
+
+# 修复 bug
+bug:
+  - head-branch: 'fix/**'
+  - head-branch: 'hotfix/**'
+  - head-branch: 'bugfix/**'
+
+# 新功能
+feature:
+  - head-branch: 'feat/**'
+
+#  chore 类型
+chore:
+  - head-branch: 'chore/**'
+  - head-branch: 'refactor/**'
