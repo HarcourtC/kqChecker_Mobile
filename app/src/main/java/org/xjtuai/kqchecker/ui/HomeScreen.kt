@@ -11,6 +11,10 @@ import org.xjtuai.kqchecker.repository.WeeklyRepository
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
 
+/**
+ * 首页屏幕
+ * 展示欢迎信息和基本操作入口
+ */
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit,
@@ -29,20 +33,20 @@ fun HomeScreen(
             color = MaterialTheme.colors.primary,
             modifier = Modifier.padding(vertical = 24.dp)
         )
-        
+
         InfoCard(title = "Welcome") {
             Text(text = "Welcome to kqChecker. Please login and check your status below.")
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         AppButton(
             text = "Login",
             onClick = onLoginClick
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         AppButton(
             text = "Check Cache Status",
             onClick = onCheckCacheStatus,

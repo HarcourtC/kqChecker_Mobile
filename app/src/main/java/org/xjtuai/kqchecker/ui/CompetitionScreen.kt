@@ -22,6 +22,10 @@ import kotlinx.coroutines.launch
 import org.xjtuai.kqchecker.network.CompetitionItem
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 
+/**
+ * 竞赛信息屏幕
+ * 展示教务处竞赛列表，支持分类筛选和刷新
+ */
 @Composable
 fun CompetitionScreen(
     onPostEvent: (String) -> Unit,
@@ -56,11 +60,15 @@ fun CompetitionScreen(
         }
     }
 
+    /**
+     * 加载竞赛数据
+     * @param force 是否强制刷新
+     */
     fun loadData(force: Boolean) {
         scope.launch {
             isLoading = true
             onPostEvent(if (force) "Refreshing competition data (API)..." else "Loading competition data...")
-            
+
             try {
                 val response = repo.getCompetitionData(forceRefresh = force)
                 if (response != null && response.status == "success") {
@@ -136,11 +144,11 @@ fun CompetitionScreen(
                         Tab(
                             selected = isSelected,
                             onClick = { selectedCategory = category },
-                            text = { 
+                            text = {
                                 Text(
                                     text = category,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                ) 
+                                )
                             }
                         )
                     }
@@ -174,7 +182,7 @@ fun CompetitionScreen(
                             )
                         }
                     }
-                    
+
                     items(filteredItems) { item ->
                         CompetitionCard(item = item, onClick = {
                             try {
@@ -191,6 +199,10 @@ fun CompetitionScreen(
     }
 }
 
+/**
+ * 竞赛卡片组件
+ * 展示单个竞赛信息的卡片样式
+ */
 @Composable
 fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
     Card(
@@ -215,9 +227,9 @@ fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.subtitle1,
@@ -238,7 +250,7 @@ fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
                         style = MaterialTheme.typography.caption,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                     )
-                    
+
                     if (!item.deadline.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
@@ -249,7 +261,7 @@ fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
                         )
                     }
                 }
-                
+
                 Text(
                     text = item.type.uppercase(),
                     style = MaterialTheme.typography.caption,
@@ -260,6 +272,10 @@ fun CompetitionCard(item: CompetitionItem, onClick: () -> Unit) {
     }
 }
 
+/**
+ * 分类标签组件
+ * 用于显示竞赛分类的标签样式
+ */
 @Composable
 fun ContainerTag(text: String) {
     Surface(
