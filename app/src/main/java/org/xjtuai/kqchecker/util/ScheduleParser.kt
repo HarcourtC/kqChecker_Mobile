@@ -22,9 +22,15 @@ object ScheduleParser {
             if (start == -1) continue // Invalid period format
 
             val name = obj.optString("subjectSName", "Unknown")
-            val room = obj.optString("roomRoomnum", "")
-            val build = obj.optString("buildName", "")
-            val location = if (build.isNotEmpty() && room.isNotEmpty()) "$build-$room" else "$build$room"
+            // Use trim() to clean up potentials spaces, consistent with WeeklyCleaner
+            val room = obj.optString("roomRoomnum", "").trim()
+            val build = obj.optString("buildName", "").trim()
+            val location = when {
+                build.isNotEmpty() && room.isNotEmpty() -> "$build-$room"
+                build.isNotEmpty() -> build
+                room.isNotEmpty() -> room
+                else -> ""
+            }
             val teacher = obj.optString("teachNameList", "")
             
             // Simple hash for color consistency
