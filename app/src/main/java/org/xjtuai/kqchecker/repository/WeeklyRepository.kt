@@ -27,7 +27,6 @@ class WeeklyRepository(private val context: Context) {
     private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
     private val termRepository = RepositoryProvider.getTermRepository()
-    private val termRepository = RepositoryProvider.getTermRepository()
 
     /**
      * 获取周课表数据
