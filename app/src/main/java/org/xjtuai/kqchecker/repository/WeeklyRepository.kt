@@ -12,6 +12,8 @@ import org.xjtuai.kqchecker.util.ConfigHelper
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 
+import org.xjtuai.kqchecker.network.CurrentTermResponse
+
 /**
  * 周课表仓库类，负责处理周课表数据的获取、缓存和业务逻辑
  */
@@ -24,7 +26,9 @@ class WeeklyRepository(private val context: Context) {
     private val baseUrl: String = ConfigHelper.getBaseUrl(context)
     private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
-    
+    private val termRepository = RepositoryProvider.getTermRepository()
+    private val termRepository = RepositoryProvider.getTermRepository()
+
     /**
      * 获取周课表数据
      * 1. 首先检查缓存是否有效
@@ -95,10 +99,25 @@ class WeeklyRepository(private val context: Context) {
      */
     private suspend fun getWeeklyDataFromApi(): WeeklyResponse? {
         Log.d(TAG, "开始API请求...")
+        
+        // 尝试获取当前学期信息
+        var termNo: Int? = null
+        var week: Int? = null
+        try {
+            val termInfo = termRepository.fetchCurrentTerm()
+            if (termInfo != null && termInfo.success) {
+                termNo = termInfo.bh
+                week = termInfo.currentWeek
+                Log.i(TAG, "Using term info: termNo=$termNo, week=$week")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to fetch current term info, using defaults", e)
+        }
+
         return try {
             // 创建请求体
             Log.d(TAG, "准备请求参数...")
-            val requestBody = createWeeklyRequest()
+            val requestBody = createWeeklyRequest(termNo, week)
             
             Log.d(TAG, "发送API请求到: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
             val respBody = apiService.getWeeklyData(requestBody)
@@ -194,7 +213,19 @@ class WeeklyRepository(private val context: Context) {
         Log.d(TAG, "fetchWeeklyRawFromApi() called")
         return withContext(Dispatchers.IO) {
             try {
-                val requestBody = createWeeklyRequest()
+                var termNo: Int? = null
+                var week: Int? = null
+                try {
+                    val termInfo = termRepository.fetchCurrentTerm()
+                    if (termInfo != null && termInfo.success) {
+                        termNo = termInfo.bh
+                        week = termInfo.currentWeek
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to fetch term, fetching raw with default params", e)
+                }
+
+                val requestBody = createWeeklyRequest(termNo, week)
                 Log.d(TAG, "Sending raw API request to: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
                 val respBody = apiService.getWeeklyData(requestBody)
                 if (respBody == null) {
@@ -238,23 +269,26 @@ class WeeklyRepository(private val context: Context) {
     /**
      * 创建周课表请求体
      */
-    private fun createWeeklyRequest(): RequestBody {
+    private fun createWeeklyRequest(termNo: Int? = null, week: Int? = null): RequestBody {
         val payloadObj = JSONObject()
         
-        // 尝试从配置文件读取termNo和week
+        if (termNo != null) payloadObj.put("termNo", termNo)
+        if (week != null) payloadObj.put("week", week)
+
+        // 尝试从配置文件读取作为兜底 (config.json)
         try {
             context.assets.open("config.json").use { stream ->
                 val text = stream.bufferedReader().readText()
                 val config = JSONObject(text)
-                if (config.has("termNo")) {
+                if (!payloadObj.has("termNo") && config.has("termNo")) {
                     payloadObj.put("termNo", config.getInt("termNo"))
                 }
-                if (config.has("week")) {
+                if (!payloadObj.has("week") && config.has("week")) {
                     payloadObj.put("week", config.getInt("week"))
                 }
             }
         } catch (e: Exception) {
-            Log.d(TAG, "No termNo/week in config.json, using empty request body")
+            Log.d(TAG, "No termNo/week in config.json or file read failed")
         }
         
         return ApiService.jsonToRequestBody(payloadObj)

@@ -34,6 +34,12 @@ interface ApiService {
      */
     @GET("xjtudean")
     suspend fun getCompetitionData(): ResponseBody?
+
+    /**
+     * 获取当前学期信息
+     */
+    @POST("attendance-student/global/getCurrentTerm")
+    suspend fun getCurrentTerm(@Body requestBody: RequestBody): ResponseBody?
     
     companion object {
         /**
