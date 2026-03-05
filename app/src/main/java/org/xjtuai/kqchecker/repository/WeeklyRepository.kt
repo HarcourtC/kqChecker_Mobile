@@ -127,6 +127,8 @@ class WeeklyRepository(private val context: Context) {
                 try {
                     val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
                     if (response.code == 400 || response.code == 401 || response.code == 403 || response.msg.contains("请登录") || response.msg.contains("未登录")) {
+                        // 先清除过期 token，再通知用户
+                        tm.clear()
                         tm.notifyTokenInvalid()
                         // 抛出认证异常，交由 UI 层处理（例如弹出登录）
                         throw org.xjtuai.kqchecker.auth.AuthRequiredException(response.msg)
@@ -211,6 +213,8 @@ class WeeklyRepository(private val context: Context) {
                     if (parsed.code == 400 || parsed.code == 401 || parsed.code == 403 || parsed.msg.contains("请登录") || parsed.msg.contains("未登录")) {
                         try {
                             val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
+                            // 先清除过期 token，再通知用户
+                            tm.clear()
                             tm.notifyTokenInvalid()
                         } catch (t: Throwable) {
                             Log.w(TAG, "Failed to notify token invalid while fetching raw", t)

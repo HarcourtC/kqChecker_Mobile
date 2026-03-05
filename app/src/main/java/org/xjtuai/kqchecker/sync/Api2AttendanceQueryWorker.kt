@@ -230,6 +230,10 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
 
     private fun notifyTokenInvalid() {
         try {
+            // 先清除过期 token
+            val tm = TokenManager(context)
+            tm.clear()
+            // 再发送通知
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val ch = NotificationChannel(NOTIF_CHANNEL_ID, "API2 Alerts", NotificationManager.IMPORTANCE_HIGH)

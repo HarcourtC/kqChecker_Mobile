@@ -15,6 +15,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Default.Home)
+    object Schedule : Screen("schedule", "Schedule", Icons.Default.DateRange)
     object Competition : Screen("competition", "Dean's", Icons.Default.List)
     object Tools : Screen("tools", "Tools", Icons.Default.Build)
     object Integration : Screen("integration", "Integration", Icons.Default.Settings) 
@@ -50,7 +52,7 @@ fun MainScreen(
                 backgroundColor = MaterialTheme.colors.surface,
                 contentColor = MaterialTheme.colors.primary
             ) {
-                val screens = listOf(Screen.Home, Screen.Competition, Screen.Tools, Screen.Integration)
+                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Integration)
                 screens.forEach { screen ->
                     BottomNavigationItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
@@ -76,6 +78,9 @@ fun MainScreen(
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
                         onCheckCacheStatus = onCheckCacheStatus
+                    )
+                    Screen.Schedule -> ScheduleScreen(
+                        onPostEvent = onPostEvent
                     )
                     Screen.Competition -> CompetitionScreen(
                         onPostEvent = onPostEvent

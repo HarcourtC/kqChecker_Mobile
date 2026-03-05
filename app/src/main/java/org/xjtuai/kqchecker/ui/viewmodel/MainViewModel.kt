@@ -20,6 +20,7 @@ import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.repository.WeeklyCleaner
 import org.xjtuai.kqchecker.repository.WeeklyRepository
 import org.xjtuai.kqchecker.ui.state.MainUiState
+import org.xjtuai.kqchecker.util.ScheduleParser
 
 /**
  * ViewModel for MainActivity
@@ -63,10 +64,12 @@ class MainViewModel(
           is RefreshWeeklyUseCase.RefreshResult.Success -> {
             addEventLog(result.message)
             addEventLog("Cache will expire on: ${result.cacheStatus.expiresDate ?: "unknown"}")
+            loadSchedule()
           }
           is RefreshWeeklyUseCase.RefreshResult.CacheValid -> {
             addEventLog(result.message)
             addEventLog("Expires on: ${result.expiresDate}")
+            loadSchedule()
           }
           is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
             addEventLog(result.message)
@@ -83,9 +86,22 @@ class MainViewModel(
     }
   }
 
+
+  private suspend fun loadSchedule() {
+    try {
+        val response = weeklyRepository.getWeeklyData(false)
+        if (response != null && response.success) {
+            val items = ScheduleParser.parse(response.data)
+            _uiState.update { it.copy(scheduleItems = items) }
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to load schedule", e)
+    }
+  }
+
   /**
    * Load API2 settings from SharedPreferences
-   */
+   */           
   private fun loadApi2Settings() {
     viewModelScope.launch(Dispatchers.IO) {
       try {
@@ -143,6 +159,7 @@ class MainViewModel(
             addEventLog(result.message)
             addEventLog("Cache status: ${if (result.cacheStatus.isExpired) "Expired" else "Valid"}")
             addEventLog("Cache expires on: ${result.cacheStatus.expiresDate ?: "unknown"}")
+            loadSchedule()
           }
           is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
             addEventLog(result.message)
