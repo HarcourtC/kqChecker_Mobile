@@ -54,6 +54,7 @@ fun ToolsScreen(
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
+    val tokenManager = remember { org.xjtuai.kqchecker.auth.TokenManager(context) }
 
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -139,7 +140,19 @@ fun ToolsScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        InfoCard(title = "Synchronization") {
+        InfoCard(title = "Authentication") {
+            AppButton(text = "Clear Token (Logout)", onClick = {
+                onPostEvent("Clearing token...")
+                try {
+                    tokenManager.clear()
+                    onPostEvent("Token cleared successfully. Please restart the app if needed.")
+                } catch (e: Exception) {
+                    onPostEvent("Failed to clear token: ${e.message}")
+                }
+            })
+    }
+
+    InfoCard(title = "Synchronization") {
             AppButton(text = "Trigger Sync (Week)", onClick = {
                 onPostEvent("Triggering manual sync...")
                 scope.launch(Dispatchers.IO) {

@@ -12,6 +12,9 @@ import android.webkit.CookieManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import org.xjtuai.kqchecker.auth.WebLoginActivity
+import android.webkit.WebStorage
+import android.os.Handler
+import android.os.Looper
 
 class TokenManager(private val context: Context) {
     private val prefs by lazy {
@@ -75,6 +78,20 @@ class TokenManager(private val context: Context) {
                 val intent = Intent(ACTION_TOKEN_CLEARED)
                 context.sendBroadcast(intent)
             } catch (_: Throwable) {}
+
+            try {
+                // Clear WebView local storage on main thread
+                Handler(Looper.getMainLooper()).post {
+                    try {
+                        WebStorage.getInstance().deleteAllData()
+                        Log.d("TokenManager", "WebStorage cleared successfully")
+                    } catch (e: java.lang.Exception) {
+                        Log.e("TokenManager", "Failed to clear WebStorage", e)
+                    }
+                }
+            } catch (e: Throwable) {
+                Log.e("TokenManager", "Failed to post WebStorage clear task", e)
+            }
         } catch (e: Throwable) {
             try { Log.e("TokenManager", "clear failed", e) } catch (_: Throwable) {}
         }
