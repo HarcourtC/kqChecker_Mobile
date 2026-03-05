@@ -31,11 +31,12 @@ fun AppButton(
 @Composable
 fun InfoCard(
     title: String,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     Card(
         elevation = 4.dp,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
