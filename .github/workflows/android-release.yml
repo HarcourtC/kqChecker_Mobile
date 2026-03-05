@@ -21,14 +21,20 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+           gradle-version: wrapper
+           cache-disabled: false
 
-
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
       - name: Install Android SDK 
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-36 build-tools;34.0.0'
-    
 
       - name: Prepare keystore from secrets
         env:
@@ -45,42 +51,6 @@ jobs:
           echo "Decoding keystore..."
           echo "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
           printf 'storeFile=release-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
-          ls -la release-keystore.jks keystore.properties || true
-
-
-      - name: "Debug: list sync sources and show gradle version"
-        run: |
-          echo "Listing sync sources in app/src/main/java..."
-          ls -la app/src/main/java/org/example/kqchecker/sync || true
-          echo "Gradle wrapper info:"
-          ./gradlew --version || true
-          echo "Android SDK location:"
-          cat local.properties || true
-          ls -la gradle/wrapper || true
-      
-      - name: Cache Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: wrapper
-          cache-disabled: false
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Verify Gradle Environment Explicitly
-        run: |
-          echo "=== 检查 Gradle Wrapper 文件 ==="
-          cat gradle/wrapper/gradle-wrapper.properties | grep distributionUrl
-          echo ""
-          echo "=== 检查实际运行的 Gradle 版本 ==="
-          ./gradlew --version | grep -A 1 "Gradle"
-          echo ""
-          echo "=== 检查 JAVA_HOME ==="
-          echo $JAVA_HOME
-
-
-      - name: Verify Gradle Version in CI
-        run: ./gradlew --version | grep "Gradle"
 
       - name: Build Release APK
         run: |

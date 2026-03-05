@@ -39,6 +39,13 @@ fun IntegrationScreen(
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var api2ForegroundEnabled by remember { mutableStateOf(prefs.getBoolean("api2_foreground_enabled", false)) }
     var deadlineCheckEnabled by remember { mutableStateOf(prefs.getBoolean("deadline_check_enabled", false)) }
+    var eventLogEnabled by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
+
+    fun toggleEventLog(enabled: Boolean) {
+        prefs.edit().putBoolean("event_log_enabled", enabled).apply()
+        eventLogEnabled = enabled
+        onPostEvent("Event log ${if (enabled) "enabled" else "disabled"}")
+    }
 
     fun startForegroundPolling(intervalMin: Int = 5) {
         try {
@@ -151,6 +158,21 @@ fun IntegrationScreen(
                         } else {
                             disableDeadlineCheck()
                         }
+                    }
+                )
+            }
+        }
+        
+        org.xjtuai.kqchecker.ui.components.InfoCard(title = "UI Configuration", modifier = Modifier.padding(top = 16.dp)) {
+             Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Show Event Log Panel",
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = eventLogEnabled,
+                    onCheckedChange = { checked ->
+                         toggleEventLog(checked)
                     }
                 )
             }

@@ -30,6 +30,7 @@ import java.io.File
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         RepositoryProvider.initialize(this)
         setContent {
             KqCheckerTheme {
@@ -45,6 +46,20 @@ fun AppContent() {
     val events = remember { mutableStateListOf<String>() }
     val context = LocalContext.current
     val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
+    val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
+    var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
+
+    DisposableEffect(Unit) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == "event_log_enabled") {
+                showEventLog = sharedPreferences.getBoolean("event_log_enabled", true)
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
 
     fun postEvent(msg: String) {
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
@@ -177,6 +192,7 @@ fun AppContent() {
     // MainScreen manages the tabs and content
     MainScreen(
         events = events,
+        showEventLog = showEventLog,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
         onCheckCacheStatus = {
