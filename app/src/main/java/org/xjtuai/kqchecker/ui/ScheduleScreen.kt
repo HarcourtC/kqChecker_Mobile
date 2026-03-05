@@ -167,8 +167,8 @@ fun ScheduleScreen(
 @Composable
 fun ScheduleItemCard(item: ScheduleItem) {
     // 60.dp per period
-    val height = (item.endPeriod - item.startPeriod + 1) * 60.dp
-    val topOffset = (item.startPeriod - 1) * 60.dp
+    val height = ((item.endPeriod - item.startPeriod + 1) * 60).dp
+    val topOffset = ((item.startPeriod - 1) * 60).dp
     
     // Choose color based on index
     val cardColor = when (item.colorIndex) {
