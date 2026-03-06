@@ -56,29 +56,17 @@ build:
   - changed-files:
       - any-glob-to-any-file: 'gradle.properties'
 
-# 重构
-refactor:
-  - changed-files:
-      - any-glob-to-any-file: 'app/src/main/java/org/xjtuai/kqchecker/**/*'
-    all-globs-to-all-files:
-      - '!**/ui/**/*'
-      - '!**/repository/**/*'
-      - '!**/network/**/*'
-      - '!**/util/**/*'
-      - '!**/sync/**/*'
-      - '!**/auth/**/*'
-
-# 修复 bug
+# 修复 bug - 使用正则表达式
 bug:
-  - head-branch: 'fix/**'
-  - head-branch: 'hotfix/**'
-  - head-branch: 'bugfix/**'
+  - head-branch: '^fix/'
+  - head-branch: '^hotfix/'
+  - head-branch: '^bugfix/'
 
-# 新功能
+# 新功能 - 使用正则表达式
 feature:
-  - head-branch: 'feat/**'
+  - head-branch: '^feat/'
 
-#  chore 类型
+# Chore 类型 - 使用正则表达式
 chore:
-  - head-branch: 'chore/**'
-  - head-branch: 'refactor/**'
+  - head-branch: '^chore/'
+  - head-branch: '^refactor/'
