@@ -54,15 +54,15 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-    
+
     // Lint优化配置
     lintOptions {
         // 禁用不必要的lint检查
         disable 'TypographyFractions', 'TypographyQuotes'
-        
+
         // 启用并行检查（如果可用）
         checkReleaseBuilds = false
-        
+
         // 减少警告数量以提高性能
         quiet = true
     }
