@@ -34,7 +34,9 @@ buildscript {
         agp_version1 = '8.13.0'
     }
     repositories {
-        // Aliyun mirrors for plugin and dependency resolution
+        // First try official Gradle Plugin Portal since ktlint usually lives there
+        gradlePluginPortal()
+        // Then try Aliyun mirrors
         maven { url = 'https://maven.aliyun.com/repository/public' }
         maven { url = 'https://maven.aliyun.com/repository/google' }
         maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
@@ -46,6 +48,8 @@ buildscript {
         // Android Gradle plugin
         classpath "com.android.tools.build:gradle:$agp_version1"
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10'
+        // ktlint
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:11.3.1"
     }
 }
 

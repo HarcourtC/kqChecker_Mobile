@@ -1,5 +1,7 @@
 package org.xjtuai.kqchecker.ui.state
 
+import org.xjtuai.kqchecker.model.ScheduleItem
+
 /**
  * Represents the complete UI state for MainActivity
  * Centralizes all state management for easier testing and composition
@@ -7,6 +9,9 @@ package org.xjtuai.kqchecker.ui.state
 data class MainUiState(
   // Navigation state
   val currentPage: Int = 0, // 0 = Home, 1 = Tools, 2 = Integration
+
+  // Schedule Data
+  val scheduleItems: List<ScheduleItem> = emptyList(),
 
   // API2 settings
   val api2AutoEnabled: Boolean = false,

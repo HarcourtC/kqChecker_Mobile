@@ -386,7 +386,8 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                 startMillis, 
                                 endMillis, 
                                 description, 
-                                bh // 传递唯一标识用于后续匹配
+                                bh, // 传递唯一标识用于后续匹配
+                                eqno // 传递地点信息
                             )
                             insertedCount++
                             Log.d(TAG, "   - ✅ 成功创建日历事件: $eventTitle ($watertime) - $eqno")

@@ -41,6 +41,10 @@ import org.xjtuai.kqchecker.ui.components.InfoCard
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+/**
+ * 工具屏幕
+ * 提供调试、同步、日历写入等开发工具功能
+ */
 @Composable
 fun ToolsScreen(
     onPostEvent: (String) -> Unit,
@@ -50,10 +54,11 @@ fun ToolsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    
+
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
+    val tokenManager = remember { org.xjtuai.kqchecker.auth.TokenManager(context) }
 
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -71,6 +76,9 @@ fun ToolsScreen(
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var api2AutoEnabled by remember { mutableStateOf(prefs.getBoolean("api2_auto_enabled", false)) }
 
+    /**
+     * 启用 API2 自动轮询
+     */
     fun enableApi2Periodic() {
         try {
             val workManager = WorkManager.getInstance(context)
@@ -84,6 +92,9 @@ fun ToolsScreen(
         }
     }
 
+    /**
+     * 禁用 API2 自动轮询
+     */
     fun disableApi2Periodic() {
         try {
             WorkManager.getInstance(context).cancelUniqueWork("api2_att_query_periodic")
@@ -94,7 +105,11 @@ fun ToolsScreen(
             onPostEvent("Failed to disable automatic api2 queries: ${e.message}")
         }
     }
-    
+
+    /**
+     * 开始日历同步
+     * 将课程数据写入系统日历
+     */
     fun startSync() {
         // Logic for WriteCalendar extracted from MainActivity
         onPostEvent("Writing calendar from backend...")
@@ -139,7 +154,19 @@ fun ToolsScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        InfoCard(title = "Synchronization") {
+        InfoCard(title = "Authentication") {
+            AppButton(text = "Clear Token (Logout)", onClick = {
+                onPostEvent("Clearing token...")
+                try {
+                    tokenManager.clear()
+                    onPostEvent("Token cleared successfully. Please restart the app if needed.")
+                } catch (e: Exception) {
+                    onPostEvent("Failed to clear token: ${e.message}")
+                }
+            })
+        }
+
+    InfoCard(title = "Synchronization") {
             AppButton(text = "Trigger Sync (Week)", onClick = {
                 onPostEvent("Triggering manual sync...")
                 scope.launch(Dispatchers.IO) {
@@ -165,9 +192,9 @@ fun ToolsScreen(
                     }
                 }
             })
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             AppButton(text = "Trigger Sync (WaterList)", onClick = {
                  onPostEvent("Running experimental sync (API2)...")
                   scope.launch(Dispatchers.IO) {
@@ -226,7 +253,7 @@ fun ToolsScreen(
                 }
             })
              Spacer(modifier = Modifier.height(8.dp))
-             
+
             AppButton(text = "Print weekly.json", onClick = {
                 scope.launch {
                     onPostEvent("Printing weekly files...")
@@ -244,9 +271,9 @@ fun ToolsScreen(
                     }
                 }
             })
-            
+
              Spacer(modifier = Modifier.height(8.dp))
-             
+
             AppButton(text = "Generate Cleaned Weekly", onClick = {
                  scope.launch {
                     onPostEvent("Generating cleaned weekly...")
@@ -263,7 +290,7 @@ fun ToolsScreen(
                  }
             })
         }
-        
+
         InfoCard(title = "Settings") {
              Row(verticalAlignment = Alignment.CenterVertically) {
                   Text(text = "Enable automatic API2 queries:", modifier = Modifier.weight(1f))

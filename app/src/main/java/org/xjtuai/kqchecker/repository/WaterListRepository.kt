@@ -113,6 +113,8 @@ class WaterListRepository(private val context: Context) {
                     val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
                     if (wr != null) {
                         if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                            // 先清除过期 token，再通知用户
+                            tm.clear()
                             tm.notifyTokenInvalid()
                             // 抛出认证异常，交由 UI 层处理（例如弹出登录）
                             throw org.xjtuai.kqchecker.auth.AuthRequiredException(wr.msg)

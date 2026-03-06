@@ -37,70 +37,110 @@ adb logcat | grep -i "kqchecker"
 
 ### Technology Stack
 - **Language**: Kotlin 1.9.10
-- **UI Framework**: Jetpack Compose 1.5.3
+- **UI Framework**: Jetpack Compose 1.5.3 (Material 3)
 - **Network**: Retrofit 2.9.0 + Moshi + OkHttp 4.11.0
-- **Async**: Kotlin Coroutines 1.7.0
+- **Async**: Kotlin Coroutines 1.7.0 + Flow
 - **Background Tasks**: WorkManager 2.8.1
 - **Storage**: EncryptedSharedPreferences + Files (JSON caching)
 - **SDK**: Target SDK 36, Min SDK 21
+- **Architecture**: MVVM + Repository + Clean Architecture (Use Cases)
 
 ### Code Structure
 
 ```
-app/src/main/java/org/example/kqchecker/
-├── MainActivity.kt                # Main UI (Jetpack Compose, ~800 lines)
-├── KqApplication.kt               # App initialization, NetworkModule setup
+app/src/main/java/org/xjtuai/kqchecker/
+├── MainActivity.kt                    # Main entry point
+├── KqApplication.kt                   # App initialization
 │
-├── auth/                          # Authentication module
-│   ├── TokenStore.kt              # Token persistence via SharedPreferences
-│   ├── TokenManager.kt            # Token operations (fetch, refresh)
-│   ├── TokenAuthenticator.kt      # Retrofit token refresh interceptor
-│   └── WebLoginActivity.kt        # Web-based login UI
+├── auth/                              # Authentication module
+│   ├── TokenStore.kt                  # Token persistence via EncryptedSharedPreferences
+│   ├── TokenManager.kt                # Token operations (fetch, refresh)
+│   ├── TokenInterceptor.kt            # Adds auth token to requests
+│   ├── TokenAuthenticator.kt          # Retrofit token refresh on 401
+│   └── WebLoginActivity.kt            # Web-based login UI
 │
-├── network/                       # Network/API layer
-│   ├── NetworkModule.kt           # Singleton Retrofit & OkHttp setup
-│   ├── ApiService.kt              # Retrofit API interface definitions
-│   ├── ApiClient.kt               # OkHttp client configuration
-│   ├── TokenInterceptor.kt        # Adds auth token to requests
-│   ├── TokenResponse.kt           # API response models
-│   ├── WeeklyResponse.kt          # Weekly attendance data model
-│   └── WaterListResponse.kt       # Water list (api2) data model
+├── network/                           # Network/API layer
+│   ├── NetworkModule.kt               # Singleton Retrofit & OkHttp setup
+│   ├── ApiService.kt                  # Retrofit API interface definitions
+│   ├── ApiClient.kt                   # OkHttp client configuration
+│   ├── TokenResponse.kt               # API response models
+│   ├── WeeklyResponse.kt              # Weekly attendance data model
+│   ├── WaterListResponse.kt           # Water list (api2) data model
+│   ├── CompetitionResponse.kt         # Competition data model
+│   └── CompetitionApiInterceptor.kt    # Interceptor for Harco API
 │
-├── repository/                    # Data access & business logic layer
-│   ├── RepositoryProvider.kt      # Singleton repository accessor
-│   ├── WeeklyRepository.kt        # Fetches & caches weekly attendance (api1)
-│   ├── WaterListRepository.kt     # Fetches & caches water list (api2)
-│   ├── WeeklyCleaner.kt           # Data transformation/cleaning logic
-│   ├── WeeklyRefreshWorker.kt     # WorkManager background sync
-│   ├── CacheManager.kt            # File-based caching (JSON files)
-│   └── DebugRepository.kt         # Debug/testing helpers
+├── repository/                        # Data access & business logic layer
+│   ├── RepositoryProvider.kt          # Singleton repository accessor
+│   ├── WeeklyRepository.kt            # Fetches & caches weekly attendance (api1)
+│   ├── WaterListRepository.kt         # Fetches & caches water list (api2)
+│   ├── CompetitionRepository.kt       # Competition data with caching
+│   ├── WeeklyCleaner.kt               # Data transformation/cleaning logic
+│   ├── WeeklyRefreshWorker.kt         # WorkManager background sync
+│   └── CacheManager.kt                # File-based caching (JSON files)
 │
-├── sync/                          # Background sync
-│   ├── Api2PollingService.kt      # Foreground service for api2 polling
-│   └── BootReceiver.kt            # Restarts polling after device reboot
+├── domain/usecase/                    # Clean Architecture use cases
+│   ├── IntegrationFlowUseCase.kt      # End-to-end calendar sync workflow
+│   ├── RefreshWeeklyUseCase.kt        # Weekly data refresh logic
+│   ├── WriteCalendarUseCase.kt        # Calendar writing logic
+│   └── Api2QueryUseCase.kt            # Water list query logic
 │
-├── model/                         # Data classes (if any)
-├── util/                          # Utilities
-│   ├── CalendarHelper.kt          # Calendar integration
-│   └── Others...
-└── repo/                          # Legacy code directory
+├── ui/                                # UI layer (Jetpack Compose)
+│   ├── MainScreen.kt                  # Main screen with navigation
+│   ├── HomeScreen.kt                  # Home screen with sync controls
+│   ├── CompetitionScreen.kt            # Competition info display
+│   ├── IntegrationScreen.kt           # Calendar integration UI
+│   ├── ToolsScreen.kt                 # Debug tools screen
+│   ├── LogDisplay.kt                  # In-app log viewer
+│   ├── viewmodel/
+│   │   └── MainViewModel.kt           # Main UI state management
+│   ├── state/
+│   │   └── MainUiState.kt             # UI state models
+│   ├── components/
+│   │   └── CommonComponents.kt        # Reusable Compose components
+│   └── theme/
+│       ├── Theme.kt                   # Material 3 theme
+│       └── Color.kt                   # Color definitions
+│
+├── sync/                              # Background sync
+│   ├── Api2PollingService.kt          # Foreground service for api2 polling
+│   ├── Api2AttendanceQueryWorker.kt   # WorkManager for attendance queries
+│   ├── CompetitionDeadlineWorker.kt   # Competition deadline notifications
+│   ├── WriteCalendar.kt               # Calendar writing service
+│   └── BootReceiver.kt                # Restarts polling after device reboot
+│
+├── model/                             # Data models
+│   ├── WeeklyModels.kt                # Weekly attendance models
+│   └── PeriodModels.kt                # Academic period models
+│
+├── util/                              # Utilities
+│   ├── CalendarHelper.kt              # Calendar integration helpers
+│   ├── LoginHelper.kt                # Login flow helpers
+│   ├── WorkManagerHelper.kt          # WorkManager configuration
+│   ├── ConfigHelper.kt               # Configuration loading
+│   └── NotificationHelper.kt         # Notification utilities
+│
+└── debug/                             # Debug/testing utilities
+    ├── DebugRepository.kt             # Debug network requests
+    ├── MockRepository.kt              # Load test data from assets
+    ├── DebugWorkers.kt                # Test workers (calendar, sync)
+    └── Api2QueryTestWorker.kt         # API2 query test worker
 ```
 
-### Architecture Pattern: MVVM + Repository
+### Architecture Pattern: MVVM + Repository + Use Cases
 
-**Flow**: UI (MainActivity) → Repository → Network (ApiService) → Backend
+**Flow**: UI (Compose Screens) → ViewModel → Use Cases → Repository → Network (ApiService) → Backend
 
-1. **UI Layer** (MainActivity): Jetpack Compose UI, state management via Compose state holders
-2. **Repository Layer**: Abstracts data fetching logic, manages caching, handles retries
+1. **UI Layer** (Compose Screens): Material 3 UI, state management via ViewModel + StateFlow
+2. **ViewModel**: Manages UI state, orchestrates use cases
+3. **Use Cases** (domain/usecase): Business logic orchestration
+   - `IntegrationFlowUseCase` - End-to-end calendar sync workflow
+   - `RefreshWeeklyUseCase` - Weekly data refresh with caching
+   - `WriteCalendarUseCase` - Calendar writing with conflict handling
+4. **Repository Layer**: Abstracts data fetching, manages caching
    - `WeeklyRepository.fetchWeeklyData()` - Checks cache first, falls back to API
-   - `WaterListRepository.fetchWaterListData()` - Same pattern for water list
-3. **Network Layer**: Retrofit services, interceptors, authentication
-   - `ApiService` defines endpoints
-   - `TokenInterceptor` adds auth header
-   - `TokenAuthenticator` refreshes expired tokens
-4. **Data Persistence**:
-   - Tokens: EncryptedSharedPreferences (TokenStore)
-   - JSON data: Local files via CacheManager
+   - `WaterListRepository.fetchWaterListData()` - Water list with caching
+   - `CompetitionRepository` - Competition data from Harco API
+5. **Network Layer**: Retrofit services, interceptors, authentication
 
 ### Key Design Patterns
 
@@ -110,33 +150,35 @@ app/src/main/java/org/example/kqchecker/
 
 **Repository Pattern**:
 - Repositories hide network/cache complexity
-- Always call repositories from UI, never ApiService directly
+- Always call repositories through use cases, never ApiService directly
 
 **Interceptor Chain** (OkHttp):
 1. TokenInterceptor (adds Authorization header)
-2. (If 401) TokenAuthenticator (refreshes token and retries)
+2. CompetitionApiInterceptor (adds X-API-KEY for Harco API)
+3. (If 401) TokenAuthenticator (refreshes token and retries)
 
 **Async Patterns**:
 - Suspend functions with `try/catch` for error handling
 - Coroutines with `launch` or `async` for non-blocking operations
 - WorkManager for background persistence across app restarts
+- StateFlow for reactive UI updates
 
 ## Data Files & Caching
 
-Weekly attendance data caches to three files:
+Cache files stored in `/data/data/org.xjtuai.kqchecker/files/`:
 - **weekly.json** - Original API response (api1)
 - **weekly_raw.json** - Backup of raw response
-- **weekly_cleaned.json** - Processed/cleaned data for calendar integration
+- **weekly_cleaned.json** - Processed data for calendar integration
 - **api2_query_log.json** - Water list (api2) response for debugging
-
-Cache location: `/data/data/org.example.kqchecker/files/` (device storage)
+- **competition_data.json** - Competition data from Harco API
+- **periods.json** - Academic period information
 
 ## Important Configuration
 
 ### Base URL
 - **Default**: Defined in `app/build.gradle` `buildConfigField "BASE_URL"`
 - **Override**: Create `assets/config.json` with `{"base_url": "..."}`
-- **Loaded in**: `KqApplication.onCreate()`
+- **Loaded in**: `KqApplication.onCreate()` via `ConfigHelper`
 
 ### Token Lifecycle
 1. User logs in via WebLoginActivity
@@ -150,19 +192,25 @@ Cache location: `/data/data/org.example.kqchecker/files/` (device storage)
 - `WRITE_CALENDAR` / `READ_CALENDAR` - Calendar integration
 - `WAKE_LOCK` - Background task execution
 - `RECEIVE_BOOT_COMPLETED` - Restart after device reboot
+- `POST_NOTIFICATIONS` - Competition deadline notifications
 
 ## API Endpoints & Data Models
 
-**API1 (Weekly Attendance)**
-- Endpoint: `/api1` (path varies based on BASE_URL)
-- Response Model: `WeeklyResponse`
-- Repository: `WeeklyRepository.fetchWeeklyData()`
+**Internal APIs** (require authentication):
+- **API1** (Weekly Attendance): `/attendance-student/rankClass/getWeekSchedule2`
+  - Repository: `WeeklyRepository.fetchWeeklyData()`
+  - Response: `WeeklyResponse`
 
-**API2 (Water List / 考情流水)**
-- Endpoint: `/api2` (path varies)
-- Response Model: `WaterListResponse`
-- Repository: `WaterListRepository.fetchWaterListData()`
-- Payload: `calendarBh` (term number), `startdate`, `enddate`, `pageSize`, `current`
+- **API2** (Water List / 考情流水): `/attendance-student/waterList/page`
+  - Repository: `WaterListRepository.fetchWaterListData()`
+  - Response: `WaterListResponse`
+  - Payload: `calendarBh` (term number), `startdate`, `enddate`, `pageSize`, `current`
+
+**External APIs**:
+- **Competition API**: `https://api.harco.top/xjtudean`
+  - Repository: `CompetitionRepository`
+  - Auth: `X-API-KEY` header via `CompetitionApiInterceptor`
+  - Caches to: `competition_data.json`
 
 ## Development Workflow
 
@@ -175,25 +223,35 @@ Cache location: `/data/data/org.example.kqchecker/files/` (device storage)
 ### Debugging Weekly Data Issues
 ```bash
 # Clear cache files
-adb shell run-as org.example.kqchecker rm -f /data/data/org.example.kqchecker/files/weekly*.json
+adb shell run-as org.xjtuai.kqchecker rm -f /data/data/org.xjtuai.kqchecker/files/weekly*.json
 
 # Pull and inspect cache files
-adb shell run-as org.example.kqchecker cat /data/data/org.example.kqchecker/files/weekly.json > weekly.json
+adb shell run-as org.xjtuai.kqchecker cat /data/data/org.xjtuai.kqchecker/files/weekly.json > weekly.json
 
 # View filtered logs
 adb logcat -v time WeeklyRepository:* MainActivity:* WeeklyCleaner:* *:S
 ```
 
-### Adding New Network Endpoints
-1. Add method to `ApiService` interface
-2. Create response model class (e.g., `MyResponse.kt`)
-3. Create repository class (e.g., `MyRepository.kt`) with caching logic
-4. Call from MainActivity via `RepositoryProvider.getRepository().myMethod()`
+### Debugging Tools in App
+MainActivity provides debug features accessible via ToolsScreen:
+- **Fetch Weekly (API)** - Force fetch from API1, print raw response
+- **Print cleaned weekly** - Display processed data in UI and Logcat
+- **Print api2_query_log** - Show raw API2 response
+- **Run Integration** - End-to-end calendar sync workflow
+- **Debug Request** - Manual API request testing interface
 
-### Modifying Cache Logic
-- CacheManager handles file I/O (`readFile()`, `writeFile()`)
-- WeeklyCleaner handles data transformation
-- Override caching in individual repositories (`WeeklyRepository`, etc.)
+### Mock Data for Development
+- `assets/example_weekly.json` - Mock weekly data fallback
+- `assets/example_weekly_cleaned.json` - Mock cleaned data
+- `assets/periods.json` - Mock academic periods
+- Use `MockRepository` to load from assets for offline testing
+
+### Adding New Features
+1. Add API endpoint to `ApiService.kt` (or create response model)
+2. Create repository in `repository/` with caching logic
+3. Create use case in `domain/usecase/` for business logic
+4. Add UI in `ui/` (screen, update ViewModel)
+5. Wire up in `MainViewModel` and navigation
 
 ## Common Issues & Solutions
 
@@ -205,60 +263,23 @@ adb logcat -v time WeeklyRepository:* MainActivity:* WeeklyCleaner:* *:S
 **Token Expiration / 401 Errors**
 - TokenAuthenticator should handle refresh automatically
 - If it fails, user is prompted to re-login
-- Tokens are stored securely in EncryptedSharedPreferences
+- Tokens stored securely in EncryptedSharedPreferences
 
 **Weekly Data Not Syncing**
-- Check cache files exist: `adb shell run-as org.example.kqchecker ls /data/data/org.example.kqchecker/files/`
-- Clear cache and force re-fetch: Use debug buttons in MainActivity
+- Check cache files exist: `adb shell run-as org.xjtuai.kqchecker ls /data/data/org.xjtuai.kqchecker/files/`
+- Clear cache and force re-fetch via ToolsScreen
 - Review logs for parsing errors in WeeklyCleaner
 
 **WorkManager Background Tasks Not Running**
 - Device may have aggressive battery optimization; whitelist app if needed
 - Check WorkManager logs: `adb logcat | grep WorkManager`
-- Verify `WeeklyRefreshWorker` is properly enqueued in code
-
-## Contribution Guidelines (from CONTRIBUTING.md)
-
-### Kotlin Code Style
-- 2-space indentation
-- Class names: PascalCase
-- Function/variable names: camelCase
-- Constants: ALL_CAPS_WITH_UNDERSCORES
-- Max line length: 100 characters
-- Use suspend functions for async operations
-
-### Compose Component Style
-- Component names: PascalCase
-- Avoid long-running ops in composables
-- Use `remember`, `derivedStateOf` for memoization
-
-### Branch & Commit Strategy
-- **main**: Stable releases
-- **develop**: Latest dev version
-- Create feature branches: `feature/short-description`
-- Commit format: `<type>: <description>` (e.g., `feat: add api2 support`)
-
-### Testing
-- Build after changes: `./gradlew assembleDebug`
-- Install and manually test on device
-- Check logs for errors/crashes
-- For larger changes, test on API 21+ devices/emulators
-
-## Debugging Tools in App
-
-MainActivity provides debug buttons (visible in dev builds):
-- **Fetch Weekly (API)** - Force fetch from API1, print raw response
-- **Print cleaned weekly** - Display processed data in UI and Logcat
-- **Print api2_query_log** - Show raw API2 response
-- **Run Integration** - End-to-end calendar sync workflow
-- **Debug Request** - Manual API request testing interface
-
-Access via UI debug section at bottom of MainActivity Compose layout.
+- Verify workers are properly enqueued in code
 
 ## Additional Documentation
 
 - **运行指南.md** - Detailed device setup & testing steps (Chinese)
 - **模块拆分方案.md** - Architecture refactoring plan (Chinese)
 - **API说明.md** - API endpoint specifications (Chinese)
-- **README.md** - Project overview & installation
+- **COMPETITION_FEATURE_GUIDE.md** - Competition module details
 - **CONTRIBUTING.md** - Contribution guidelines & code standards
+- **README.md** - Project overview & installation
