@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=flat" alt="Android">
-  <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=flat" alt="Kotlin">
-  <img src="https://img.shields.io/badge/UI-Compose-purple?style=flat" alt="Compose">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="MIT">
-  <img src="https://img.shields.io/github/v/release/HarcourtC/kqChecker_Mobile?style=flat" alt="v0.3.0">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=flat" alt="Platform-Android">
+  <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=flat" alt="Language-Kotlin">
+  <img src="https://img.shields.io/badge/UI-Compose-purple?style=flat" alt="UI-Compose">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="License-MIT">
+  <img src="https://img.shields.io/github/v/release/HarcourtC/kqChecker_Mobile?style=flat" alt="Version-v0.3.0">
 </p>
 
 > 🚀 西安交通大学考勤检查移动应用 | Attendance Checker Mobile App
