@@ -4,6 +4,38 @@ plugins {
     id 'org.jlleitschuh.gradle.ktlint'
 }
 
+/**
+ * 从 Git tag 自动获取版本号
+ * 使用方式: git tag v1.2.3
+ */
+def getVersionName = {
+    try {
+        def tag = 'git describe --tags --abbrev=0'.execute([], project.rootDir).text.trim()
+        return tag ? tag.replaceFirst('v', '') : "0.0.0-dev"
+    } catch (Exception e) {
+        return "0.0.0-dev"
+    }
+}
+
+def getVersionCode = {
+    try {
+        def tag = 'git describe --tags --abbrev=0'.execute([], project.rootDir).text.trim()
+        if (!tag) return 99999
+
+        def version = tag.replaceFirst('v', '')
+        def parts = version.split('\\.')
+
+        // 格式: major * 10000 + minor * 100 + patch
+        def major = parts.length > 0 ? parts[0].toInteger() : 0
+        def minor = parts.length > 1 ? parts[1].toInteger() : 0
+        def patch = parts.length > 2 ? parts[2].toInteger() : 0
+
+        return major * 10000 + minor * 100 + patch
+    } catch (Exception e) {
+        return 99999
+    }
+}
+
 android {
     namespace = "org.xjtuai.kqchecker"
     compileSdk 36
@@ -12,16 +44,35 @@ android {
         applicationId = "org.xjtuai.kqchecker"
         minSdk = 21
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = getVersionCode()
+        versionName = getVersionName()
         // default base url (can be overridden by assets/config.json at runtime)
         buildConfigField "String", "BASE_URL", '"http://bkkq.xjtu.edu.cn/attendance-student-pc"'
+    }
+
+    signingConfigs {
+        release {
+            // 从 workflow 生成的 keystore.properties 读取配置
+            def keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                def props = new Properties()
+                props.load(new FileInputStream(keystorePropertiesFile))
+                storeFile rootProject.file(props.storeFile)
+                storePassword props.storePassword
+                keyAlias props.keyAlias
+                keyPassword props.keyPassword
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 使用签名配置
+            if (rootProject.file("keystore.properties").exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
