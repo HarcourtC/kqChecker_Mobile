@@ -1,106 +1,84 @@
-name: Build signed APK on tag
+name: Build and Release APK
 
 on:
   push:
     tags:
-      - 'v*'     # 或你需要的 tag 规则，例如 v1.*, v*
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
-      
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-           gradle-version: wrapper
-           cache-disabled: false
+          java-version: '17'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Install Android SDK 
+      - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-36 build-tools;34.0.0'
 
-      - name: Prepare keystore from secrets
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # 1. 直接解码，不判断是否存在 (如果没配置 Secret，这里会报错，也算是一种检查)
+      - name: Decode Keystore
         run: |
-          set -euo pipefail
-          if [ -z "${KEYSTORE_BASE64:-}" ]; then
-            echo "No keystore secret provided, skipping keystore setup"
-            exit 0
-          fi
-          echo "Decoding keystore..."
-          echo "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
-          printf 'storeFile=release-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-keystore.jks
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('/*.gradle*', '/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: Build Release APK
-        run: |
-          set -euo pipefail
-          ./gradlew assembleRelease --build-cache --configuration-cache --parallel
-
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        with:
-          # 指向构建生成的APK所在目录
-          releaseDirectory: app/build/outputs/apk/release
-          # 使用 action 要求的输入名
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        # 2. 将密码映射为环境变量，通过命令行参数注入
         env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-
-      - name: Verify and Upload release APK
+          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          set -euo pipefail
-          APK_PATH="app/build/outputs/apk/release/app-release.apk"
-          if [ ! -f "$APK_PATH" ]; then
-            echo "ERROR: APK not found at $APK_PATH"
-            ls -R app/build/outputs || true
-            exit 1
-          fi
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/release-keystore.jks \
+            -Pandroid.injected.signing.store.password=$SIGNING_STORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$SIGNING_KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$SIGNING_KEY_PASSWORD \
+            --parallel
 
-      - name: Upload release APK
+      - name: Find APK
+        id: apk
+        run: |
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          echo "path=$APK" >> $GITHUB_OUTPUT
+          ls -lh "$APK"
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-${{ github.ref_name }}.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: app-release-${{ github.ref_name }}
+          path: ${{ steps.apk.outputs.path }}
 
-      - name: Clean up keystore
-        run: |
-          set -euo pipefail
-          # try secure delete, fallback to remove
-          if command -v shred >/dev/null 2>&1; then
-            shred -u release-keystore.jks || true
-            shred -u keystore.properties || true
-          else
-            # best-effort overwrite then remove
-            if [ -f release-keystore.jks ]; then
-              dd if=/dev/zero of=release-keystore.jks bs=1M count=1 2>/dev/null || true
-            fi
-            rm -f release-keystore.jks || true
-            rm -f keystore.properties || true
-          fi
-          # Unset sensitive envs
-          unset KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD || true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ steps.apk.outputs.path }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
+
+      - name: Cleanup keystore
+        if: always() # 无论成功失败都清理
+        run: rm -f release-keystore.jks
