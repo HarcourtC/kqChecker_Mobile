@@ -1,134 +1,209 @@
-# Origin_Mobile - kqChecker 移动应用
+# kqChecker
 
-## 项目简介
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the-badge&logo=android" alt="Platform">
+  <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=for-the-badge&logo=kotlin" alt="Language">
+  <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-purple?style=for-the-badge&logo=jetpackcompose" alt="UI">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/github/v/release/HarcourtC/kqChecker_Mobile?style=for-the-badge" alt="Version">
+</p>
 
-Origin_Mobile 是一个基于 Android Kotlin 和 Jetpack Compose 开发的考勤检查（kqChecker）移动应用，提供了完整的网络请求、数据同步和用户交互功能。
+> 🚀 西安交通大学考勤检查移动应用 | Attendance Checker Mobile App
 
-## 技术栈
+## ✨ 特性
 
-- **开发语言**: Kotlin
-- **UI 框架**: Jetpack Compose
-- **网络请求**: Retrofit + Moshi
-- **数据存储**: SharedPreferences
-- **后台任务**: WorkManager
-- **协程处理**: Kotlin Coroutines
-- **架构模式**: MVVM (Model-View-ViewModel)
+| 功能 | 描述 |
+|------|------|
+| 📅 周课表同步 | 自动获取并缓存周课表数据 |
+| 📊 考勤流水 | 查询学生考勤记录详情 |
+| 🏆 竞赛信息 | 实时获取教务处竞赛通知 |
+| 📅 日历集成 | 课程自动写入系统日历 |
+| 🔔 智能提醒 | 考勤异常即时推送通知 |
+| 🌙 深色模式 | 完整的 Material 3 深色主题 |
 
-## 项目结构
+## 🏗️ 技术架构
 
 ```
-Origin_Mobile/
-├── app/
-│   ├── build.gradle         # 应用模块构建配置
-│   └── src/main/java/org/example/kqchecker/
-│       ├── MainActivity.kt  # 主活动入口
-│       ├── NetworkModule.kt # 网络请求模块
-│       ├── TokenStore.kt    # Token 存储管理
-│       ├── SyncWorker.kt    # 后台同步工作器
-│       └── ...              # 其他功能模块
-├── build.gradle             # 项目级构建配置
-├── gradle/                  # Gradle 包装器
-├── settings.gradle          # Gradle 设置
-├── README.md                # 项目说明文档
-└── CONTRIBUTING.md          # 贡献指南
+┌─────────────────────────────────────────────────────────────┐
+│                        UI Layer                              │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐  │
+│  │ HomeScreen  │ │Competition  │ │  IntegrationScreen  │  │
+│  └─────────────┘ └─────────────┘ └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    ViewModel Layer                           │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              MainViewModel                          │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    UseCase Layer                            │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌────────────┐   │
+│  │IntegrationFlow  │ │ RefreshWeekly   │ │Api2Query   │   │
+│  └─────────────────┘ └─────────────────┘ └────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Repository Layer                           │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐   │
+│  │WeeklyRepo    │ │WaterListRepo │ │ CompetitionRepo  │   │
+│  └─────────────┘ └─────────────┘ └──────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Network Layer                            │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │     Retrofit + OkHttp + Moshi                       │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 主要功能
+### 技术栈
 
-### 核心功能
-- 考勤数据同步与检查
-- 竞赛信息获取与本地缓存（支持从 https://api.harco.top/xjtudean 获取竞赛数据）
-- 网络请求与响应处理
-- 数据缓存管理
-- 事件日志记录与显示
-- JSON 数据导出功能
-- 运行时调试入口（打印后端原始响应、分块写入 Logcat），便于复制和离线分析
+- **Language**: Kotlin 1.9.10
+- **UI**: Jetpack Compose 1.5.3 (Material 3)
+- **Network**: Retrofit 2.9.0 + OkHttp 4.11.0 + Moshi
+- **Async**: Kotlin Coroutines + Flow
+- **Background**: WorkManager 2.8.1
+- **Storage**: EncryptedSharedPreferences + File Cache
+- **Architecture**: MVVM + Repository + Clean Architecture
 
-### 技术特性
-- Compose UI 组件构建
-- 协程异步操作处理
-- 网络请求重试机制
-- DNS 解析与请求头管理
-- 本地文件存储与读取
+## 📁 项目结构
 
-## 安装与运行
+```
+app/src/main/java/org/xjtuai/kqchecker/
+├── auth/                  # 🔐 认证模块
+│   ├── TokenStore.kt
+│   ├── TokenManager.kt
+│   └── WebLoginActivity.kt
+├── network/              # 🌐 网络层
+│   ├── ApiService.kt
+│   ├── ApiClient.kt
+│   └── NetworkModule.kt
+├── repository/           # 📦 数据仓库
+│   ├── WeeklyRepository.kt
+│   ├── WaterListRepository.kt
+│   └── CompetitionRepository.kt
+├── domain/usecase/       # ⚡ 业务用例
+│   ├── IntegrationFlowUseCase.kt
+│   └── RefreshWeeklyUseCase.kt
+├── ui/                   # 🎨 UI 层
+│   ├── HomeScreen.kt
+│   ├── CompetitionScreen.kt
+│   └── viewmodel/
+├── sync/                 # 🔄 后台同步
+│   ├── WriteCalendar.kt
+│   └── Api2AttendanceQueryWorker.kt
+└── util/                 # 🛠️ 工具类
+    ├── ConfigHelper.kt
+    └── CalendarHelper.kt
+```
+
+## 🚀 快速开始
 
 ### 环境要求
-- Android Studio Hedgehog 或更高版本
-- JDK 17
-- Android SDK 34（Target SDK）
-- Gradle 8.0+
 
-### 安装步骤
-1. 克隆或下载项目到本地
-2. 在 Android Studio 中打开项目根目录（选择 `Origin_Mobile`）
-3. 等待 Gradle 同步完成（可能需要安装必要的插件）
-4. 在 `NetworkModule` 中配置后端 API 地址
+| 工具 | 版本 |
+|------|------|
+| JDK | 17+ |
+| Android SDK | 34+ |
+| Gradle | 8.0+ |
 
-### 运行项目
-1. 连接 Android 设备或启动模拟器
-2. 点击 "Run 'app'" 按钮或使用 Shift+F10 快捷键
-3. 应用将安装并启动到设备上
+### 构建
 
-## 配置说明
+```bash
+# Debug 构建
+./gradlew assembleDebug
 
-### 网络配置
-- 在 `NetworkModule` 类中修改 `BASE_URL` 常量，指向你的后端服务地址
-- 根据需要调整 `OkHttpClient` 的超时设置和拦截器配置
+# Release 构建
+./gradlew assembleRelease
 
-### 权限配置
-应用需要以下权限，请确保在 AndroidManifest.xml 中正确配置：
-- 网络访问权限
-- 存储访问权限（用于导出数据）
+# 安装到设备
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
 
-## 使用说明
+### 配置
 
-### 登录功能
-应用启动时会自动检查缓存并尝试登录。成功登录后，Token 将被保存在 `TokenStore` 中供后续请求使用。
+在 `assets/config.json` 中配置：
 
-### 数据同步
-- 使用界面上的 "Trigger Sync" 按钮手动触发数据同步
-- "Run Experimental Sync" 按钮提供高级同步功能
-- 后台通过 `SyncWorker` 定期执行数据同步任务
+```json
+{
+  "base_url": "http://your-api-server.com",
+  "termNo": 20241,
+  "week": 10
+}
+```
 
-### 数据导出
-使用 "Export weekly.json to Downloads" 按钮可以将周数据导出到设备的 Downloads 目录。
+## 📱 功能预览
 
-### 日志查看
-应用界面底部的日志区域会显示所有操作事件和错误信息，方便调试和监控。
+| 页面 | 功能 |
+|------|------|
+| **首页** | 登录状态、缓存状态、同步控制 |
+| **课表** | 周课表展示、数据刷新 |
+| **竞赛** | 分类筛选、截止日期提醒 |
+| **集成** | 日历写入、冲突处理 |
+| **工具** | 调试面板、缓存管理 |
 
-### 竞赛数据获取
-应用支持获取竞赛信息（来自 https://api.harco.top/xjtudean），并自动缓存到本地：
-- 首次加载从 API 获取数据并缓存
-- 后续加载优先从本地缓存读取
-- 支持强制刷新跳过缓存直接从 API 获取
-- 缓存文件：`competition_data.json`
-
-详见 [COMPETITION_FEATURE_GUIDE.md](COMPETITION_FEATURE_GUIDE.md) 获取详细使用说明。
-
-## 开发指南
+## 🔧 开发指南
 
 ### 代码规范
-- 遵循 Kotlin 语言规范和 Jetpack Compose 最佳实践
-- 使用挂起函数（suspend functions）处理异步操作
-- 采用依赖注入模式管理组件依赖
 
-### 调试工具
-- 使用 "Debug Request" 按钮可以测试和调试网络请求
-- 界面提供缓存状态检查和日志显示功能
+- 遵循 [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
+- 使用 ktlint 进行代码检查
+- 提交前运行 `./gradlew ktlintCheck`
 
-详细的 adb 调试/复现命令（清理缓存、拉取缓存文件、抓取过滤后的 Logcat）以及新加的工具按钮使用说明见 `docs/运行指南.md` 和 `docs/API说明.md`。
+### 分支策略
 
-## 贡献指南
+```
+master     ── 稳定版本 ─────────────────────►
+  │
+dev        ── 开发分支 ────────────────────►
+  │
+feat/*     ── 新功能 ─────────────────────►
+bugfix/*   ── Bug 修复 ─────────────────►
+hotfix/*   ── 紧急修复 ─────────────────►
+```
 
-请参考 [CONTRIBUTING.md](CONTRIBUTING.md) 文件了解如何为项目贡献代码。
+### 提交规范
 
-## 许可证
+```
+feat:     新功能
+fix:      Bug 修复
+docs:     文档更新
+style:    代码格式
+refactor: 重构
+perf:     性能优化
+chore:    构建/工具
+```
 
-该项目采用 MIT 许可证 - 详情请查看 LICENSE 文件
+## 📄 文档
 
-## 联系方式
+- [运行指南](docs/运行指南.md) - 设备连接与调试
+- [API 说明](docs/API说明.md) - 接口文档
+- [贡献指南](CONTRIBUTING.md) - 如何参与开发
 
-如有任何问题或建议，请通过以下方式联系我们：
-- 技术支持：[harcourtzzz@outlook.com]
+## 🤝 贡献
 
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feat/amazing-feature`)
+3. 提交更改 (`git commit -m 'feat: 添加新功能'`)
+4. 推送分支 (`git push origin feat/amazing-feature`)
+5. 打开 Pull Request
+
+## 📄 许可证
+
+MIT License - 查看 [LICENSE](LICENSE) 了解详情
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/HarcourtC">Harcourt</a>
+</p>
