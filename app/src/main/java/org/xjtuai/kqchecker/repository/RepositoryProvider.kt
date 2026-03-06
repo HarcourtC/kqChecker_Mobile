@@ -14,6 +14,7 @@ object RepositoryProvider {
     private var weeklyCleaner: WeeklyCleaner? = null
     private var cacheManager: CacheManager? = null
     private var competitionRepository: CompetitionRepository? = null
+    private var termRepository: TermRepository? = null
     
     /**
      * 初始化Repository提供者
@@ -23,6 +24,7 @@ object RepositoryProvider {
         // 确保使用应用上下文，避免内存泄漏
         val appContext = context.applicationContext
         cacheManager = CacheManager(appContext)
+        termRepository = TermRepository(appContext)
         weeklyRepository = WeeklyRepository(appContext)
         waterListRepository = WaterListRepository(appContext)
         debugRepository = DebugRepository(appContext)
@@ -65,6 +67,13 @@ object RepositoryProvider {
     fun getCompetitionRepository(): CompetitionRepository {
         return competitionRepository ?: throw IllegalStateException("RepositoryProvider not initialized")
     }
+
+    /**
+     * 获取TermRepository实例
+     */
+    fun getTermRepository(): TermRepository {
+        return termRepository ?: throw IllegalStateException("RepositoryProvider not initialized")
+    }
     
     /**
      * 重置所有Repository实例（用于测试或特定场景）
@@ -75,5 +84,6 @@ object RepositoryProvider {
         cacheManager = null
         weeklyCleaner = null
         competitionRepository = null
+        termRepository = null
     }
 }
