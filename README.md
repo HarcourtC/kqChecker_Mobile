@@ -1,15 +1,15 @@
 # kqChecker
 
 <p align="center">
-  <img src="icon.png" width="128" alt="Logo">
+  <img src="./icon.png" width="128" alt="Logo">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the-badge&logo=android" alt="Platform">
-  <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=for-the-badge&logo=kotlin" alt="Language">
-  <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-purple?style=for-the-badge&logo=jetpackcompose" alt="UI">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/github/v/release/HarcourtC/kqChecker_Mobile?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=flat" alt="Android">
+  <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=flat" alt="Kotlin">
+  <img src="https://img.shields.io/badge/UI-Compose-purple?style=flat" alt="Compose">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="MIT">
+  <img src="https://img.shields.io/github/v/release/HarcourtC/kqChecker_Mobile?style=flat" alt="v0.3.0">
 </p>
 
 > 🚀 西安交通大学考勤检查移动应用 | Attendance Checker Mobile App
