@@ -21,9 +21,12 @@ import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.ui.MainScreen
+import org.xjtuai.kqchecker.ui.components.UpdateDialog
 import org.xjtuai.kqchecker.ui.theme.KqCheckerTheme
 import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.util.NotificationHelper
+import org.xjtuai.kqchecker.util.VersionChecker
+import org.xjtuai.kqchecker.util.VersionInfo
 import org.json.JSONObject
 import java.io.File
 
@@ -49,6 +52,11 @@ fun AppContent() {
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
 
+    // 版本更新状态
+    var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var versionCheckDone by remember { mutableStateOf(false) }
+
     DisposableEffect(Unit) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
             if (key == "event_log_enabled") {
@@ -71,7 +79,26 @@ fun AppContent() {
 
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
 
-    // Check cache expiration on startup
+    // 检查版本更新
+    LaunchedEffect(Unit) {
+        if (!versionCheckDone) {
+            versionCheckDone = true
+            try {
+                val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                val currentVersion = packageInfo.versionName ?: "1.0"
+
+                val info = VersionChecker.checkForUpdate(currentVersion)
+                if (info != null && info.isUpdateAvailable) {
+                    versionInfo = info
+                    showUpdateDialog = true
+                }
+            } catch (e: Exception) {
+                Log.d("VersionCheck", "Failed to check version", e)
+            }
+        }
+    }
+
+    // 检查缓存过期
     LaunchedEffect(Unit) {
         postEvent("Checking weekly.json cache expiration...")
         try {
@@ -123,7 +150,7 @@ fun AppContent() {
         }
     }
 
-    // Register receiver for no-attendance broadcast
+    // 注册广播接收器
     val noAttendanceReceiver = remember {
         object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
@@ -166,7 +193,7 @@ fun AppContent() {
         }
     }
 
-    // Login launcher
+    // 登录启动器
     val loginLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -188,8 +215,8 @@ fun AppContent() {
             }
         }
     }
-    
-    // MainScreen manages the tabs and content
+
+    // 主屏幕
     MainScreen(
         events = events,
         showEventLog = showEventLog,
@@ -211,4 +238,13 @@ fun AppContent() {
         },
         onLoginRequired = { LoginHelper.launchLogin(context, loginLauncher) }
     )
+
+    // 显示版本更新对话框
+    if (showUpdateDialog && versionInfo != null) {
+        UpdateDialog(
+            versionInfo = versionInfo!!,
+            onDismiss = { showUpdateDialog = false },
+            onUpdate = { showUpdateDialog = false }
+        )
+    }
 }
