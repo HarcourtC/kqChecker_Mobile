@@ -50,7 +50,7 @@ class TokenAuthenticator(private val context: Context, private val baseUrl: Stri
                 tokenManager.saveAccessToken(bearer)
                 if (newRefresh != null) tokenManager.saveRefreshToken(newRefresh)
 
-                return response.request.newBuilder().header("Authorization", tokenManager.getAccessToken()!!).build()
+                return response.request.newBuilder().header("Authorization", bearer).build()
             } catch (t: Throwable) {
                 tokenManager.clear()
                 return null

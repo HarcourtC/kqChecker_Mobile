@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -28,6 +29,7 @@ class Api2PollingService : Service() {
         const val CHANNEL_ID = "api2_polling_channel"
         const val EXTRA_INTERVAL_MIN = "interval_minutes"
         const val ACTION_STOP = "org.xjtuai.kqchecker.ACTION_STOP_POLLING"
+        private const val TAG = "Api2PollingService"
     }
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
@@ -47,7 +49,17 @@ class Api2PollingService : Service() {
         val intervalMin = intent?.getIntExtra(EXTRA_INTERVAL_MIN, 5) ?: 5
 
         val notif = buildNotification(intervalMin)
-        startForeground(10010, notif)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(10010, notif, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } else {
+                startForeground(10010, notif)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground mode", e)
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         if (!running) {
             running = true

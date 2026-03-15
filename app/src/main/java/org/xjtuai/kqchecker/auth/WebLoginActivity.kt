@@ -35,6 +35,60 @@ class WebLoginActivity : ComponentActivity() {
     private var webViewInstance: WebView? = null
     private var tokenClearedReceiver: BroadcastReceiver? = null
 
+    private data class TokenPayload(
+        val accessToken: String,
+        val refreshToken: String?
+    )
+
+    private fun normalizeBearer(token: String): String {
+        val normalized = token.trim()
+        return if (normalized.startsWith("bearer ", true)) normalized else "bearer $normalized"
+    }
+
+    private fun parseFragmentParameter(uri: Uri, key: String): String? {
+        val fragment = uri.fragment ?: return null
+        return Uri.parse("?$fragment").getQueryParameter(key)
+    }
+
+    private fun extractTokenPayload(uri: Uri): TokenPayload? {
+        if (!uri.toString().startsWith(redirectPrefix)) return null
+
+        val token = uri.getQueryParameter("token")
+            ?: parseFragmentParameter(uri, "token")
+            ?: return null
+        val refreshToken = uri.getQueryParameter("refresh_token")
+            ?: parseFragmentParameter(uri, "refresh_token")
+        return TokenPayload(
+            accessToken = normalizeBearer(token),
+            refreshToken = refreshToken
+        )
+    }
+
+    private fun completeLogin(payload: TokenPayload, source: String, logTag: String) {
+        try {
+            Log.d(
+                "WebLoginActivity",
+                "$logTag detected token prefix=${payload.accessToken.take(8)}... (len=${payload.accessToken.length})"
+            )
+            tokenManager.saveAccessToken(payload.accessToken)
+            tokenManager.saveRefreshToken(payload.refreshToken)
+            val data = Intent().apply {
+                putExtra(RESULT_TOKEN, payload.accessToken)
+                putExtra(RESULT_TOKEN_SOURCE, source)
+            }
+            setResult(Activity.RESULT_OK, data)
+            runOnUiThread { finish() }
+        } catch (e: Exception) {
+            Log.e("WebLoginActivity", "$logTag failed to complete login", e)
+        }
+    }
+
+    private fun completeLoginFromUri(uri: Uri, source: String, logTag: String): Boolean {
+        val payload = extractTokenPayload(uri) ?: return false
+        completeLogin(payload, source, logTag)
+        return true
+    }
+
     inner class JsBridge {
         @JavascriptInterface
         fun postUrl(href: String?) {
@@ -42,53 +96,11 @@ class WebLoginActivity : ComponentActivity() {
             try {
                 Log.d("WebLoginActivity", "JsBridge.postUrl href=$href")
                 val uri = Uri.parse(href)
-
-                try {
-                    if (uri.toString().startsWith(redirectPrefix)) {
-                        var token: String? = null
-                        token = uri.getQueryParameter("token")
-                        if (token == null) {
-                            val frag = uri.fragment
-                            if (frag != null) {
-                                val fragUri = Uri.parse("?$frag")
-                                token = fragUri.getQueryParameter("token")
-                            }
-                        }
-
-                            if (token != null) {
-                            val tokenVal = token!!
-                            val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
-                            try {
-                                try { Log.d("WebLoginActivity", "JsBridge detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
-                                tokenManager.saveAccessToken(bearer)
-                                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from JsBridge (source=url)") } catch (_: Throwable) {}
-                            } catch (e: Throwable) {
-                                Log.e("WebLoginActivity", "JsBridge failed to save token", e)
-                            }
-                            var refresh: String? = uri.getQueryParameter("refresh_token")
-                            if (refresh == null) {
-                                val frag = uri.fragment
-                                if (frag != null) {
-                                    val fragUri = Uri.parse("?$frag")
-                                    refresh = fragUri.getQueryParameter("refresh_token")
-                                }
-                            }
-                            tokenManager.saveRefreshToken(refresh)
-
-                            val data = Intent()
-                            data.putExtra(RESULT_TOKEN, bearer)
-                            data.putExtra(RESULT_TOKEN_SOURCE, "url")
-                            setResult(Activity.RESULT_OK, data)
-                            runOnUiThread {
-                                finish()
-                            }
-                        }
-                    }
-                } catch (t: Throwable) {
-                    Log.e("WebLoginActivity", "JsBridge.handleUrl error for uri=$uri", t)
+                if (completeLoginFromUri(uri, "url", "JsBridge.postUrl")) {
+                    return
                 }
-            } catch (t: Throwable) {
-                Log.e("WebLoginActivity", "JsBridge.postUrl error", t)
+            } catch (e: Exception) {
+                Log.e("WebLoginActivity", "JsBridge.postUrl error", e)
             }
         }
 
@@ -96,23 +108,9 @@ class WebLoginActivity : ComponentActivity() {
         fun postToken(token: String?) {
             if (token == null) return
             try {
-                try { Log.d("WebLoginActivity", "JsBridge.postToken token prefix=${token.take(8)}... (len=${token.length})") } catch (_: Throwable) {}
-                val tokenVal = token.trim()
-                val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
-                try {
-                    tokenManager.saveAccessToken(bearer)
-                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from postToken (source=local)") } catch (_: Throwable) {}
-                } catch (e: Throwable) {
-                    Log.e("WebLoginActivity", "postToken failed to save token", e)
-                }
-                // also set result and finish
-                val data = Intent()
-                data.putExtra(RESULT_TOKEN, bearer)
-                data.putExtra(RESULT_TOKEN_SOURCE, "local")
-                setResult(Activity.RESULT_OK, data)
-                runOnUiThread { finish() }
-            } catch (t: Throwable) {
-                Log.e("WebLoginActivity", "JsBridge.postToken error", t)
+                completeLogin(TokenPayload(normalizeBearer(token), null), "local", "JsBridge.postToken")
+            } catch (e: Exception) {
+                Log.e("WebLoginActivity", "JsBridge.postToken error", e)
             }
         }
     }
@@ -336,51 +334,9 @@ class WebLoginActivity : ComponentActivity() {
 
                 private fun handleUrl(uri: Uri): Boolean {
                     try {
-                        if (uri.toString().startsWith(redirectPrefix)) {
-                            // token may be in query or fragment
-                            var token: String? = null
-                            // try query first
-                            token = uri.getQueryParameter("token")
-                            if (token == null) {
-                                // try fragment parsing
-                                val frag = uri.fragment
-                                if (frag != null) {
-                                    val fragUri = Uri.parse("?$frag")
-                                    token = fragUri.getQueryParameter("token")
-                                }
-                            }
-
-                                                if (token != null) {
-                                                val tokenVal = token!!
-                                                val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
-                                                try {
-                                                    try { Log.d("WebLoginActivity", "handleUrl detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
-                                                    tokenManager.saveAccessToken(bearer)
-                                                    try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from handleUrl (source=url)") } catch (_: Throwable) {}
-                                                } catch (e: Throwable) {
-                                                    Log.e("WebLoginActivity", "handleUrl failed to save token", e)
-                                                }
-                                // try to extract refresh token too if present
-                                var refresh: String? = uri.getQueryParameter("refresh_token")
-                                if (refresh == null) {
-                                    val frag = uri.fragment
-                                    if (frag != null) {
-                                        val fragUri = Uri.parse("?$frag")
-                                        refresh = fragUri.getQueryParameter("refresh_token")
-                                    }
-                                }
-                                tokenManager.saveRefreshToken(refresh)
-
-                                val data = Intent()
-                                data.putExtra(RESULT_TOKEN, bearer)
-                                data.putExtra(RESULT_TOKEN_SOURCE, "url")
-                                setResult(Activity.RESULT_OK, data)
-                                finish()
-                                return true
-                            }
-                        }
-                    } catch (t: Throwable) {
-                        Log.e("WebLoginActivity", "handleUrl error for uri=$uri", t)
+                        return completeLoginFromUri(uri, "url", "handleUrl")
+                    } catch (e: Exception) {
+                        Log.e("WebLoginActivity", "handleUrl error for uri=$uri", e)
                     }
                     return false
                 }

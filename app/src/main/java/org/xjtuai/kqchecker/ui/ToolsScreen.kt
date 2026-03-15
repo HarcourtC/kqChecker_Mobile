@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -26,19 +25,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.auth.AuthRequiredException
-import org.xjtuai.kqchecker.debug.Api2QueryTestWorker
-import org.xjtuai.kqchecker.repository.CacheManager
 import org.xjtuai.kqchecker.repository.RepositoryProvider
-import org.xjtuai.kqchecker.repository.WeeklyCleaner
-import org.xjtuai.kqchecker.repository.WeeklyRepository
-import org.xjtuai.kqchecker.repository.WaterListRepository
 import org.xjtuai.kqchecker.sync.Api2AttendanceQueryWorker
 import org.xjtuai.kqchecker.sync.WriteCalendar
-import org.xjtuai.kqchecker.util.ConfigHelper
-import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
-import java.io.File
+import org.xjtuai.kqchecker.util.WorkManagerHelper
 import java.util.concurrent.TimeUnit
 
 /**
@@ -76,6 +68,40 @@ fun ToolsScreen(
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var api2AutoEnabled by remember { mutableStateOf(prefs.getBoolean("api2_auto_enabled", false)) }
 
+    suspend fun postEventOnMain(message: String) {
+        withContext(Dispatchers.Main) {
+            onPostEvent(message)
+        }
+    }
+
+    fun handleAuthRequired(tag: String, message: String, error: AuthRequiredException) {
+        Log.w(tag, message, error)
+        scope.launch {
+            postEventOnMain("$message.")
+            onLoginRequired()
+        }
+    }
+
+    fun launchRepositoryAction(
+        startMessage: String,
+        successMessage: String,
+        emptyMessage: String,
+        tag: String,
+        action: suspend () -> Any?
+    ) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                postEventOnMain(startMessage)
+                val result = action()
+                postEventOnMain(if (result != null) successMessage else emptyMessage)
+            } catch (e: AuthRequiredException) {
+                handleAuthRequired(tag, "Authentication required", e)
+            } catch (e: Exception) {
+                postEventOnMain("$tag failed: ${e.message ?: e.toString()}")
+            }
+        }
+    }
+
     /**
      * 启用 API2 自动轮询
      */
@@ -111,39 +137,51 @@ fun ToolsScreen(
      * 将课程数据写入系统日历
      */
     fun startSync() {
-        // Logic for WriteCalendar extracted from MainActivity
-        onPostEvent("Writing calendar from backend...")
+        onPostEvent("Starting forced calendar sync pipeline...")
         scope.launch {
             try {
+                val refreshed = withContext(Dispatchers.IO) {
+                    weeklyRepository.refreshWeeklyData()
+                }
+                if (refreshed == null) {
+                    postEventOnMain("Step 1/3 failed: unable to refresh latest weekly data")
+                    return@launch
+                }
+                onPostEvent("Step 1/3 done: latest weekly data refreshed")
+
+                val cleanedOk = withContext(Dispatchers.IO) {
+                    weeklyCleaner.generateCleanedWeekly()
+                }
+                if (!cleanedOk) {
+                    postEventOnMain("Step 2/3 failed: cleaned weekly generation failed")
+                    return@launch
+                }
+                onPostEvent("Step 2/3 done: cleaned weekly regenerated")
+
                 val request = OneTimeWorkRequestBuilder<WriteCalendar>().build()
                 val workId = withContext(Dispatchers.IO) {
                     WorkManager.getInstance(context).enqueue(request)
                     request.id
                 }
-                withContext(Dispatchers.Main) {
-                    WorkManager.getInstance(context)
-                        .getWorkInfoByIdLiveData(workId)
-                        .observeForever { workInfo ->
-                            if (workInfo != null) {
-                                val statusMessage = when (workInfo.state) {
-                                    androidx.work.WorkInfo.State.ENQUEUED -> "Work enqueued..."
-                                    androidx.work.WorkInfo.State.RUNNING -> "Work running..."
-                                    androidx.work.WorkInfo.State.SUCCEEDED -> "Calendar write completed!"
-                                    androidx.work.WorkInfo.State.FAILED -> "Calendar write failed"
-                                    androidx.work.WorkInfo.State.CANCELLED -> "Calendar write cancelled"
-                                    else -> "Work state: ${workInfo.state}"
-                                }
-                                Log.d("WriteCalendarObserver", statusMessage)
-                                // Note: Avoiding duplicate events might be needed but simple post is fine
-                                onPostEvent(statusMessage)
-                            }
-                        }
-                }
+                onPostEvent("Step 3/3 started: writing to calendar...")
+                WorkManagerHelper.observeWorkStatus(
+                    context = context,
+                    workId = workId,
+                    onStatusChange = { _, statusMessage ->
+                        Log.d("WriteCalendarObserver", statusMessage)
+                        onPostEvent(statusMessage)
+                    },
+                    taskName = "Calendar write"
+                )
+            } catch (e: AuthRequiredException) {
+                handleAuthRequired(
+                    tag = "WriteCalendarButton",
+                    message = "Authentication required before forced calendar write",
+                    error = e
+                )
             } catch (e: Exception) {
                 Log.e("WriteCalendarButton", "Calendar write error", e)
-                withContext(Dispatchers.Main) {
-                    onPostEvent("Calendar write error: ${e.message ?: e.toString()}")
-                }
+                postEventOnMain("Calendar write error: ${e.message ?: e.toString()}")
             }
         }
     }
@@ -168,57 +206,27 @@ fun ToolsScreen(
 
     InfoCard(title = "Synchronization") {
             AppButton(text = "Trigger Sync (Week)", onClick = {
-                onPostEvent("Triggering manual sync...")
-                scope.launch(Dispatchers.IO) {
-                    try {
-                        val result = weeklyRepository.refreshWeeklyData()
-                        withContext(Dispatchers.Main) {
-                            if (result != null) {
-                                onPostEvent("Sync completed successfully")
-                            } else {
-                                onPostEvent("Sync failed - null result")
-                            }
-                        }
-                    } catch (e: AuthRequiredException) {
-                        Log.w("SyncButton", "Auth required", e)
-                        withContext(Dispatchers.Main) {
-                            onPostEvent("Authentication required.")
-                            onLoginRequired()
-                        }
-                    } catch (e: Exception) {
-                         withContext(Dispatchers.Main) {
-                            onPostEvent("Sync exception: ${e.message}")
-                         }
-                    }
+                launchRepositoryAction(
+                    startMessage = "Triggering manual sync...",
+                    successMessage = "Sync completed successfully",
+                    emptyMessage = "Sync failed - null result",
+                    tag = "SyncButton"
+                ) {
+                    weeklyRepository.refreshWeeklyData()
                 }
             })
 
             Spacer(modifier = Modifier.height(8.dp))
 
             AppButton(text = "Trigger Sync (WaterList)", onClick = {
-                 onPostEvent("Running experimental sync (API2)...")
-                  scope.launch(Dispatchers.IO) {
-                    try {
-                      val result = waterListRepository.refreshWaterListData()
-                      withContext(Dispatchers.Main) {
-                        if (result != null) {
-                          onPostEvent("API2 data fetched and saved")
-                        } else {
-                          onPostEvent("Experimental sync failed - null result")
-                        }
-                      }
-                    } catch (e: AuthRequiredException) {
-                      Log.w("ExperimentalSync", "Auth required", e)
-                      withContext(Dispatchers.Main) {
-                        onPostEvent("Authentication required.")
-                        onLoginRequired()
-                      }
-                    } catch (e: Exception) {
-                      withContext(Dispatchers.Main) {
-                        onPostEvent("Experimental sync exception: ${e.message ?: e.toString()}")
-                      }
-                    }
-                  }
+                launchRepositoryAction(
+                    startMessage = "Running experimental sync (API2)...",
+                    successMessage = "API2 data fetched and saved",
+                    emptyMessage = "Experimental sync failed - null result",
+                    tag = "ExperimentalSync"
+                ) {
+                    waterListRepository.refreshWaterListData()
+                }
             })
         }
 
