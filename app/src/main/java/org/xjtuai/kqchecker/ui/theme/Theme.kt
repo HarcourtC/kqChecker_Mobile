@@ -10,11 +10,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 private val LightColorPalette = lightColors(
-    primary = BluePrimary,
-    primaryVariant = BlueVariant,
-    secondary = Secondary,
-    background = Background,
-    surface = Surface,
+    primary = TidePrimary,
+    primaryVariant = TidePrimaryVariant,
+    secondary = CoralSecondary,
+    background = SoftBackground,
+    surface = CardSurface,
     error = Error,
     onPrimary = OnPrimary,
     onSecondary = OnSecondary,
@@ -25,30 +25,55 @@ private val LightColorPalette = lightColors(
 
 @Composable
 fun KqCheckerTheme(content: @Composable () -> Unit) {
+    val appTypography = Typography(
+        h3 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 34.sp,
+            letterSpacing = 0.2.sp
+        ),
+        h5 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            letterSpacing = 0.15.sp
+        ),
+        h6 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp
+        ),
+        subtitle1 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
+        ),
+        body1 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp
+        ),
+        body2 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp
+        ),
+        caption = TextStyle(
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Normal,
+            fontSize = 12.sp
+        ),
+        button = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            letterSpacing = 0.5.sp
+        )
+    )
+
     MaterialTheme(
         colors = LightColorPalette,
-        typography = Typography(
-            body1 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp
-            ),
-            h5 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 24.sp
-            ),
-            h6 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp
-            ),
-            button = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            )
-        ),
+        typography = appTypography,
         shapes = MaterialTheme.shapes,
         content = content
     )

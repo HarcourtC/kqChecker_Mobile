@@ -1,23 +1,26 @@
 package org.xjtuai.kqchecker.ui
 
-import android.content.Intent
-import android.net.Uri
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import org.xjtuai.kqchecker.network.CompetitionItem
 import org.xjtuai.kqchecker.repository.RepositoryProvider
@@ -31,7 +34,6 @@ fun CompetitionScreen(
     onPostEvent: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val repo = remember { RepositoryProvider.getCompetitionRepository() }
 
@@ -43,6 +45,9 @@ fun CompetitionScreen(
     // 0 -> Recent, 1 -> All
     var selectedTab by remember { mutableStateOf(0) }
     var selectedCategory by remember { mutableStateOf("All") }
+    var openedUrl by remember { mutableStateOf<String?>(null) }
+    var openedTitle by remember { mutableStateOf("Dean's") }
+    var inAppWebView by remember { mutableStateOf<WebView?>(null) }
 
     val categories = remember(items) {
         listOf("All") + items.map { it.category }.distinct().sorted()
@@ -92,14 +97,45 @@ fun CompetitionScreen(
         loadData(false)
     }
 
+    BackHandler(enabled = openedUrl != null) {
+        val webView = inAppWebView
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            openedUrl = null
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dean's Office Competitions") },
+                title = { Text(if (openedUrl == null) "Dean's Office Competitions" else openedTitle) },
                 backgroundColor = MaterialTheme.colors.surface,
                 elevation = 0.dp,
+                navigationIcon = if (openedUrl != null) {
+                    {
+                        IconButton(onClick = {
+                            val webView = inAppWebView
+                            if (webView != null && webView.canGoBack()) {
+                                webView.goBack()
+                            } else {
+                                openedUrl = null
+                            }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                } else {
+                    null
+                },
                 actions = {
-                    IconButton(onClick = { loadData(true) }) {
+                    IconButton(onClick = {
+                        if (openedUrl == null) {
+                            loadData(true)
+                        } else {
+                            inAppWebView?.reload()
+                        }
+                    }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
@@ -107,6 +143,36 @@ fun CompetitionScreen(
         },
         backgroundColor = MaterialTheme.colors.background
     ) { padding ->
+        if (openedUrl != null) {
+            AndroidView(
+                modifier = modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                factory = { context ->
+                    val initialUrl = openedUrl
+                    WebView(context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.cacheMode = WebSettings.LOAD_DEFAULT
+                        webViewClient = object : WebViewClient() {}
+                        if (!initialUrl.isNullOrBlank()) {
+                            loadUrl(initialUrl)
+                        }
+                        inAppWebView = this
+                    }
+                },
+                update = { webView ->
+                    val currentUrl = webView.url
+                    val targetUrl = openedUrl
+                    if (!targetUrl.isNullOrBlank() && currentUrl != targetUrl) {
+                        webView.loadUrl(targetUrl)
+                    }
+                    inAppWebView = webView
+                }
+            )
+            return@Scaffold
+        }
+
         Column(modifier = modifier.padding(padding).fillMaxSize()) {
             if (isLoading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -185,11 +251,11 @@ fun CompetitionScreen(
 
                     items(filteredItems) { item ->
                         CompetitionCard(item = item, onClick = {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.url))
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
+                            if (item.url.isBlank()) {
                                 onPostEvent("Cannot open URL: ${item.url}")
+                            } else {
+                                openedUrl = item.url
+                                openedTitle = item.title
                             }
                         })
                     }

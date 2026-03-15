@@ -1,12 +1,16 @@
 package org.xjtuai.kqchecker.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -14,7 +18,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,48 +34,57 @@ fun LogDisplay(events: List<String>, modifier: Modifier = Modifier) {
         }
     }
 
-    Column(
-        modifier = modifier
-            .background(Color(0xFF2B2B2B))
-            .let {
-                if (isExpanded) it.height(200.dp) else it.wrapContentHeight()
-            }
-            .padding(8.dp)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        color = MaterialTheme.colors.surface,
+        elevation = 10.dp
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
-                .padding(bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                .let {
+                    if (isExpanded) it.height(200.dp) else it.wrapContentHeight()
+                }
+                .border(1.dp, MaterialTheme.colors.primary.copy(alpha = 0.15f))
+                .background(MaterialTheme.colors.onSurface.copy(alpha = 0.03f))
+                .padding(10.dp)
         ) {
-            Text(
-                text = "Event Log",
-                color = Color.White,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace,
-            )
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = Color.White
-            )
-        }
-        
-        if (isExpanded) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(events) { event ->
-                    Text(
-                        text = "> $event",
-                        color = Color.Green,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(vertical = 1.dp)
-                    )
+                Text(
+                    text = "Event Log",
+                    color = MaterialTheme.colors.onSurface,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace
+                )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colors.primary
+                )
+            }
+
+            if (isExpanded) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(events) { event ->
+                        Text(
+                            text = "> $event",
+                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.85f),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        )
+                    }
                 }
             }
         }

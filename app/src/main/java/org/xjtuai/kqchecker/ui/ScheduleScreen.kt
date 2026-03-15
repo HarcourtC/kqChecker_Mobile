@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,15 +32,20 @@ import org.xjtuai.kqchecker.model.HomeworkRecord
 import org.xjtuai.kqchecker.model.ScheduleItem
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.repository.HomeworkRepository
 import org.xjtuai.kqchecker.repository.RepositoryProvider
+import org.xjtuai.kqchecker.sync.WriteCalendar
 import org.xjtuai.kqchecker.util.CalendarHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.ScheduleTimeHelper
+import org.xjtuai.kqchecker.util.WorkManagerHelper
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -59,6 +65,7 @@ fun ScheduleScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val repository = remember { RepositoryProvider.getWeeklyRepository() }
+    val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
     val homeworkRepository = remember { HomeworkRepository(context) }
     var scheduleItems by remember { mutableStateOf(emptyList<ScheduleItem>()) }
     var homeworkRecords by remember { mutableStateOf(emptyList<HomeworkRecord>()) }
@@ -66,6 +73,7 @@ fun ScheduleScreen(
     var selectedCourse by remember { mutableStateOf<ScheduleItem?>(null) }
     var homeworkDraft by remember { mutableStateOf<HomeworkDraft?>(null) }
     var pendingCalendarHomework by remember { mutableStateOf<HomeworkRecord?>(null) }
+    var pendingManualCalendarSync by remember { mutableStateOf(false) }
 
     fun loadHomeworkRecords() {
         scope.launch(Dispatchers.IO) {
@@ -127,16 +135,30 @@ fun ScheduleScreen(
         }
     }
 
+    lateinit var startCalendarSyncPipeline: () -> Unit
+
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions.values.all { it }
         val pendingRecord = pendingCalendarHomework
+        val pendingSync = pendingManualCalendarSync
         pendingCalendarHomework = null
-        if (granted && pendingRecord != null) {
-            writeHomeworkToCalendar(pendingRecord)
-        } else if (!granted && pendingRecord != null) {
-            onPostEvent("Homework saved, but calendar permission was denied.")
+        pendingManualCalendarSync = false
+        if (granted) {
+            if (pendingRecord != null) {
+                writeHomeworkToCalendar(pendingRecord)
+            }
+            if (pendingSync) {
+                startCalendarSyncPipeline()
+            }
+        } else {
+            if (pendingRecord != null) {
+                onPostEvent("Homework saved, but calendar permission was denied.")
+            }
+            if (pendingSync) {
+                onPostEvent("Calendar permission denied.")
+            }
         }
     }
 
@@ -153,6 +175,67 @@ fun ScheduleScreen(
             writeHomeworkToCalendar(record)
         } else {
             pendingCalendarHomework = record
+            calendarPermissionLauncher.launch(
+                arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+            )
+        }
+    }
+
+    startCalendarSyncPipeline = {
+        onPostEvent("Starting forced calendar sync pipeline...")
+        scope.launch {
+            try {
+                val refreshed = withContext(Dispatchers.IO) {
+                    repository.refreshWeeklyData()
+                }
+                if (refreshed == null) {
+                    onPostEvent("Step 1/3 failed: unable to refresh latest weekly data")
+                    return@launch
+                }
+                onPostEvent("Step 1/3 done: latest weekly data refreshed")
+
+                val cleanedOk = withContext(Dispatchers.IO) {
+                    weeklyCleaner.generateCleanedWeekly()
+                }
+                if (!cleanedOk) {
+                    onPostEvent("Step 2/3 failed: cleaned weekly generation failed")
+                    return@launch
+                }
+                onPostEvent("Step 2/3 done: cleaned weekly regenerated")
+
+                val request = OneTimeWorkRequestBuilder<WriteCalendar>().build()
+                val workId = withContext(Dispatchers.IO) {
+                    WorkManager.getInstance(context).enqueue(request)
+                    request.id
+                }
+                onPostEvent("Step 3/3 started: writing to calendar...")
+                WorkManagerHelper.observeWorkStatus(
+                    context = context,
+                    workId = workId,
+                    onStatusChange = { _, statusMessage ->
+                        onPostEvent(statusMessage)
+                    },
+                    taskName = "Calendar write"
+                )
+            } catch (e: Exception) {
+                onPostEvent("Calendar write error: ${e.message ?: e.toString()}")
+            }
+        }
+    }
+
+    fun requestCalendarWriteForSync() {
+        val readGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+        val writeGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+        if (readGranted && writeGranted) {
+            startCalendarSyncPipeline()
+        } else {
+            pendingManualCalendarSync = true
             calendarPermissionLauncher.launch(
                 arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
             )
@@ -270,9 +353,22 @@ fun ScheduleScreen(
     }
 
     Scaffold(
+        backgroundColor = MaterialTheme.colors.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = { refreshData(true) }) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                FloatingActionButton(
+                    onClick = { requestCalendarWriteForSync() },
+                    backgroundColor = MaterialTheme.colors.secondary,
+                    contentColor = MaterialTheme.colors.onSecondary
+                ) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Write to Calendar")
+                }
+                FloatingActionButton(onClick = { refreshData(true) }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                }
             }
         }
     ) { padding ->
@@ -286,7 +382,13 @@ fun ScheduleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp)
-                    .background(MaterialTheme.colors.surface),
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colors.surface)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(30.dp)) // Placeholder for period numbers
@@ -302,6 +404,7 @@ fun ScheduleScreen(
                 }
             }
             Divider()
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (isLoading && scheduleItems.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -332,15 +435,15 @@ fun ScheduleScreen(
                                     Text(
                                         text = i.toString(),
                                         style = MaterialTheme.typography.caption,
-                                        color = Color.Gray
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
                                     )
                                 }
                                 // Horizontal line
                                 Divider(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 59.dp), 
-                                    color = Color.LightGray.copy(alpha = 0.5f)
+                                        .padding(top = 59.dp),
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
                                 )
                             }
                         }
@@ -405,14 +508,14 @@ fun ScheduleItemCard(
     
     // Choose color based on index
     val cardColor = when (item.colorIndex) {
-        0 -> Color(0xFFE3F2FD) // Blue
-        1 -> Color(0xFFF3E5F5) // Purple
-        2 -> Color(0xFFE8F5E9) // Green
-        3 -> Color(0xFFFFF3E0) // Orange
-        4 -> Color(0xFFFFEBEE) // Red
-        5 -> Color(0xFFE0F7FA) // Cyan
-        6 -> Color(0xFFF1F8E9) // Light Green
-        else -> Color(0xFFFFF8E1) // Amber
+        0 -> MaterialTheme.colors.primary.copy(alpha = 0.20f)
+        1 -> MaterialTheme.colors.secondary.copy(alpha = 0.24f)
+        2 -> MaterialTheme.colors.primary.copy(alpha = 0.15f)
+        3 -> MaterialTheme.colors.secondary.copy(alpha = 0.18f)
+        4 -> MaterialTheme.colors.primary.copy(alpha = 0.12f)
+        5 -> MaterialTheme.colors.secondary.copy(alpha = 0.20f)
+        6 -> MaterialTheme.colors.primary.copy(alpha = 0.18f)
+        else -> MaterialTheme.colors.secondary.copy(alpha = 0.15f)
     }
 
     Card(
@@ -423,8 +526,8 @@ fun ScheduleItemCard(
             .offset(y = topOffset)
             .clickable(onClick = onClick),
         backgroundColor = cardColor,
-        elevation = 2.dp,
-        shape = RoundedCornerShape(4.dp)
+        elevation = 3.dp,
+        shape = RoundedCornerShape(10.dp)
     ) {
         Column(
             modifier = Modifier
@@ -440,7 +543,7 @@ fun ScheduleItemCard(
                 ) {
                     Text(
                         text = "$homeworkCount 作业",
-                        color = Color.White,
+                        color = MaterialTheme.colors.onSecondary,
                         style = MaterialTheme.typography.overline,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
@@ -529,7 +632,7 @@ private fun HomeworkDialog(
                 ) {
                     Text("截止日期: ${formatter.format(draft.dueDateMillis)}")
                 }
-                Button(
+                OutlinedButton(
                     onClick = onPickPhoto,
                     modifier = Modifier.fillMaxWidth()
                 ) {

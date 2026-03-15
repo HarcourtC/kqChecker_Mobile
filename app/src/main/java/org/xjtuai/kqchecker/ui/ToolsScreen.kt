@@ -1,14 +1,13 @@
 package org.xjtuai.kqchecker.ui
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -16,21 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.auth.AuthRequiredException
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.sync.Api2AttendanceQueryWorker
-import org.xjtuai.kqchecker.sync.WriteCalendar
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
-import org.xjtuai.kqchecker.util.WorkManagerHelper
 import java.util.concurrent.TimeUnit
 
 /**
@@ -43,6 +39,7 @@ fun ToolsScreen(
     onLoginRequired: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDebugBuild = BuildConfig.DEBUG
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -51,18 +48,6 @@ fun ToolsScreen(
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
     val tokenManager = remember { org.xjtuai.kqchecker.auth.TokenManager(context) }
-
-    // Permission launcher
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val granted = permissions.entries.all { it.value }
-        if (granted) {
-            onPostEvent("Permissions granted. Please try the action again.")
-        } else {
-            onPostEvent("Permissions denied.")
-        }
-    }
 
     // Prefs for toggles
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
@@ -77,7 +62,7 @@ fun ToolsScreen(
     fun handleAuthRequired(tag: String, message: String, error: AuthRequiredException) {
         Log.w(tag, message, error)
         scope.launch {
-            postEventOnMain("$message.")
+            postEventOnMain("$message。")
             onLoginRequired()
         }
     }
@@ -95,9 +80,9 @@ fun ToolsScreen(
                 val result = action()
                 postEventOnMain(if (result != null) successMessage else emptyMessage)
             } catch (e: AuthRequiredException) {
-                handleAuthRequired(tag, "Authentication required", e)
+                handleAuthRequired(tag, "需要重新登录", e)
             } catch (e: Exception) {
-                postEventOnMain("$tag failed: ${e.message ?: e.toString()}")
+                postEventOnMain("$tag 失败: ${e.message ?: e.toString()}")
             }
         }
     }
@@ -111,10 +96,10 @@ fun ToolsScreen(
             val periodic = PeriodicWorkRequestBuilder<Api2AttendanceQueryWorker>(15, TimeUnit.MINUTES).build()
             workManager.enqueueUniquePeriodicWork("api2_att_query_periodic", ExistingPeriodicWorkPolicy.REPLACE, periodic)
             prefs.edit().putBoolean("api2_auto_enabled", true).apply()
-            onPostEvent("Automatic api2 queries enabled")
+            onPostEvent("已启用 API2 自动轮询")
         } catch (e: Exception) {
             Log.e("Api2Auto", "Failed to enable periodic work", e)
-            onPostEvent("Failed to enable automatic api2 queries: ${e.message}")
+            onPostEvent("启用 API2 自动轮询失败: ${e.message}")
         }
     }
 
@@ -125,64 +110,10 @@ fun ToolsScreen(
         try {
             WorkManager.getInstance(context).cancelUniqueWork("api2_att_query_periodic")
             prefs.edit().putBoolean("api2_auto_enabled", false).apply()
-            onPostEvent("Automatic api2 queries disabled")
+            onPostEvent("已关闭 API2 自动轮询")
         } catch (e: Exception) {
             Log.e("Api2Auto", "Failed to disable periodic work", e)
-            onPostEvent("Failed to disable automatic api2 queries: ${e.message}")
-        }
-    }
-
-    /**
-     * 开始日历同步
-     * 将课程数据写入系统日历
-     */
-    fun startSync() {
-        onPostEvent("Starting forced calendar sync pipeline...")
-        scope.launch {
-            try {
-                val refreshed = withContext(Dispatchers.IO) {
-                    weeklyRepository.refreshWeeklyData()
-                }
-                if (refreshed == null) {
-                    postEventOnMain("Step 1/3 failed: unable to refresh latest weekly data")
-                    return@launch
-                }
-                onPostEvent("Step 1/3 done: latest weekly data refreshed")
-
-                val cleanedOk = withContext(Dispatchers.IO) {
-                    weeklyCleaner.generateCleanedWeekly()
-                }
-                if (!cleanedOk) {
-                    postEventOnMain("Step 2/3 failed: cleaned weekly generation failed")
-                    return@launch
-                }
-                onPostEvent("Step 2/3 done: cleaned weekly regenerated")
-
-                val request = OneTimeWorkRequestBuilder<WriteCalendar>().build()
-                val workId = withContext(Dispatchers.IO) {
-                    WorkManager.getInstance(context).enqueue(request)
-                    request.id
-                }
-                onPostEvent("Step 3/3 started: writing to calendar...")
-                WorkManagerHelper.observeWorkStatus(
-                    context = context,
-                    workId = workId,
-                    onStatusChange = { _, statusMessage ->
-                        Log.d("WriteCalendarObserver", statusMessage)
-                        onPostEvent(statusMessage)
-                    },
-                    taskName = "Calendar write"
-                )
-            } catch (e: AuthRequiredException) {
-                handleAuthRequired(
-                    tag = "WriteCalendarButton",
-                    message = "Authentication required before forced calendar write",
-                    error = e
-                )
-            } catch (e: Exception) {
-                Log.e("WriteCalendarButton", "Calendar write error", e)
-                postEventOnMain("Calendar write error: ${e.message ?: e.toString()}")
-            }
+            onPostEvent("关闭 API2 自动轮询失败: ${e.message}")
         }
     }
 
@@ -192,121 +123,138 @@ fun ToolsScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        InfoCard(title = "Authentication") {
-            AppButton(text = "Clear Token (Logout)", onClick = {
-                onPostEvent("Clearing token...")
+        InfoCard(title = "工具") {
+            Text(
+                text = if (isDebugBuild) "同步、诊断与开发工具" else "账号与同步工具",
+                style = MaterialTheme.typography.body2,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+            )
+        }
+
+        InfoCard(title = "账号") {
+            AppButton(text = "退出登录", onClick = {
+                onPostEvent("正在清除登录状态...")
                 try {
                     tokenManager.clear()
-                    onPostEvent("Token cleared successfully. Please restart the app if needed.")
+                    onPostEvent("已清除登录状态")
                 } catch (e: Exception) {
-                    onPostEvent("Failed to clear token: ${e.message}")
+                    onPostEvent("清除登录状态失败: ${e.message}")
                 }
             })
         }
 
-    InfoCard(title = "Synchronization") {
-            AppButton(text = "Trigger Sync (Week)", onClick = {
+        InfoCard(title = "同步") {
+            AppButton(text = "同步课表", onClick = {
                 launchRepositoryAction(
-                    startMessage = "Triggering manual sync...",
-                    successMessage = "Sync completed successfully",
-                    emptyMessage = "Sync failed - null result",
-                    tag = "SyncButton"
+                    startMessage = "正在同步课表...",
+                    successMessage = "课表同步完成",
+                    emptyMessage = "课表同步失败（空结果）",
+                    tag = "课表同步"
                 ) {
                     weeklyRepository.refreshWeeklyData()
                 }
             })
 
-            Spacer(modifier = Modifier.height(8.dp))
+            if (isDebugBuild) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            AppButton(text = "Trigger Sync (WaterList)", onClick = {
-                launchRepositoryAction(
-                    startMessage = "Running experimental sync (API2)...",
-                    successMessage = "API2 data fetched and saved",
-                    emptyMessage = "Experimental sync failed - null result",
-                    tag = "ExperimentalSync"
+                AppButton(text = "同步 API2 水课单（调试）", onClick = {
+                    launchRepositoryAction(
+                        startMessage = "正在执行 API2 同步...",
+                        successMessage = "API2 数据同步完成",
+                        emptyMessage = "API2 同步失败（空结果）",
+                        tag = "API2 同步"
+                    ) {
+                        waterListRepository.refreshWaterListData()
+                    }
+                })
+            }
+        }
+
+        if (isDebugBuild) {
+            InfoCard(title = "调试与原始数据") {
+                AppButton(text = "拉取课表原始响应", onClick = {
+                    scope.launch {
+                        onPostEvent("正在拉取课表原始响应...")
+                        try {
+                            val rawResp = withContext(Dispatchers.IO) { weeklyRepository.fetchWeeklyRawFromApi() }
+                            if (!rawResp.isNullOrBlank()) {
+                                onPostEvent("拉取成功（${rawResp.length} bytes）")
+                                onPostEvent(rawResp.take(500) + "...")
+                            } else {
+                                onPostEvent("原始响应为空")
+                            }
+                        } catch (e: Exception) {
+                            onPostEvent("拉取失败: ${e.message}")
+                        }
+                    }
+                })
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AppButton(text = "输出 weekly.json 预览", onClick = {
+                    scope.launch {
+                        onPostEvent("正在输出 weekly 文件...")
+                        try {
+                            val previews = withContext(Dispatchers.IO) { weeklyRepository.getWeeklyFilePreviews() }
+                            if (previews.isEmpty()) {
+                                onPostEvent("没有可输出的 weekly 文件")
+                            }
+                            for (p in previews) {
+                                onPostEvent("文件: ${p.name} (${p.size} bytes)")
+                                onPostEvent(p.preview.take(200) + "...")
+                            }
+                        } catch (e: Exception) {
+                            onPostEvent("输出失败: ${e.message}")
+                        }
+                    }
+                })
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AppButton(text = "生成 cleaned weekly（调试）", onClick = {
+                    scope.launch {
+                        onPostEvent("正在生成 cleaned weekly...")
+                        try {
+                            val ok = withContext(Dispatchers.IO) { weeklyCleaner.generateCleanedWeekly() }
+                            if (ok) {
+                                onPostEvent("生成成功")
+                            } else {
+                                onPostEvent("生成失败")
+                            }
+                        } catch (e: Exception) {
+                            onPostEvent("异常: ${e.message}")
+                        }
+                    }
+                })
+            }
+        }
+
+        if (isDebugBuild) {
+            InfoCard(title = "调试设置") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = 0.dp,
+                    shape = RoundedCornerShape(14.dp),
+                    backgroundColor = MaterialTheme.colors.background
                 ) {
-                    waterListRepository.refreshWaterListData()
-                }
-            })
-        }
-
-        InfoCard(title = "Calendar") {
-             AppButton(text = "Write to Calendar", onClick = {
-                 val read = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR)
-                  val write = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR)
-                  if (read == PackageManager.PERMISSION_GRANTED && write == PackageManager.PERMISSION_GRANTED) {
-                    startSync()
-                  } else {
-                    onPostEvent("Requesting calendar permissions...")
-                    permissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
-                  }
-             })
-        }
-
-        InfoCard(title = "Debug & Raw Data") {
-            AppButton(text = "Fetch Weekly (API Raw)", onClick = {
-                scope.launch {
-                    onPostEvent("Fetching weekly from API (via WeeklyRepository)...")
-                    try {
-                         val rawResp = withContext(Dispatchers.IO) { weeklyRepository.fetchWeeklyRawFromApi() }
-                        if (!rawResp.isNullOrBlank()) {
-                            onPostEvent("Weekly API raw response fetched (${rawResp.length} bytes)")
-                             onPostEvent(rawResp.take(500) + "...")
-                        } else {
-                            onPostEvent("Raw fetch returned empty.")
-                        }
-                    } catch (e: Exception) {
-                        onPostEvent("Fetch failed: ${e.message}")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "启用 API2 自动轮询",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.body2
+                        )
+                        Switch(checked = api2AutoEnabled, onCheckedChange = { checked ->
+                            api2AutoEnabled = checked
+                            if (checked) enableApi2Periodic() else disableApi2Periodic()
+                        })
                     }
                 }
-            })
-             Spacer(modifier = Modifier.height(8.dp))
-
-            AppButton(text = "Print weekly.json", onClick = {
-                scope.launch {
-                    onPostEvent("Printing weekly files...")
-                    try {
-                        val previews = withContext(Dispatchers.IO) { weeklyRepository.getWeeklyFilePreviews() }
-                        if (previews.isEmpty()) {
-                            onPostEvent("No weekly files found to print")
-                        }
-                        for (p in previews) {
-                            onPostEvent("File: ${p.name} (${p.size} bytes)")
-                            onPostEvent(p.preview.take(200) + "...")
-                        }
-                    } catch (e: Exception) {
-                         onPostEvent("Print failed: ${e.message}")
-                    }
-                }
-            })
-
-             Spacer(modifier = Modifier.height(8.dp))
-
-            AppButton(text = "Generate Cleaned Weekly", onClick = {
-                 scope.launch {
-                    onPostEvent("Generating cleaned weekly...")
-                    try {
-                        val ok = withContext(Dispatchers.IO) { weeklyCleaner.generateCleanedWeekly() }
-                        if (ok) {
-                             onPostEvent("Weekly cleaned generation succeeded")
-                        } else {
-                             onPostEvent("Weekly cleaned generation failed")
-                        }
-                    } catch(e: Exception) {
-                        onPostEvent("Error: ${e.message}")
-                    }
-                 }
-            })
-        }
-
-        InfoCard(title = "Settings") {
-             Row(verticalAlignment = Alignment.CenterVertically) {
-                  Text(text = "Enable automatic API2 queries:", modifier = Modifier.weight(1f))
-                  Switch(checked = api2AutoEnabled, onCheckedChange = { checked ->
-                    api2AutoEnabled = checked
-                    if (checked) enableApi2Periodic() else disableApi2Periodic()
-                  })
-             }
+            }
         }
     }
 }
