@@ -1,7 +1,9 @@
 package org.xjtuai.kqchecker.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Typography
+import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
@@ -10,21 +12,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 private val LightColorPalette = lightColors(
-    primary = TidePrimary,
-    primaryVariant = TidePrimaryVariant,
-    secondary = CoralSecondary,
-    background = SoftBackground,
-    surface = CardSurface,
-    error = Error,
-    onPrimary = OnPrimary,
-    onSecondary = OnSecondary,
-    onBackground = OnBackground,
-    onSurface = OnSurface,
-    onError = OnError
+    primary = OceanPrimary,
+    primaryVariant = OceanPrimaryVariant,
+    secondary = OceanSecondary,
+    background = OceanBackground,
+    surface = OceanSurface,
+    error = OceanError,
+    onPrimary = OceanOnPrimary,
+    onSecondary = OceanOnSecondary,
+    onBackground = OceanOnBackground,
+    onSurface = OceanOnSurface,
+    onError = OceanOnError
+)
+
+private val DarkColorPalette = darkColors(
+    primary = OceanPrimaryDark,
+    primaryVariant = OceanPrimaryVariantDark,
+    secondary = OceanSecondaryDark,
+    background = OceanBackgroundDark,
+    surface = OceanSurfaceDark,
+    error = OceanErrorDark,
+    onPrimary = OceanOnPrimaryDark,
+    onSecondary = OceanOnSecondaryDark,
+    onBackground = OceanOnBackgroundDark,
+    onSurface = OceanOnSurfaceDark,
+    onError = OceanOnErrorDark
 )
 
 @Composable
-fun KqCheckerTheme(content: @Composable () -> Unit) {
+fun KqCheckerTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
     val appTypography = Typography(
         h3 = TextStyle(
             fontFamily = FontFamily.Serif,
@@ -72,7 +97,7 @@ fun KqCheckerTheme(content: @Composable () -> Unit) {
     )
 
     MaterialTheme(
-        colors = LightColorPalette,
+        colors = colors,
         typography = appTypography,
         shapes = MaterialTheme.shapes,
         content = content

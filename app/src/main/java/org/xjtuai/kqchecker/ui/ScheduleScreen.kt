@@ -364,10 +364,10 @@ fun ScheduleScreen(
                     backgroundColor = MaterialTheme.colors.secondary,
                     contentColor = MaterialTheme.colors.onSecondary
                 ) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Write to Calendar")
+                    Icon(Icons.Default.DateRange, contentDescription = "写入日历")
                 }
                 FloatingActionButton(onClick = { refreshData(true) }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    Icon(Icons.Default.Refresh, contentDescription = "刷新")
                 }
             }
         }
@@ -392,7 +392,7 @@ fun ScheduleScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(30.dp)) // Placeholder for period numbers
-                val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                val days = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
                 days.forEach { day ->
                     Text(
                         text = day,
@@ -506,62 +506,70 @@ fun ScheduleItemCard(
     val height = ((item.endPeriod - item.startPeriod + 1) * 60).dp
     val topOffset = ((item.startPeriod - 1) * 60).dp
     
-    // Choose color based on index
-    val cardColor = when (item.colorIndex) {
-        0 -> MaterialTheme.colors.primary.copy(alpha = 0.20f)
-        1 -> MaterialTheme.colors.secondary.copy(alpha = 0.24f)
-        2 -> MaterialTheme.colors.primary.copy(alpha = 0.15f)
-        3 -> MaterialTheme.colors.secondary.copy(alpha = 0.18f)
-        4 -> MaterialTheme.colors.primary.copy(alpha = 0.12f)
-        5 -> MaterialTheme.colors.secondary.copy(alpha = 0.20f)
-        6 -> MaterialTheme.colors.primary.copy(alpha = 0.18f)
-        else -> MaterialTheme.colors.secondary.copy(alpha = 0.15f)
-    }
+    // Improved pastel palette for cleaner look
+    val colorPalette = listOf(
+        androidx.compose.ui.graphics.Color(0xFFE1F5FE), // Light Blue
+        androidx.compose.ui.graphics.Color(0xFFF3E5F5), // Light Purple
+        androidx.compose.ui.graphics.Color(0xFFE0F2F1), // Light Teal
+        androidx.compose.ui.graphics.Color(0xFFFFF8E1), // Amber
+        androidx.compose.ui.graphics.Color(0xFFFBE9E7), // Deep Orange
+        androidx.compose.ui.graphics.Color(0xFFF1F8E9), // Light Green
+        androidx.compose.ui.graphics.Color(0xFFECEFF1)  // Blue Grey
+    )
+    
+    val cardColor = colorPalette[item.colorIndex % colorPalette.size]
+    val textColor = androidx.compose.ui.graphics.Color(0xFF263238)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
-            .padding(1.dp)
+            .padding(2.dp)
             .offset(y = topOffset)
             .clickable(onClick = onClick),
         backgroundColor = cardColor,
-        elevation = 3.dp,
-        shape = RoundedCornerShape(10.dp)
+        elevation = 0.5.dp, // Very subtle elevation
+        shape = RoundedCornerShape(8.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(4.dp)
+                .padding(vertical = 4.dp, horizontal = 2.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (homeworkCount > 0) {
                 Surface(
-                    color = MaterialTheme.colors.secondary,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.align(Alignment.End)
+                    color = MaterialTheme.colors.secondary.copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.padding(bottom = 2.dp)
                 ) {
                     Text(
-                        text = "$homeworkCount 作业",
+                        text = "作业",
                         color = MaterialTheme.colors.onSecondary,
                         style = MaterialTheme.typography.overline,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                        fontSize = 8.sp
                     )
                 }
             }
             Text(
                 text = item.courseName,
-                style = MaterialTheme.typography.caption.copy(fontSize = 10.sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 3,
+                style = MaterialTheme.typography.caption.copy(fontSize = 11.sp),
+                color = textColor,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 4,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
             if (item.location.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "@${item.location}",
-                    style = MaterialTheme.typography.overline.copy(fontSize = 8.sp),
+                    style = MaterialTheme.typography.overline.copy(fontSize = 9.sp),
+                    color = textColor.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center,
+                    maxLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -641,7 +649,7 @@ private fun HomeworkDialog(
                 if (previewBitmap != null) {
                     Image(
                         bitmap = previewBitmap,
-                        contentDescription = "Homework photo",
+                        contentDescription = "作业图片",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(160.dp)

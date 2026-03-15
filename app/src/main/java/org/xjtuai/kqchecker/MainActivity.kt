@@ -53,6 +53,7 @@ fun AppContent() {
     val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
+    var startupSyncEnabled by remember { mutableStateOf(prefs.getBoolean("startup_sync_enabled", true)) }
 
     // 版本更新状态
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
@@ -63,6 +64,8 @@ fun AppContent() {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
             if (key == "event_log_enabled") {
                 showEventLog = sharedPreferences.getBoolean("event_log_enabled", true)
+            } else if (key == "startup_sync_enabled") {
+                startupSyncEnabled = sharedPreferences.getBoolean("startup_sync_enabled", true)
             }
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -122,10 +125,16 @@ fun AppContent() {
 
     // 检查缓存过期
     LaunchedEffect(Unit) {
-        postEvent("Checking weekly.json cache expiration...")
+        postEvent(
+            if (startupSyncEnabled) {
+                "Startup sync enabled, refreshing weekly data once..."
+            } else {
+                "Checking weekly.json cache expiration..."
+            }
+        )
         try {
             val cacheStatus = weeklyRepository.getCacheStatus()
-            if (!cacheStatus.exists || cacheStatus.isExpired) {
+            if (startupSyncEnabled || !cacheStatus.exists || cacheStatus.isExpired) {
                 postEvent("Weekly cache is expired or not found, triggering automatic refresh...")
                 scope.launch(Dispatchers.IO) {
                     try {

@@ -59,14 +59,14 @@ fun LogDisplay(events: List<String>, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Event Log",
+                    text = "事件日志",
                     color = MaterialTheme.colors.onSurface,
                     fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    contentDescription = if (isExpanded) "收起" else "展开",
                     tint = MaterialTheme.colors.primary
                 )
             }

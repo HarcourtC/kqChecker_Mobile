@@ -44,13 +44,13 @@ fun CompetitionScreen(
 
     // 0 -> Recent, 1 -> All
     var selectedTab by remember { mutableStateOf(0) }
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf("全部") }
     var openedUrl by remember { mutableStateOf<String?>(null) }
-    var openedTitle by remember { mutableStateOf("Dean's") }
+    var openedTitle by remember { mutableStateOf("竞赛详情") }
     var inAppWebView by remember { mutableStateOf<WebView?>(null) }
 
     val categories = remember(items) {
-        listOf("All") + items.map { it.category }.distinct().sorted()
+        listOf("全部") + items.map { it.category }.distinct().sorted()
     }
 
     val filteredItems = remember(items, selectedTab, selectedCategory) {
@@ -60,7 +60,7 @@ fun CompetitionScreen(
                 1 -> true
                 else -> true
             }
-            val matchCategory = if (selectedCategory == "All") true else item.category == selectedCategory
+            val matchCategory = if (selectedCategory == "全部") true else item.category == selectedCategory
             matchTab && matchCategory
         }
     }
@@ -109,7 +109,7 @@ fun CompetitionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (openedUrl == null) "Dean's Office Competitions" else openedTitle) },
+                title = { Text(if (openedUrl == null) "教务处竞赛" else openedTitle) },
                 backgroundColor = MaterialTheme.colors.surface,
                 elevation = 0.dp,
                 navigationIcon = if (openedUrl != null) {
@@ -122,7 +122,7 @@ fun CompetitionScreen(
                                 openedUrl = null
                             }
                         }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                         }
                     }
                 } else {
@@ -136,7 +136,7 @@ fun CompetitionScreen(
                             inAppWebView?.reload()
                         }
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Default.Refresh, contentDescription = "刷新")
                     }
                 }
             )
@@ -187,12 +187,12 @@ fun CompetitionScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Recent (NEW)") }
+                    text = { Text("近期（新）") }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("All") }
+                    text = { Text("全部") }
                 )
             }
 
@@ -225,23 +225,23 @@ fun CompetitionScreen(
 
             if (items.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No data loaded.\nTap refresh button.", color = Color.Gray, style = MaterialTheme.typography.body2)
+                    Text("暂无数据。\n请点击刷新按钮。", color = Color.Gray, style = MaterialTheme.typography.body2)
                 }
             } else if (filteredItems.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No items found in this category.", color = Color.Gray)
+                    Text("当前分类下暂无内容。", color = Color.Gray)
                 }
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (lastUpdate != null && selectedTab == 1 && selectedCategory == "All") {
+                    if (lastUpdate != null && selectedTab == 1 && selectedCategory == "全部") {
                         // Only show update time on the main "All" view to avoid clutter, or always show?
                         // Let's keep it always at top of list
                         item {
                             Text(
-                                text = "Last successful update: $lastUpdate",
+                                text = "最近成功更新时间：$lastUpdate",
                                 fontSize = 12.sp,
                                 color = Color.Gray,
                                 modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)

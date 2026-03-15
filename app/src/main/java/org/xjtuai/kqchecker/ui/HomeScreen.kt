@@ -33,7 +33,7 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "kqChecker",
+            text = "考勤助手",
             style = MaterialTheme.typography.h3,
             color = MaterialTheme.colors.primary,
             modifier = Modifier.padding(vertical = 24.dp)
@@ -54,15 +54,12 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        AppButton(
-            text = "Login",
-            onClick = onLoginClick
-        )
+        AppButton(text = "登录", onClick = onLoginClick)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         AppButton(
-            text = "Check Cache Status",
+            text = "检查缓存状态",
             onClick = onCheckCacheStatus,
             backgroundColor = MaterialTheme.colors.secondary
         )
