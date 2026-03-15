@@ -39,6 +39,44 @@ object CalendarHelper {
     }
 
     fun insertEvent(context: Context, calendarId: Long, title: String, startMillis: Long, endMillis: Long, description: String? = null, eventId: String? = null, location: String? = null): Long? {
+        val values = createEventValues(calendarId, title, startMillis, endMillis, description, eventId, location)
+        val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+        return uri?.lastPathSegment?.toLongOrNull()
+    }
+
+    fun upsertEvent(
+        context: Context,
+        calendarId: Long,
+        title: String,
+        startMillis: Long,
+        endMillis: Long,
+        description: String? = null,
+        eventId: String,
+        location: String? = null
+    ): Long? {
+        val existingEventRowId = findExistingEvent(context, title, startMillis, eventId)
+        val values = createEventValues(calendarId, title, startMillis, endMillis, description, eventId, location)
+        return if (existingEventRowId != null) {
+            val eventUri = CalendarContract.Events.CONTENT_URI.buildUpon()
+                .appendPath(existingEventRowId.toString())
+                .build()
+            context.contentResolver.update(eventUri, values, null, null)
+            existingEventRowId
+        } else {
+            val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+            uri?.lastPathSegment?.toLongOrNull()
+        }
+    }
+
+    private fun createEventValues(
+        calendarId: Long,
+        title: String,
+        startMillis: Long,
+        endMillis: Long,
+        description: String? = null,
+        eventId: String? = null,
+        location: String? = null
+    ): ContentValues {
         val descriptionBuilder = StringBuilder()
         if (!description.isNullOrEmpty()) {
             descriptionBuilder.append(description)
@@ -49,8 +87,8 @@ object CalendarHelper {
             descriptionBuilder.append("ID:$eventId")
         }
         val finalDesc = if (descriptionBuilder.isNotEmpty()) descriptionBuilder.toString() else null
-        
-        val values = ContentValues().apply {
+
+        return ContentValues().apply {
             put(CalendarContract.Events.DTSTART, startMillis)
             put(CalendarContract.Events.DTEND, endMillis)
             put(CalendarContract.Events.TITLE, title)
@@ -59,8 +97,6 @@ object CalendarHelper {
             if (finalDesc != null) put(CalendarContract.Events.DESCRIPTION, finalDesc)
             if (location != null) put(CalendarContract.Events.EVENT_LOCATION, location)
         }
-        val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-        return uri?.lastPathSegment?.toLongOrNull()
     }
 
     fun getDefaultCalendarId(context: Context): Long? {

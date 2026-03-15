@@ -26,8 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.systemBarsPadding
+import org.xjtuai.kqchecker.model.ScheduleItem
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Default.Home)
@@ -40,6 +40,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 @Composable
 fun MainScreen(
     events: List<String>,
+    scheduleItems: List<ScheduleItem>,
     showEventLog: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -80,7 +81,8 @@ fun MainScreen(
                 when (currentScreen) {
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
-                        onCheckCacheStatus = onCheckCacheStatus
+                        onCheckCacheStatus = onCheckCacheStatus,
+                        scheduleItems = scheduleItems
                     )
                     Screen.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
