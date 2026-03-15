@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -26,20 +25,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.unit.dp
+import org.xjtuai.kqchecker.BuildConfig
+import org.xjtuai.kqchecker.model.ScheduleItem
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Home : Screen("home", "Home", Icons.Default.Home)
-    object Schedule : Screen("schedule", "Schedule", Icons.Default.DateRange)
-    object Competition : Screen("competition", "Dean's", Icons.Default.List)
-    object Tools : Screen("tools", "Tools", Icons.Default.Build)
-    object Integration : Screen("integration", "Integration", Icons.Default.Settings) 
+    object Home : Screen("home", "首页", Icons.Default.Home)
+    object Schedule : Screen("schedule", "课表", Icons.Default.DateRange)
+    object Competition : Screen("competition", "竞赛", Icons.Default.List)
+    object Tools : Screen("tools", "工具", Icons.Default.Build)
+    object Integration : Screen("integration", "集成", Icons.Default.Settings)
 }
 
 @Composable
 fun MainScreen(
     events: List<String>,
+    scheduleItems: List<ScheduleItem>,
     showEventLog: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -50,10 +52,14 @@ fun MainScreen(
 
     Scaffold(
         modifier = Modifier.systemBarsPadding(),
+        backgroundColor = MaterialTheme.colors.background,
         bottomBar = {
             BottomNavigation(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
                 backgroundColor = MaterialTheme.colors.surface,
-                contentColor = MaterialTheme.colors.primary
+                contentColor = MaterialTheme.colors.primary,
+                elevation = 10.dp
             ) {
                 val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Integration)
                 screens.forEach { screen ->
@@ -80,7 +86,8 @@ fun MainScreen(
                 when (currentScreen) {
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
-                        onCheckCacheStatus = onCheckCacheStatus
+                        onCheckCacheStatus = onCheckCacheStatus,
+                        scheduleItems = scheduleItems
                     )
                     Screen.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
@@ -97,10 +104,10 @@ fun MainScreen(
                     )
                 }
             }
-            
+
             Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
-            
-            if (showEventLog) {
+
+            if (BuildConfig.DEBUG && showEventLog) {
                 LogDisplay(
                     events = events,
                     modifier = Modifier.fillMaxWidth()

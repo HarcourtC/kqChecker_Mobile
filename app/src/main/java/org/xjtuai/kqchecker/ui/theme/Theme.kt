@@ -1,7 +1,9 @@
 package org.xjtuai.kqchecker.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Typography
+import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
@@ -10,45 +12,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 private val LightColorPalette = lightColors(
-    primary = BluePrimary,
-    primaryVariant = BlueVariant,
-    secondary = Secondary,
-    background = Background,
-    surface = Surface,
-    error = Error,
-    onPrimary = OnPrimary,
-    onSecondary = OnSecondary,
-    onBackground = OnBackground,
-    onSurface = OnSurface,
-    onError = OnError
+    primary = OceanPrimary,
+    primaryVariant = OceanPrimaryVariant,
+    secondary = OceanSecondary,
+    background = OceanBackground,
+    surface = OceanSurface,
+    error = OceanError,
+    onPrimary = OceanOnPrimary,
+    onSecondary = OceanOnSecondary,
+    onBackground = OceanOnBackground,
+    onSurface = OceanOnSurface,
+    onError = OceanOnError
+)
+
+private val DarkColorPalette = darkColors(
+    primary = OceanPrimaryDark,
+    primaryVariant = OceanPrimaryVariantDark,
+    secondary = OceanSecondaryDark,
+    background = OceanBackgroundDark,
+    surface = OceanSurfaceDark,
+    error = OceanErrorDark,
+    onPrimary = OceanOnPrimaryDark,
+    onSecondary = OceanOnSecondaryDark,
+    onBackground = OceanOnBackgroundDark,
+    onSurface = OceanOnSurfaceDark,
+    onError = OceanOnErrorDark
 )
 
 @Composable
-fun KqCheckerTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colors = LightColorPalette,
-        typography = Typography(
-            body1 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp
-            ),
-            h5 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 24.sp
-            ),
-            h6 = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp
-            ),
-            button = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            )
+fun KqCheckerTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    val appTypography = Typography(
+        h3 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 34.sp,
+            letterSpacing = 0.2.sp
         ),
+        h5 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            letterSpacing = 0.15.sp
+        ),
+        h6 = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp
+        ),
+        subtitle1 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
+        ),
+        body1 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp
+        ),
+        body2 = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp
+        ),
+        caption = TextStyle(
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Normal,
+            fontSize = 12.sp
+        ),
+        button = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            letterSpacing = 0.5.sp
+        )
+    )
+
+    MaterialTheme(
+        colors = colors,
+        typography = appTypography,
         shapes = MaterialTheme.shapes,
         content = content
     )

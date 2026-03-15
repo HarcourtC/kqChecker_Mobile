@@ -44,7 +44,7 @@ fun IntegrationScreen(
     fun toggleEventLog(enabled: Boolean) {
         prefs.edit().putBoolean("event_log_enabled", enabled).apply()
         eventLogEnabled = enabled
-        onPostEvent("Event log ${if (enabled) "enabled" else "disabled"}")
+        onPostEvent("事件日志已${if (enabled) "开启" else "关闭"}")
     }
 
     fun startForegroundPolling(intervalMin: Int = 5) {
@@ -61,10 +61,10 @@ fun IntegrationScreen(
                 context.startService(svc)
             }
             api2ForegroundEnabled = true
-            onPostEvent("Foreground polling started (interval ${intervalMin}m)")
+            onPostEvent("前台轮询已启动（间隔 ${intervalMin} 分钟）")
         } catch (e: Exception) {
             Log.e("Api2Polling", "Failed to start foreground polling", e)
-            onPostEvent("Failed to start foreground polling: ${e.message}")
+            onPostEvent("启动前台轮询失败: ${e.message}")
         }
     }
 
@@ -73,10 +73,10 @@ fun IntegrationScreen(
             prefs.edit().putBoolean("api2_foreground_enabled", false).apply()
             context.stopService(Intent(context, Api2PollingService::class.java))
             api2ForegroundEnabled = false
-            onPostEvent("Foreground polling stopped")
+            onPostEvent("前台轮询已停止")
         } catch (e: Exception) {
             Log.e("Api2Polling", "Failed to stop foreground polling", e)
-            onPostEvent("Failed to stop foreground polling: ${e.message}")
+            onPostEvent("停止前台轮询失败: ${e.message}")
         }
     }
 
@@ -95,10 +95,10 @@ fun IntegrationScreen(
             )
             prefs.edit().putBoolean("deadline_check_enabled", true).apply()
             deadlineCheckEnabled = true
-            onPostEvent("Deadline check enabled (daily)")
+            onPostEvent("截止日期提醒已开启（每天）")
         } catch (e: Exception) {
             Log.e("DeadlineCheck", "Failed to enable deadline check", e)
-            onPostEvent("Failed to enable deadline check: ${e.message}")
+            onPostEvent("开启截止日期提醒失败: ${e.message}")
         }
     }
 
@@ -107,10 +107,10 @@ fun IntegrationScreen(
             WorkManager.getInstance(context).cancelUniqueWork("competition_deadline_check")
             prefs.edit().putBoolean("deadline_check_enabled", false).apply()
             deadlineCheckEnabled = false
-            onPostEvent("Deadline check disabled")
+            onPostEvent("截止日期提醒已关闭")
         } catch (e: Exception) {
             Log.e("DeadlineCheck", "Failed to disable deadline check", e)
-            onPostEvent("Failed to disable deadline check: ${e.message}")
+            onPostEvent("关闭截止日期提醒失败: ${e.message}")
         }
     }
     
@@ -123,17 +123,17 @@ fun IntegrationScreen(
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        InfoCard(title = "Background Services") {
+        InfoCard(title = "后台服务") {
              Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Enable foreground polling (Realtime)",
+                    text = "启用前台轮询（实时）",
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
                     checked = api2ForegroundEnabled,
                     onCheckedChange = { checked ->
                         if (checked) {
-                            Toast.makeText(context, "Foreground polling increases battery usage.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "前台轮询会增加耗电。", Toast.LENGTH_LONG).show()
                             startForegroundPolling(5)
                         } else {
                             stopForegroundPolling()
@@ -147,7 +147,7 @@ fun IntegrationScreen(
                 modifier = Modifier.padding(top = 12.dp)
             ) {
                 Text(
-                    text = "Enable deadline daily reminder",
+                    text = "启用比赛截止日期每日提醒",
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
@@ -163,10 +163,10 @@ fun IntegrationScreen(
             }
         }
         
-        org.xjtuai.kqchecker.ui.components.InfoCard(title = "UI Configuration", modifier = Modifier.padding(top = 16.dp)) {
+        org.xjtuai.kqchecker.ui.components.InfoCard(title = "界面设置", modifier = Modifier.padding(top = 16.dp)) {
              Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Show Event Log Panel",
+                    text = "显示事件日志面板",
                     modifier = Modifier.weight(1f)
                 )
                 Switch(

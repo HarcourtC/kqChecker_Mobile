@@ -2,7 +2,10 @@ package org.xjtuai.kqchecker.ui.components
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
@@ -14,8 +17,11 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.util.VersionInfo
 
@@ -26,12 +32,38 @@ fun AppButton(
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colors.primary
 ) {
+    val buttonShape = RoundedCornerShape(14.dp)
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor)
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp),
+        shape = buttonShape,
+        elevation = ButtonDefaults.elevation(defaultElevation = 1.dp, pressedElevation = 4.dp),
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = Color.Transparent,
+            contentColor = MaterialTheme.colors.onPrimary
+        ),
+        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
     ) {
-        Text(text = text)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(backgroundColor, MaterialTheme.colors.primaryVariant)
+                    ),
+                    shape = buttonShape
+                )
+                .padding(vertical = 12.dp, horizontal = 16.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.button,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -41,20 +73,37 @@ fun InfoCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(18.dp)
     Card(
-        elevation = 4.dp,
+        elevation = 8.dp,
+        shape = cardShape,
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
         androidx.compose.foundation.layout.Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .clip(cardShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colors.surface,
+                            MaterialTheme.colors.background
+                        )
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colors.primary.copy(alpha = 0.12f),
+                    shape = cardShape
+                )
+                .padding(16.dp)
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.h6,
                 color = MaterialTheme.colors.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 10.dp)
             )
             content()
         }

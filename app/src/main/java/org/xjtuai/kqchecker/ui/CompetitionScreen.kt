@@ -1,23 +1,26 @@
 package org.xjtuai.kqchecker.ui
 
-import android.content.Intent
-import android.net.Uri
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import org.xjtuai.kqchecker.network.CompetitionItem
 import org.xjtuai.kqchecker.repository.RepositoryProvider
@@ -31,7 +34,6 @@ fun CompetitionScreen(
     onPostEvent: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val repo = remember { RepositoryProvider.getCompetitionRepository() }
 
@@ -42,10 +44,13 @@ fun CompetitionScreen(
 
     // 0 -> Recent, 1 -> All
     var selectedTab by remember { mutableStateOf(0) }
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf("全部") }
+    var openedUrl by remember { mutableStateOf<String?>(null) }
+    var openedTitle by remember { mutableStateOf("竞赛详情") }
+    var inAppWebView by remember { mutableStateOf<WebView?>(null) }
 
     val categories = remember(items) {
-        listOf("All") + items.map { it.category }.distinct().sorted()
+        listOf("全部") + items.map { it.category }.distinct().sorted()
     }
 
     val filteredItems = remember(items, selectedTab, selectedCategory) {
@@ -55,7 +60,7 @@ fun CompetitionScreen(
                 1 -> true
                 else -> true
             }
-            val matchCategory = if (selectedCategory == "All") true else item.category == selectedCategory
+            val matchCategory = if (selectedCategory == "全部") true else item.category == selectedCategory
             matchTab && matchCategory
         }
     }
@@ -92,21 +97,82 @@ fun CompetitionScreen(
         loadData(false)
     }
 
+    BackHandler(enabled = openedUrl != null) {
+        val webView = inAppWebView
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            openedUrl = null
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dean's Office Competitions") },
+                title = { Text(if (openedUrl == null) "教务处竞赛" else openedTitle) },
                 backgroundColor = MaterialTheme.colors.surface,
                 elevation = 0.dp,
+                navigationIcon = if (openedUrl != null) {
+                    {
+                        IconButton(onClick = {
+                            val webView = inAppWebView
+                            if (webView != null && webView.canGoBack()) {
+                                webView.goBack()
+                            } else {
+                                openedUrl = null
+                            }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        }
+                    }
+                } else {
+                    null
+                },
                 actions = {
-                    IconButton(onClick = { loadData(true) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    IconButton(onClick = {
+                        if (openedUrl == null) {
+                            loadData(true)
+                        } else {
+                            inAppWebView?.reload()
+                        }
+                    }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "刷新")
                     }
                 }
             )
         },
         backgroundColor = MaterialTheme.colors.background
     ) { padding ->
+        if (openedUrl != null) {
+            AndroidView(
+                modifier = modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                factory = { context ->
+                    val initialUrl = openedUrl
+                    WebView(context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.cacheMode = WebSettings.LOAD_DEFAULT
+                        webViewClient = object : WebViewClient() {}
+                        if (!initialUrl.isNullOrBlank()) {
+                            loadUrl(initialUrl)
+                        }
+                        inAppWebView = this
+                    }
+                },
+                update = { webView ->
+                    val currentUrl = webView.url
+                    val targetUrl = openedUrl
+                    if (!targetUrl.isNullOrBlank() && currentUrl != targetUrl) {
+                        webView.loadUrl(targetUrl)
+                    }
+                    inAppWebView = webView
+                }
+            )
+            return@Scaffold
+        }
+
         Column(modifier = modifier.padding(padding).fillMaxSize()) {
             if (isLoading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -121,12 +187,12 @@ fun CompetitionScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Recent (NEW)") }
+                    text = { Text("近期（新）") }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("All") }
+                    text = { Text("全部") }
                 )
             }
 
@@ -159,23 +225,23 @@ fun CompetitionScreen(
 
             if (items.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No data loaded.\nTap refresh button.", color = Color.Gray, style = MaterialTheme.typography.body2)
+                    Text("暂无数据。\n请点击刷新按钮。", color = Color.Gray, style = MaterialTheme.typography.body2)
                 }
             } else if (filteredItems.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No items found in this category.", color = Color.Gray)
+                    Text("当前分类下暂无内容。", color = Color.Gray)
                 }
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (lastUpdate != null && selectedTab == 1 && selectedCategory == "All") {
+                    if (lastUpdate != null && selectedTab == 1 && selectedCategory == "全部") {
                         // Only show update time on the main "All" view to avoid clutter, or always show?
                         // Let's keep it always at top of list
                         item {
                             Text(
-                                text = "Last successful update: $lastUpdate",
+                                text = "最近成功更新时间：$lastUpdate",
                                 fontSize = 12.sp,
                                 color = Color.Gray,
                                 modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
@@ -185,11 +251,11 @@ fun CompetitionScreen(
 
                     items(filteredItems) { item ->
                         CompetitionCard(item = item, onClick = {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.url))
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
+                            if (item.url.isBlank()) {
                                 onPostEvent("Cannot open URL: ${item.url}")
+                            } else {
+                                openedUrl = item.url
+                                openedTitle = item.title
                             }
                         })
                     }

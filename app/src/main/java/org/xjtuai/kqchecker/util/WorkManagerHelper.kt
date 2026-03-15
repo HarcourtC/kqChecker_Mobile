@@ -2,6 +2,7 @@ package org.xjtuai.kqchecker.util
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkInfo
@@ -49,6 +50,36 @@ object WorkManagerHelper {
     }
   }
 
+  private fun createAutoRemovingObserver(
+    liveData: LiveData<WorkInfo>,
+    onStatusChange: (WorkInfo.State, String) -> Unit,
+    taskName: String
+  ): Observer<WorkInfo> {
+    lateinit var observer: Observer<WorkInfo>
+    observer = Observer { workInfo ->
+      if (workInfo == null) return@Observer
+
+      val statusMessage = getStatusMessage(workInfo.state, taskName)
+      onStatusChange(workInfo.state, statusMessage)
+
+      if (workInfo.state.isFinished) {
+        when (workInfo.state) {
+          WorkInfo.State.SUCCEEDED -> {
+            onStatusChange(workInfo.state, "Calendar data updated successfully")
+            onStatusChange(workInfo.state, "Tip: Use 'Print weekly.json' button to view raw data")
+          }
+          WorkInfo.State.FAILED -> {
+            onStatusChange(workInfo.state, "Suggestion: Check logs for detailed error info")
+            onStatusChange(workInfo.state, "Tip: Ensure valid weekly data cache exists")
+          }
+          else -> {}
+        }
+        liveData.removeObserver(observer)
+      }
+    }
+    return observer
+  }
+
   suspend fun enqueueWorkRequest(context: Context, workRequest: OneTimeWorkRequest): UUID {
     return withContext(Dispatchers.IO) {
       WorkManager.getInstance(context).enqueue(workRequest)
@@ -63,9 +94,8 @@ object WorkManagerHelper {
     taskName: String = "Task"
   ) {
     withContext(Dispatchers.Main) {
-      WorkManager.getInstance(context)
-        .getWorkInfoByIdLiveData(workId)
-        .observeForever(createWorkObserver(onStatusChange, taskName))
+      val liveData = WorkManager.getInstance(context).getWorkInfoByIdLiveData(workId)
+      liveData.observeForever(createAutoRemovingObserver(liveData, onStatusChange, taskName))
     }
   }
 

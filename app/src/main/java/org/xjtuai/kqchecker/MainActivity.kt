@@ -17,6 +17,7 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
 import org.xjtuai.kqchecker.repository.RepositoryProvider
@@ -25,6 +26,7 @@ import org.xjtuai.kqchecker.ui.components.UpdateDialog
 import org.xjtuai.kqchecker.ui.theme.KqCheckerTheme
 import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.util.NotificationHelper
+import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
 import org.xjtuai.kqchecker.util.VersionInfo
 import org.json.JSONObject
@@ -51,6 +53,7 @@ fun AppContent() {
     val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
+    var startupSyncEnabled by remember { mutableStateOf(prefs.getBoolean("startup_sync_enabled", true)) }
 
     // 版本更新状态
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
@@ -61,6 +64,8 @@ fun AppContent() {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
             if (key == "event_log_enabled") {
                 showEventLog = sharedPreferences.getBoolean("event_log_enabled", true)
+            } else if (key == "startup_sync_enabled") {
+                startupSyncEnabled = sharedPreferences.getBoolean("startup_sync_enabled", true)
             }
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -78,6 +83,26 @@ fun AppContent() {
     }
 
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
+    var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
+
+    fun loadHomeSchedule(forceRefresh: Boolean) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = weeklyRepository.getWeeklyData(forceRefresh)
+                if (response != null && response.success) {
+                    val parsed = ScheduleParser.parse(response.data)
+                    withContext(Dispatchers.Main) {
+                        scheduleItems = parsed
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to load home schedule", e)
+                withContext(Dispatchers.Main) {
+                    postEvent("Failed to load home schedule: ${e.message ?: e.toString()}")
+                }
+            }
+        }
+    }
 
     // 检查版本更新
     LaunchedEffect(Unit) {
@@ -100,10 +125,16 @@ fun AppContent() {
 
     // 检查缓存过期
     LaunchedEffect(Unit) {
-        postEvent("Checking weekly.json cache expiration...")
+        postEvent(
+            if (startupSyncEnabled) {
+                "Startup sync enabled, refreshing weekly data once..."
+            } else {
+                "Checking weekly.json cache expiration..."
+            }
+        )
         try {
             val cacheStatus = weeklyRepository.getCacheStatus()
-            if (!cacheStatus.exists || cacheStatus.isExpired) {
+            if (startupSyncEnabled || !cacheStatus.exists || cacheStatus.isExpired) {
                 postEvent("Weekly cache is expired or not found, triggering automatic refresh...")
                 scope.launch(Dispatchers.IO) {
                     try {
@@ -114,6 +145,7 @@ fun AppContent() {
                                 val updatedStatus = weeklyRepository.getCacheStatus()
                                 val expiresMsg = updatedStatus.expiresDate ?: "unknown"
                                 postEvent("Cache will expire on: $expiresMsg")
+                                loadHomeSchedule(false)
                             } else {
                                 postEvent("Auto-refresh failed: Repository returned null")
                             }
@@ -143,10 +175,12 @@ fun AppContent() {
                 } else {
                     postEvent("Weekly cache is up-to-date")
                 }
+                loadHomeSchedule(false)
             }
         } catch (e: Exception) {
             Log.e("AutoRefreshWeekly", "Error checking cache status", e)
             postEvent("Auto-refresh check failed: ${e.message ?: e.toString()}")
+            loadHomeSchedule(false)
         }
     }
 
@@ -219,6 +253,7 @@ fun AppContent() {
     // 主屏幕
     MainScreen(
         events = events,
+        scheduleItems = scheduleItems,
         showEventLog = showEventLog,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
@@ -242,7 +277,7 @@ fun AppContent() {
     // 显示版本更新对话框
     if (showUpdateDialog && versionInfo != null) {
         UpdateDialog(
-            versionInfo = versionInfo!!,
+            versionInfo = requireNotNull(versionInfo),
             onDismiss = { showUpdateDialog = false },
             onUpdate = { showUpdateDialog = false }
         )
