@@ -27,13 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.ui.unit.dp
+import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.model.ScheduleItem
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Home : Screen("home", "Home", Icons.Default.Home)
-    object Schedule : Screen("schedule", "Schedule", Icons.Default.DateRange)
-    object Competition : Screen("competition", "Dean's", Icons.Default.List)
-    object Tools : Screen("tools", "Tools", Icons.Default.Build)
+    object Home : Screen("home", "首页", Icons.Default.Home)
+    object Schedule : Screen("schedule", "课表", Icons.Default.DateRange)
+    object Competition : Screen("competition", "竞赛", Icons.Default.List)
+    object Tools : Screen("tools", "工具", Icons.Default.Build)
     object Integration : Screen("integration", "集成", Icons.Default.Settings)
 }
 
@@ -106,7 +107,7 @@ fun MainScreen(
 
             Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
 
-            if (showEventLog) {
+            if (BuildConfig.DEBUG && showEventLog) {
                 LogDisplay(
                     events = events,
                     modifier = Modifier.fillMaxWidth()
