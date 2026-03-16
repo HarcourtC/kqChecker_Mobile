@@ -1,7 +1,7 @@
 # 竞赛数据功能使用指南
 
 ## 功能概述
-已成功添加竞赛数据获取功能，支持从 `https://api.harco.top/xjtudean` API 请求竞赛数据，并自动缓存到本地。
+已成功添加竞赛数据获取功能，支持从本地配置指定的竞赛 API 请求数据，并自动缓存到本地。
 
 ## 核心实现
 
@@ -12,11 +12,11 @@
    - `CompetitionItem` - 竞赛项目（id, type, category, title, url, date, isNew）
 
 2. **CompetitionApiInterceptor.kt** - API 请求拦截器
-   - 自动添加 `X-API-KEY: HarcoSecret2026XJTUDeanApi` 请求头
+   - 自动添加 `X-API-KEY: <private key>` 请求头
 
 3. **CompetitionRepository.kt** - 数据仓库
    - 处理数据获取、缓存和业务逻辑
-   - 使用独立的 OkHttpClient（不同的 base URL 和拦截器）
+   - 使用独立的 OkHttpClient（独立的 base URL 和拦截器）
 
 ### 修改的文件
 1. **ApiService.kt** - 新增 GET 端点
@@ -111,7 +111,7 @@ CompetitionRepository.getCompetitionData()
   │
   └→ API 请求
      ├→ OkHttpClient (CompetitionApiInterceptor 添加 X-API-KEY)
-     ├→ Retrofit GET /xjtudean
+     ├→ Retrofit GET <competition_endpoint>
      ├→ 响应解析为 CompetitionResponse
      └→ 缓存响应到本地文件
 ```
@@ -148,8 +148,8 @@ adb shell run-as org.xjtuai.kqchecker rm /data/data/org.xjtuai.kqchecker/files/c
       "id": "9731",
       "type": "jsap",
       "category": "竞赛安排",
-      "title": "[竞赛安排]关于组织参加第九届中国高校智能机器人创意大赛的通知",
-      "url": "https://jwc.xjtu.edu.cn/info/1172/9731.htm",
+      "title": "[竞赛安排]示例标题",
+      "url": "https://example.invalid/competition/9731",
       "date": "2026-01-29",
       "isNew": false
     }
@@ -173,7 +173,7 @@ adb logcat | grep CompetitionApiInterceptor
 
 ### 为什么使用独立的 OkHttpClient？
 竞赛 API 与现有 API（周课表、水课表）有以下差异：
-1. **基础 URL 不同**：`https://api.harco.top/` vs `http://bkkq.xjtu.edu.cn/attendance-student-pc`
+1. **基础 URL 不同**：由 `competition_base_url` 单独配置
 2. **认证方式不同**：使用 `X-API-KEY` 而非 `synjones-auth` token
 3. **请求方法不同**：GET 请求而非 POST
 4. **不需要 Token 刷新**：没有 TokenAuthenticator
@@ -201,10 +201,7 @@ adb logcat -v time | grep -i competition
 
 ## 注意事项
 
-1. **API Key 的安全性**：当前 API Key 是硬编码在 `CompetitionApiInterceptor` 中。如果需要更高的安全性，可考虑：
-   - 使用加密存储
-   - 从服务器端获取 API Key
-   - 定期轮换 API Key
+1. **配置安全性**：公开仓库中的 `config.json` 为脱敏示例。真实 `competition_base_url`、`competition_endpoint` 和 `competition_api_key` 应仅保存在本地 `config.private.json` 中。
 
 2. **网络超时**：默认超时为 30 秒（连接和读取）
 

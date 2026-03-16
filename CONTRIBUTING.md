@@ -12,7 +12,7 @@
 
 ```bash
 # 1. Fork & Clone
-git clone https://github.com/YOUR_USERNAME/kqChecker_Mobile.git
+git clone https://github.com/HarcourtC/kqChecker_Mobile.git
 cd kqChecker_Mobile
 
 # 2. 创建开发分支
@@ -97,25 +97,25 @@ Closes #12"
 
 ```
 ┌────────────────────────────────────────────┐
-│                  UI Layer                   │
+│                  UI Layer                  │
 │  Compose Screens → ViewModel → StateFlow   │
 └────────────────────────────────────────────┘
                       │
                       ▼
 ┌────────────────────────────────────────────┐
 │               UseCase Layer                │
-│         业务逻辑编排与流程控制               │
+│         业务逻辑编排与流程控制             │
 └────────────────────────────────────────────┘
                       │
                       ▼
 ┌────────────────────────────────────────────┐
-│              Repository Layer               │
-│       数据获取 │ 缓存管理 │ API 调用        │
+│              Repository Layer              │
+│       数据获取 │ 缓存管理 │ API 调用       │
 └────────────────────────────────────────────┘
                       │
                       ▼
 ┌────────────────────────────────────────────┐
-│               Network Layer                 │
+│               Network Layer                │
 │         Retrofit + OkHttp + Moshi          │
 └────────────────────────────────────────────┘
 ```

@@ -1,37 +1,36 @@
 **API 说明（简体中文）**
 
-- **位置**: `app/src/main/java/org/example/kqchecker/network/ApiService.kt`
+- **位置**: `app/src/main/java/org/xjtuai/kqchecker/network/ApiService.kt`
 - **HTTP 客户端**: OkHttp + Retrofit（`ApiClient` 创建客户端并注入 `TokenInterceptor`）
 - **认证**: 请求头由 `TokenInterceptor` 添加
   - `synjones-auth`: `bearer <token>`（首选）
   - `Authorization`: `bearer <token>`（兼容性）
-  - Token 来源：`app/src/main/java/org/example/kqchecker/auth/TokenManager.kt`
+  - Token 来源：`app/src/main/java/org/xjtuai/kqchecker/auth/TokenManager.kt`
 
 **基础 URL**
 - 配置文件: `app/src/main/assets/config.json`
-- 代码读取位置: `getBaseUrl()`（见各 Repository）
-- 注意: `base_url` 应以 `/` 结尾，且不应包含与 `ApiService` 注解路径重复的片段。
-  - 例如本仓库最终使用: `"http://bkkq.xjtu.edu.cn/"`
+- 本地私有覆盖: `app/src/main/assets/config.private.json`
+- 代码读取位置: `ConfigHelper`
+- 注意: 仓库中提交的是脱敏示例值；真实地址、路径和密钥请仅保存在本地私有配置中。
 
 **主要端点（当前实现）**
 - 获取周课表（API1）
-  - 注解路径: `POST attendance-student/rankClass/getWeekSchedule2`
-  - Retrofit 方法: `suspend fun getWeeklyData(@Body requestBody: RequestBody): ResponseBody?`
+  - 配置键: `weekly_endpoint`
+  - Retrofit 方法: `suspend fun getWeeklyData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?`
   - 调用方: `WeeklyRepository`（`app/src/main/java/.../repository/WeeklyRepository.kt`）
   - 请求示例 RequestBody: JSON
     {
-      "action": "getWeekSchedule2",
-      // 其它业务参数由调用方构建
+      "termNo": 20241,
+      "week": 10
     }
   - 返回: 服务端返回 JSON（示例 `{ "code":200, "success":true, "data": [...] }`），仓库通过 `ResponseBody.string()` 手动解析为 `JSONObject`。
 
 - 获取水课表（API2）
-  - 注解路径: `POST attendance-student/waterList/page`
-  - Retrofit 方法: `suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?`
+  - 配置键: `water_list_endpoint`
+  - Retrofit 方法: `suspend fun getWaterListData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?`
   - 调用方: `WaterListRepository`（`app/src/main/java/.../repository/WaterListRepository.kt`）以及 `Api2AttendanceQueryWorker` 在后台使用
   - 请求示例 RequestBody: JSON
     {
-      "action": "getWaterList",
       "date": "2025-12-02",
       "termno": "<optional>"
     }
@@ -40,12 +39,11 @@
     - 仓库当前接受 `success == true` 为成功（后端返回 `code==200` 时也可成功）
 
 - 获取竞赛数据（新增）
-  - 端点: `https://api.harco.top/xjtudean`
-  - 注解路径: `GET xjtudean`
-  - Retrofit 方法: `suspend fun getCompetitionData(): ResponseBody?`
+  - 配置键: `competition_base_url` + `competition_endpoint`
+  - Retrofit 方法: `suspend fun getCompetitionData(@Url url: String): ResponseBody?`
   - 调用方: `CompetitionRepository`（`app/src/main/java/.../repository/CompetitionRepository.kt`）
   - 请求方法: GET（无请求体）
-  - 请求头: `X-API-KEY: HarcoSecret2026XJTUDeanApi`（由 `CompetitionApiInterceptor` 自动添加）
+  - 请求头: `X-API-KEY: <private key>`（由 `CompetitionApiInterceptor` 自动添加）
   - 返回: 服务端返回 JSON
     ```json
     {
@@ -60,15 +58,15 @@
           "id": "9731",
           "type": "jsap",
           "category": "竞赛安排",
-          "title": "[竞赛安排]关于组织参加第九届中国高校智能机器人创意大赛的通知",
-          "url": "https://jwc.xjtu.edu.cn/info/1172/9731.htm",
+          "title": "[竞赛安排]示例标题",
+          "url": "https://example.invalid/competition/9731",
           "date": "2026-01-29",
           "isNew": false
         }
       ]
     }
     ```
-  - 特点: 使用独立的 OkHttpClient，base URL 与其他 API 不同，不需要 token 认证
+  - 特点: 使用独立的 OkHttpClient，可与主业务 API 使用不同的 base URL 和认证方式
 
 **关于 Retrofit 返回类型**
 - 由于项目使用 `org.json` 手工解析，接口定义为 `ResponseBody?`，调用方负责调用 `respBody.string()` 并转换为 `JSONObject` 或自定义数据类（`WeeklyResponse`, `WaterListResponse`）。
@@ -88,7 +86,7 @@
 - 仓库会在成功获取 API 响应后写入缓存文件（并在 raw meta 中写入 `expires`）
 
 **新增/调试命令与行为（2025-12 更新）**
-- 新增仓库方法: `WeeklyRepository.fetchWeeklyRawFromApi()` — 直接向 `getWeekSchedule2` 发起请求并返回原始响应字符串（不写入缓存），用于调试与打印原始返回。调用点见 `MainActivity` 的“Fetch Weekly (API)”按钮。
+- 新增仓库方法: `WeeklyRepository.fetchWeeklyRawFromApi()` — 直接向配置中的周课表端点发起请求并返回原始响应字符串（不写入缓存），用于调试与打印原始返回。调用点见 `MainActivity` 的“Fetch Weekly (API)”按钮。
 - 新增 UI 按钮（工具页）:
   - `Print weekly.json`：打印并把 `weekly.json` 的预览写入 UI 日志（并把完整内容在 Logcat 中分块打印）。
   - `Print cleaned weekly`：打印并把 `weekly_cleaned.json` 的预览写入 UI 日志（完整内容写入 Logcat）。
@@ -128,11 +126,11 @@
    - 解决: 将接口返回声明改为 `ResponseBody?`，并在调用处使用 `.string()` 手工解析。
 
 2. 404 Not Found
-   - 检查 `base_url`（`config.json`）是否和 `@POST` 注解路径重复或缺失片段。
-   - 示例：若 `base_url` 包含 `attendance-student-pc` 而 `@POST` 也包含相关路径，会导致最终拼接错误。
+   - 检查 `base_url` 与各 endpoint 配置是否匹配。
+   - 示例：若 `base_url` 已包含业务前缀，而 endpoint 又重复该片段，会导致最终拼接错误。
    - 调试命令（adb logcat 过滤）：
      ```powershell
-     adb logcat -d | Select-String -Pattern "WaterListRepository|Api2AttendanceQuery|getWaterList|attendance-student|HTTP 404" -AllMatches
+     adb logcat -d | Select-String -Pattern "WaterListRepository|Api2AttendanceQuery|HTTP 404" -AllMatches
      ```
 
 3. API 返回格式与解析不匹配
@@ -158,7 +156,7 @@
 - `ApiService.kt` — Retrofit 接口和 `jsonToRequestBody`
 - `ApiClient.kt` — OkHttp client 创建与 `TokenInterceptor` 注入
 - `TokenInterceptor.kt` — 将 token 写入请求头
-- `CompetitionApiInterceptor.kt` — 将 X-API-KEY 写入竞赛 API 请求头（2025-02 新增）
+- `CompetitionApiInterceptor.kt` — 将配置中的 X-API-KEY 写入竞赛 API 请求头（2025-02 新增）
 - `WeeklyRepository.kt` — API1 调用、缓存、cleaner 调用点
 - `WaterListRepository.kt` — API2 调用、缓存、响应解析
 - `CompetitionRepository.kt` — 竞赛数据 API 调用、缓存、响应解析（2025-02 新增）
