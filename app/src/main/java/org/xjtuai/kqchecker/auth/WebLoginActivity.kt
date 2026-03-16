@@ -20,6 +20,7 @@ import android.webkit.JavascriptInterface
 import androidx.activity.ComponentActivity
 import android.util.Log
 import android.webkit.CookieManager
+import org.xjtuai.kqchecker.util.ConfigHelper
 
 class WebLoginActivity : ComponentActivity() {
     companion object {
@@ -134,10 +135,11 @@ class WebLoginActivity : ComponentActivity() {
         } catch (_: Throwable) {}
 
         try {
+            val config = ConfigHelper.getConfig(this)
             val loginUrl = intent.getStringExtra(EXTRA_LOGIN_URL)
-                ?: "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/login"
+                ?: config.authLoginUrl
             this.redirectPrefix = intent.getStringExtra(EXTRA_REDIRECT_PREFIX)
-                ?: "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+                ?: config.authRedirectPrefix
 
             Log.i("WebLoginActivity", "loginUrl=$loginUrl redirectPrefix=$redirectPrefix")
 

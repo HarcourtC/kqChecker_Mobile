@@ -3,9 +3,8 @@ package org.xjtuai.kqchecker
 import android.app.Application
 import androidx.work.Configuration
 import android.util.Log
-import java.io.InputStreamReader
-import org.json.JSONObject
 import org.xjtuai.kqchecker.network.NetworkModule
+import org.xjtuai.kqchecker.util.ConfigHelper
 
 
 class KqApplication : Application() {
@@ -18,19 +17,11 @@ class KqApplication : Application() {
         } catch (t: Throwable) {
             Log.w("KqApplication", "Failed to enable WebView debugging", t)
         }
-        // Initialize NetworkModule with configurable base URL.
-        val defaultUrl = BuildConfig.BASE_URL
-        var baseUrl = defaultUrl
-        try {
-            assets.open("config.json").use { stream ->
-                val text = InputStreamReader(stream, Charsets.UTF_8).readText()
-                val obj = JSONObject(text)
-                if (obj.has("base_url")) {
-                    baseUrl = obj.getString("base_url")
-                }
-            }
+        val baseUrl = try {
+            ConfigHelper.getBaseUrl(this)
         } catch (e: Exception) {
-            Log.i("KqApplication", "No assets/config.json found or failed to read, using BuildConfig.BASE_URL: $defaultUrl")
+            Log.i("KqApplication", "Failed to load config, using BuildConfig.BASE_URL: ${BuildConfig.BASE_URL}")
+            BuildConfig.BASE_URL
         }
 
         NetworkModule.init(this, baseUrl)

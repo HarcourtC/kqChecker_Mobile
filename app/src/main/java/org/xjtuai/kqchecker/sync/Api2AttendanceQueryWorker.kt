@@ -34,6 +34,7 @@ private const val ACTION_NO_ATTENDANCE = "org.xjtuai.kqchecker.ACTION_NO_ATTENDA
 class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val context = appContext
     private val cacheManager = CacheManager(context)
+    private val config = ConfigHelper.getConfig(context)
 
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
@@ -113,7 +114,7 @@ class Api2AttendanceQueryWorker(appContext: Context, params: WorkerParameters) :
                             // optional: include other fields if available
 
                             val requestBody = ApiService.jsonToRequestBody(payload)
-                            val respBody = apiService.getWaterListData(requestBody)
+                            val respBody = apiService.getWaterListData(config.waterListEndpoint, requestBody)
 
                             if (respBody == null) {
                                 Log.e(TAG, "api2 returned null")

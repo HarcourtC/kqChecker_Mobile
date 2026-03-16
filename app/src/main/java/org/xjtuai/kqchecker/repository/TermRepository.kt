@@ -21,6 +21,7 @@ class TermRepository(private val context: Context) {
     private val apiClient = ApiClient(context)
     private val baseUrl: String = ConfigHelper.getBaseUrl(context)
     private val apiService = apiClient.createService(baseUrl)
+    private val config = ConfigHelper.getConfig(context)
 
     /**
      * 获取当前学期信息
@@ -33,7 +34,7 @@ class TermRepository(private val context: Context) {
             val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
             val requestBody = "{}".toRequestBody(mediaType)
             
-            val responseBody = apiService.getCurrentTerm(requestBody) ?: return null
+            val responseBody = apiService.getCurrentTerm(config.currentTermEndpoint, requestBody) ?: return null
             val json = responseBody.string()
             Log.d(TAG, "Current term response: $json")
             CurrentTermResponse.fromJson(json)

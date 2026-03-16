@@ -27,6 +27,7 @@ class WeeklyRepository(private val context: Context) {
     private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
     private val termRepository = RepositoryProvider.getTermRepository()
+    private val config = ConfigHelper.getConfig(context)
 
     /**
      * 获取周课表数据
@@ -118,8 +119,8 @@ class WeeklyRepository(private val context: Context) {
             Log.d(TAG, "准备请求参数...")
             val requestBody = createWeeklyRequest(termNo, week)
             
-            Log.d(TAG, "发送API请求到: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
-            val respBody = apiService.getWeeklyData(requestBody)
+            Log.d(TAG, "发送课表请求到配置化端点")
+            val respBody = apiService.getWeeklyData(config.weeklyEndpoint, requestBody)
 
             // 验证响应
             if (respBody == null) {
@@ -225,8 +226,8 @@ class WeeklyRepository(private val context: Context) {
                 }
 
                 val requestBody = createWeeklyRequest(termNo, week)
-                Log.d(TAG, "Sending raw API request to: ${baseUrl}attendance-student/rankClass/getWeekSchedule2")
-                val respBody = apiService.getWeeklyData(requestBody)
+                Log.d(TAG, "Sending raw weekly request to configured endpoint")
+                val respBody = apiService.getWeeklyData(config.weeklyEndpoint, requestBody)
                 if (respBody == null) {
                     Log.e(TAG, "❌ API returned null response (raw)")
                     return@withContext null

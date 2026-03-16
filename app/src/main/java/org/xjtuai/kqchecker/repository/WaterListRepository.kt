@@ -23,6 +23,7 @@ class WaterListRepository(private val context: Context) {
     private val baseUrl: String = ConfigHelper.getBaseUrl(context)
     private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
+    private val config = ConfigHelper.getConfig(context)
     
     /**
      * 获取水课表数据（API2）
@@ -91,7 +92,7 @@ class WaterListRepository(private val context: Context) {
             val requestBody = ApiService.jsonToRequestBody(requestData)
             
             // 调用API
-            val respBody = apiService.getWaterListData(requestBody)
+            val respBody = apiService.getWaterListData(config.waterListEndpoint, requestBody)
 
             if (respBody == null) {
                 Log.e(TAG, "api2 returned null")

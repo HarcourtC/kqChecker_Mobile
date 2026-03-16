@@ -31,6 +31,7 @@ private const val TAG = "Api2QueryTest"
 class Api2QueryTestWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val context = appContext
     private val cacheManager = CacheManager(context)
+    private val config = ConfigHelper.getConfig(context)
 
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
@@ -110,7 +111,7 @@ class Api2QueryTestWorker(appContext: Context, params: WorkerParameters) : Corou
                         payload.put("current", 1)
 
                         val requestBody = ApiService.jsonToRequestBody(payload)
-                        val respBody = apiService.getWaterListData(requestBody)
+                        val respBody = apiService.getWaterListData(config.waterListEndpoint, requestBody)
 
                         val entry = JSONObject()
                         entry.put("key", key)
