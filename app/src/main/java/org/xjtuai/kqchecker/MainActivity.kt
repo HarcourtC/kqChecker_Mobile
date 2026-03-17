@@ -119,11 +119,9 @@ fun AppContent() {
             try {
                 val response = waterListRepository.getWaterListData()
                 if (response != null && response.success) {
-                    val records = response.data.list
-                    if (records.isNotEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            latestAttendance = records.first()
-                        }
+                    val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
+                    withContext(Dispatchers.Main) {
+                        latestAttendance = latestValidRecord
                     }
                 }
             } catch (e: Exception) {

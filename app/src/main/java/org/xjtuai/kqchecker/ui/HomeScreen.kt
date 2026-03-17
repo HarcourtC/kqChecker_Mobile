@@ -65,16 +65,12 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        InfoCard(title = "上次考勤记录") {
+        InfoCard(title = "上次有效考勤记录") {
             if (latestAttendance == null) {
                 InfoRow(icon = Icons.Default.Info, text = "暂无考勤数据或未登录。")
             } else {
                 InfoRow(icon = Icons.Default.LocationOn, text = latestAttendance.eqno.ifBlank { "未提供" })
                 InfoRow(icon = Icons.Default.DateRange, text = latestAttendance.watertime)
-                
-                val statusIcon = if (latestAttendance.statusText == "正常") Icons.Default.CheckCircle else Icons.Default.Warning
-                val statusColor = if (latestAttendance.statusText == "正常") MaterialTheme.colors.secondary else MaterialTheme.colors.error
-                InfoRow(icon = statusIcon, text = latestAttendance.statusText, textColor = statusColor)
                 InfoRow(icon = Icons.Default.Info, text = latestAttendance.fromTypeText)
             }
         }
@@ -85,7 +81,7 @@ fun HomeScreen(
             AppButton(
                 text = "登录", 
                 onClick = onLoginClick,
-                modifier = Modifier.fillMaxWidth(0.6f)
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -94,7 +90,7 @@ fun HomeScreen(
             text = "手动同步",
             onClick = onManualSync,
             backgroundColor = MaterialTheme.colors.secondary,
-            modifier = Modifier.fillMaxWidth(0.6f)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
