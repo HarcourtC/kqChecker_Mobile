@@ -56,14 +56,8 @@ class WeeklyCleaner(private val context: Context) {
                 }
             }
 
-            // 2. 读取 weekly_raw.json（优先缓存），若不存在则回退到 assets/example_weekly.json
+            // 2. 读取 weekly_raw.json（缓存）
             val raw = cacheManager.readFromCache(CacheManager.WEEKLY_RAW_CACHE_FILE)
-                ?: try {
-                    context.assets.open("example_weekly.json").bufferedReader().use { it.readText() }
-                } catch (e: Exception) {
-                    Log.e(TAG, "无法读取 weekly 原始数据（缓存或 assets 均失败）", e)
-                    null
-                }
 
             if (raw.isNullOrBlank()) {
                 Log.w(TAG, "没有可用的周课表原始数据，抛出异常以通知上层")
@@ -159,7 +153,7 @@ class WeeklyCleaner(private val context: Context) {
 
                 try {
                     if (cleanedObj.has(key)) {
-                        val arr = cleanedObj.optJSONArray(key)
+                        val arr = cleanedObj.optJSONArray(key) ?: JSONArray()
                         arr.put(out)
                         cleanedObj.put(key, arr)
                     } else {

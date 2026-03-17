@@ -12,168 +12,140 @@ import org.json.JSONObject
 import java.net.SocketTimeoutException
 
 /**
- * 水课表仓库类，负责处理API2（水课表）数据的获取、缓存和业务逻辑
+ * 考勤打卡记录仓库（API2）
  */
 class WaterListRepository(private val context: Context) {
     companion object {
         private const val TAG = "WaterListRepository"
     }
-    
+
     private val apiClient = ApiClient(context)
     private val baseUrl: String = ConfigHelper.getBaseUrl(context)
     private val apiService = apiClient.createService(baseUrl)
     private val cacheManager = CacheManager(context)
-    private val config = ConfigHelper.getConfig(context)
-    
+    private val termRepository = TermRepository(context)
+
     /**
-     * 获取水课表数据（API2）
-     * @param termno 学期号，可选，如果为空则从配置中读取
+     * 获取考勤打卡记录（API2）。始终从网络获取，不使用过期缓存。
      */
-    suspend fun getWaterListData(termno: String? = null, forceRefresh: Boolean = false): WaterListResponse? {
+    suspend fun getWaterListData(termno: String? = null): WaterListResponse? {
         return withContext(Dispatchers.IO) {
             try {
-                // 从API获取数据
-                Log.d(TAG, "Fetching water list data from API (API2)")
-                return@withContext getWaterListDataFromApi(termno)
-                
+                val payload = buildRequestPayload(termno)
+                Log.i(TAG, "API2 request: date=${payload.optString("date")}, calendarBh=${payload.optString("calendarBh")}")
+                val requestBody = ApiService.jsonToRequestBody(payload)
+                val respBody = apiService.getWaterListData(requestBody)
+
+                if (respBody == null) {
+                    Log.e(TAG, "API2 returned null body")
+                    return@withContext null
+                }
+
+                val respStr = try { respBody.string() } catch (e: Exception) {
+                    Log.e(TAG, "Failed to read API2 response body", e)
+                    return@withContext null
+                }
+
+                Log.i(TAG, "API2 response[network] preview=${respStr.take(500)}")
+                val wr = WaterListResponse.fromJson(respStr)
+
+                if (!wr.success) {
+                    Log.e(TAG, "API2 failed: code=${wr.code}, msg=${wr.msg}")
+                    if (wr.code == 400 || wr.code == 401 || wr.code == 403 ||
+                        wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                        val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
+                        tm.clear()
+                        tm.notifyTokenInvalid()
+                        throw org.xjtuai.kqchecker.auth.AuthRequiredException(wr.msg)
+                    }
+                    return@withContext null
+                }
+
+                cacheManager.saveToCache(CacheManager.WATER_LIST_CACHE_FILE, respStr)
+                Log.i(TAG, "API2 success: ${wr.data.list.size} records, total=${wr.data.totalCount}")
+                wr
+
             } catch (e: SocketTimeoutException) {
-                Log.e(TAG, "Network timeout when fetching water list data", e)
+                Log.e(TAG, "API2 timeout", e)
+                throw e
+            } catch (e: org.xjtuai.kqchecker.auth.AuthRequiredException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Error fetching water list data from API", e)
-                // 如果有缓存，尝试从缓存读取
-                if (!forceRefresh) {
-                    val cachedData = getWaterListDataFromCache()
-                    if (cachedData != null) {
-                        Log.d(TAG, "Using cached water list data due to API error")
-                        return@withContext cachedData
-                    }
-                }
+                Log.e(TAG, "API2 error", e)
                 null
             }
         }
     }
-    
-    /**
-     * 从缓存中获取水课表数据
-     */
-    private fun getWaterListDataFromCache(): WaterListResponse? {
+
+    suspend fun refreshWaterListData(termno: String? = null): WaterListResponse? {
+        return getWaterListData(termno)
+    }
+
+    private suspend fun buildRequestPayload(termno: String? = null): JSONObject {
+        val payload = JSONObject()
+        payload.put("action", "getWaterList")
+        val date = cacheManager.getCurrentDate()
+        payload.put("date", date)
+        payload.put("startdate", date)
+        payload.put("enddate", date)
+        payload.put("pageSize", 10)
+        payload.put("current", 1)
+
+        val resolvedBh = resolveTermBh(termno)
+        if (!resolvedBh.isNullOrBlank()) {
+            payload.put("termno", resolvedBh)
+            payload.put("calendarBh", resolvedBh)
+        }
+        return payload
+    }
+
+    private suspend fun resolveTermBh(explicitTermno: String? = null): String? {
+        val provided = explicitTermno?.trim()
+        if (!provided.isNullOrEmpty()) return provided
+
         try {
-            val jsonContent = cacheManager.readFromCache(CacheManager.WATER_LIST_CACHE_FILE)
-            if (jsonContent != null) {
-                return WaterListResponse.fromJson(jsonContent)
+            val termInfo = termRepository.fetchCurrentTerm()
+            if (termInfo != null && termInfo.success && termInfo.bh > 0) {
+                return termInfo.bh.toString()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading water list data from cache", e)
+            Log.w(TAG, "Failed to resolve term from current term API", e)
         }
+
+        val configTerm = ConfigHelper.getConfig(context).termNo?.toString()
+        if (!configTerm.isNullOrBlank()) return configTerm
+
         return null
     }
-    
-    /**
-     * 从API获取水课表数据
-     * @param termno 学期号，可选
-     */
-    private suspend fun getWaterListDataFromApi(termno: String? = null): WaterListResponse? {
-        try {
-            // 准备请求参数
-            val requestData = JSONObject()
-            requestData.put("action", "getWaterList")
-            
-            // 设置日期（当前日期）
-            requestData.put("date", cacheManager.getCurrentDate())
-            
-            // 设置学期号
-            val effectiveTermno = termno ?: getDefaultTermno()
-            if (effectiveTermno.isNotEmpty()) {
-                requestData.put("termno", effectiveTermno)
-            }
-            
-            // 转换为RequestBody
-            val requestBody = ApiService.jsonToRequestBody(requestData)
-            
-            // 调用API
-            val respBody = apiService.getWaterListData(config.waterListEndpoint, requestBody)
 
-            if (respBody == null) {
-                Log.e(TAG, "api2 returned null")
-                return null
-            }
-
-            val respStr = try { respBody.string() } catch (e: Exception) {
-                Log.e(TAG, "Failed to read api2 response body", e)
-                return null
-            }
-
-            Log.d(TAG, "api2 resp length: ${respStr.length}")
-            val wr = WaterListResponse.fromJson(respStr)
-
-            if (wr == null || wr.data == null || !wr.success) {
-                Log.e(TAG, "Invalid API2 response: code=${wr?.code}, success=${wr?.success}, data=${wr?.data}")
-                // 若后端认为未登录或返回认证失败，通知用户
-                try {
-                    val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
-                    if (wr != null) {
-                        if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
-                            // 先清除过期 token，再通知用户
-                            tm.clear()
-                            tm.notifyTokenInvalid()
-                            // 抛出认证异常，交由 UI 层处理（例如弹出登录）
-                            throw org.xjtuai.kqchecker.auth.AuthRequiredException(wr.msg)
-                        }
-                    }
-                } catch (t: Throwable) {
-                    Log.w(TAG, "Failed to notify token invalid", t)
-                }
-                return null
-            }
-
-            // 保存到缓存
-            cacheManager.saveToCache(CacheManager.WATER_LIST_CACHE_FILE, respStr)
-
-            Log.d(TAG, "Successfully fetched and cached water list data")
-            return wr
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in getWaterListDataFromApi", e)
-            throw e
-        }
-    }
-    
-    /**
-     * 获取默认学期号（可以从配置文件或其他来源读取）
-     */
-    private fun getDefaultTermno(): String {
-        // 这里可以实现从配置文件或其他来源读取学期号的逻辑
-        // 暂时返回空字符串，让API服务处理默认值
-        return ""
-    }
-    
-    /**
-     * 强制刷新水课表数据
-     */
-    suspend fun refreshWaterListData(termno: String? = null): WaterListResponse? {
-        return getWaterListData(termno, forceRefresh = true)
-    }
-    
-    /**
-     * 检查水课表缓存状态
-     */
     fun getWaterListCacheStatus(): CacheStatus {
         val cacheExists = cacheManager.cacheFileExists(CacheManager.WATER_LIST_CACHE_FILE)
         val cacheInfo = cacheManager.getCacheFileInfo(CacheManager.WATER_LIST_CACHE_FILE)
-        
-        // 水课表缓存没有明确的过期时间，这里简单返回是否存在
         return CacheStatus(
             exists = cacheExists,
-            isExpired = !cacheExists, // 如果不存在则认为已过期
-            expiresDate = null, // 没有明确的过期日期
+            isExpired = !cacheExists,
+            expiresDate = null,
             fileInfo = cacheInfo
         )
     }
-    
-    /**
-     * 获取水课表缓存文件路径（用于导出）
-     */
-    fun getWaterListCacheFilePath(): String {
-        return CacheManager.WATER_LIST_CACHE_FILE
+
+    fun getWaterListCacheFilePath(): String = CacheManager.WATER_LIST_CACHE_FILE
+
+    suspend fun getApi2FilePreviews(): List<FilePreview> {
+        return withContext(Dispatchers.IO) {
+            val files = listOf(CacheManager.WATER_LIST_CACHE_FILE, CacheManager.API2_QUERY_LOG_FILE)
+            val result = mutableListOf<FilePreview>()
+            for (fname in files) {
+                try {
+                    val info = cacheManager.getCacheFileInfo(fname) ?: continue
+                    val content = cacheManager.readFromCache(fname) ?: ""
+                    val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
+                    result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error preparing API2 preview for $fname", e)
+                }
+            }
+            result
+        }
     }
 }

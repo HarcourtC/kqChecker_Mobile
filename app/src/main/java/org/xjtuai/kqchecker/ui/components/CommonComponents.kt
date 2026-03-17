@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
@@ -32,36 +33,38 @@ fun AppButton(
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colors.primary
 ) {
-    val buttonShape = RoundedCornerShape(14.dp)
+    val buttonShape = CircleShape
     Button(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp),
+            .heightIn(min = 52.dp),
         shape = buttonShape,
-        elevation = ButtonDefaults.elevation(defaultElevation = 1.dp, pressedElevation = 4.dp),
+        elevation = ButtonDefaults.elevation(defaultElevation = 2.dp, pressedElevation = 6.dp),
         colors = ButtonDefaults.buttonColors(
             backgroundColor = Color.Transparent,
             contentColor = MaterialTheme.colors.onPrimary
         ),
-        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+        contentPadding = PaddingValues(0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     brush = Brush.horizontalGradient(
-                        colors = listOf(backgroundColor, MaterialTheme.colors.primaryVariant)
+                        colors = listOf(
+                            backgroundColor.copy(alpha = 0.9f),
+                            backgroundColor.copy(alpha = 1.0f)
+                        )
                     ),
                     shape = buttonShape
                 )
-                .padding(vertical = 12.dp, horizontal = 16.dp),
+                .padding(vertical = 14.dp, horizontal = 16.dp),
             contentAlignment = androidx.compose.ui.Alignment.Center
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.button,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.button
             )
         }
     }
@@ -73,37 +76,41 @@ fun InfoCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = RoundedCornerShape(20.dp)
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    
     Card(
-        elevation = 8.dp,
+        elevation = if (isDark) 4.dp else 10.dp,
         shape = cardShape,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 10.dp)
     ) {
         androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .clip(cardShape)
                 .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colors.surface,
-                            MaterialTheme.colors.background
-                        )
+                    brush = Brush.verticalGradient(
+                        colors = if (isDark) {
+                            listOf(MaterialTheme.colors.surface, MaterialTheme.colors.background)
+                        } else {
+                            listOf(Color.White, MaterialTheme.colors.surface)
+                        }
                     )
                 )
                 .border(
                     width = 1.dp,
-                    color = MaterialTheme.colors.primary.copy(alpha = 0.12f),
+                    color = MaterialTheme.colors.primary.copy(alpha = if (isDark) 0.1f else 0.05f),
                     shape = cardShape
                 )
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.h6,
                 color = MaterialTheme.colors.primary,
-                modifier = Modifier.padding(bottom = 10.dp)
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
             content()
         }

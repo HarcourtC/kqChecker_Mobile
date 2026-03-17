@@ -28,6 +28,12 @@ interface ApiService {
      * 获取水课表数据（API2）
      */
     @POST
+    suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?
+
+    /**
+     * 获取水课表数据（API2，兼容旧调用）
+     */
+    @POST
     suspend fun getWaterListData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?
 
     /**

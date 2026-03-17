@@ -25,43 +25,49 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "首页", Icons.Default.Home)
     object Schedule : Screen("schedule", "课表", Icons.Default.DateRange)
     object Competition : Screen("competition", "竞赛", Icons.Default.List)
     object Tools : Screen("tools", "工具", Icons.Default.Build)
-    object Integration : Screen("integration", "集成", Icons.Default.Settings)
+    object Settings : Screen("settings", "设置", Icons.Default.Settings)
 }
 
 @Composable
 fun MainScreen(
     events: List<String>,
     scheduleItems: List<ScheduleItem>,
+    latestAttendance: WaterRecord?,
+    isLoggedIn: Boolean,
     showEventLog: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
-    onCheckCacheStatus: () -> Unit,
+    onManualSync: () -> Unit,
     onLoginRequired: () -> Unit
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
 
     Scaffold(
-        modifier = Modifier.systemBarsPadding(),
+        modifier = Modifier.fillMaxSize().imePadding(),
         backgroundColor = MaterialTheme.colors.background,
         bottomBar = {
             BottomNavigation(
                 modifier = Modifier
+                    .navigationBarsPadding()
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 backgroundColor = MaterialTheme.colors.surface,
                 contentColor = MaterialTheme.colors.primary,
                 elevation = 10.dp
             ) {
-                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Integration)
+                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Settings)
                 screens.forEach { screen ->
                     BottomNavigationItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
@@ -76,7 +82,8 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .statusBarsPadding()
         ) {
             Box(
                 modifier = Modifier
@@ -86,8 +93,10 @@ fun MainScreen(
                 when (currentScreen) {
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
-                        onCheckCacheStatus = onCheckCacheStatus,
-                        scheduleItems = scheduleItems
+                        onManualSync = onManualSync,
+                        isLoggedIn = isLoggedIn,
+                        scheduleItems = scheduleItems,
+                        latestAttendance = latestAttendance
                     )
                     Screen.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
@@ -99,7 +108,7 @@ fun MainScreen(
                         onPostEvent = onPostEvent,
                         onLoginRequired = onLoginRequired
                     )
-                    Screen.Integration -> IntegrationScreen(
+                    Screen.Settings -> SettingsScreen(
                         onPostEvent = onPostEvent
                     )
                 }

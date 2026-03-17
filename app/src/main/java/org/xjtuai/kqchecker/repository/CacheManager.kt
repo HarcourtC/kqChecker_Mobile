@@ -19,6 +19,7 @@ class CacheManager(private val context: Context) {
         const val WEEKLY_RAW_CACHE_FILE = "weekly_raw.json"
         const val WEEKLY_RAW_META_FILE = "weekly_raw_meta.json"
         const val WATER_LIST_CACHE_FILE = "api2_waterlist_response.json"
+        const val API2_QUERY_LOG_FILE = "api2_query_log.json"
         const val COMPETITION_CACHE_FILE = "competition_data.json"
     }
     
@@ -83,7 +84,7 @@ class CacheManager(private val context: Context) {
             
             val jsonString = cacheFile.readText()
             val jsonObject = JSONObject(jsonString)
-            return jsonObject.optString("expires", null)
+            return if (jsonObject.has("expires")) jsonObject.getString("expires") else null
             
         } catch (e: Exception) {
             Log.e(TAG, "Error reading weekly cache expires date", e)

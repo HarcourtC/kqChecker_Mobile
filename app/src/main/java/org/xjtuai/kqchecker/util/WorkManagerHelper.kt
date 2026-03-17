@@ -30,7 +30,6 @@ object WorkManagerHelper {
     onStatusChange: (WorkInfo.State, String) -> Unit,
     taskName: String = "Task"
   ): Observer<WorkInfo> = Observer { workInfo ->
-    if (workInfo == null) return@Observer
 
     val statusMessage = getStatusMessage(workInfo.state, taskName)
     onStatusChange(workInfo.state, statusMessage)
@@ -57,7 +56,6 @@ object WorkManagerHelper {
   ): Observer<WorkInfo> {
     lateinit var observer: Observer<WorkInfo>
     observer = Observer { workInfo ->
-      if (workInfo == null) return@Observer
 
       val statusMessage = getStatusMessage(workInfo.state, taskName)
       onStatusChange(workInfo.state, statusMessage)

@@ -43,7 +43,7 @@ class WriteCalendarUseCase(private val context: Context) {
       WorkManagerHelper.observeWorkStatus(
         context,
         workId,
-        onStatusChange = { state, message ->
+        onStatusChange = { _, message ->
           onStatusChange(message)
         },
         taskName = "Calendar write"

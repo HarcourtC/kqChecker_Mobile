@@ -137,7 +137,7 @@ class IntegrationFlowUseCase(
       WorkManagerHelper.observeWorkStatus(
         context,
         workId,
-        onStatusChange = { state, message ->
+        onStatusChange = { _, message ->
           onStatusChange(message)
         },
         taskName = "Calendar write"

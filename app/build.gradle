@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'org.jlleitschuh.gradle.ktlint'
+    id 'io.gitlab.arturbosch.detekt'
 }
 
 /**
@@ -105,6 +106,30 @@ ktlint {
     reporters {
         reporter org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE
     }
+}
+
+// detekt configuration
+detekt {
+    toolVersion = "1.23.7"
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true   // 在默认规则集基础上叠加自定义配置
+    allRules = false                // 仅启用配置文件中明确开启的规则
+    autoCorrect = false             // 不自动修改代码（只报告）
+    parallel = true                 // 多线程分析以加快速度
+
+    source.setFrom(
+        "src/main/java",
+        "src/main/kotlin"
+    )
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+    reports {
+        html.required.set(true)     // 生成可读性好的 HTML 报告
+        xml.required.set(false)
+        txt.required.set(false)
+    }
+    jvmTarget = "1.8"
 }
 
 dependencies {

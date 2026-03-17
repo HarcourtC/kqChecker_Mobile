@@ -1,9 +1,9 @@
 package org.xjtuai.kqchecker
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
+import android.content.BroadcastReceiver
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -13,11 +13,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
 import org.xjtuai.kqchecker.repository.RepositoryProvider
@@ -25,7 +25,6 @@ import org.xjtuai.kqchecker.ui.MainScreen
 import org.xjtuai.kqchecker.ui.components.UpdateDialog
 import org.xjtuai.kqchecker.ui.theme.KqCheckerTheme
 import org.xjtuai.kqchecker.util.LoginHelper
-import org.xjtuai.kqchecker.util.NotificationHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
 import org.xjtuai.kqchecker.util.VersionInfo
@@ -60,6 +59,34 @@ fun AppContent() {
     var showUpdateDialog by remember { mutableStateOf(false) }
     var versionCheckDone by remember { mutableStateOf(false) }
 
+    // isLoggedIn 基于 Token 是否存在，在 Token 被清除或登录成功时响应更新
+    var isLoggedIn by remember { mutableStateOf(TokenManager(context).getAccessToken() != null) }
+
+    DisposableEffect(Unit) {
+        val loginStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                when (intent?.action) {
+                    TokenManager.ACTION_TOKEN_CLEARED -> isLoggedIn = false
+                    TokenManager.ACTION_REQUEST_LOGIN -> isLoggedIn = false
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(TokenManager.ACTION_TOKEN_CLEARED)
+            addAction(TokenManager.ACTION_REQUEST_LOGIN)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                loginStateReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(loginStateReceiver, filter)
+        }
+        onDispose { context.unregisterReceiver(loginStateReceiver) }
+    }
+
     DisposableEffect(Unit) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
             if (key == "event_log_enabled") {
@@ -83,7 +110,25 @@ fun AppContent() {
     }
 
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
+    val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
+    var latestAttendance by remember { mutableStateOf<WaterRecord?>(null) }
+
+    fun loadLatestAttendance() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = waterListRepository.getWaterListData()
+                if (response != null && response.success) {
+                    val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
+                    withContext(Dispatchers.Main) {
+                        latestAttendance = latestValidRecord
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to load latest attendance", e)
+            }
+        }
+    }
 
     fun loadHomeSchedule(forceRefresh: Boolean) {
         scope.launch(Dispatchers.IO) {
@@ -146,6 +191,7 @@ fun AppContent() {
                                 val expiresMsg = updatedStatus.expiresDate ?: "unknown"
                                 postEvent("Cache will expire on: $expiresMsg")
                                 loadHomeSchedule(false)
+                                loadLatestAttendance()
                             } else {
                                 postEvent("Auto-refresh failed: Repository returned null")
                             }
@@ -176,56 +222,16 @@ fun AppContent() {
                     postEvent("Weekly cache is up-to-date")
                 }
                 loadHomeSchedule(false)
+                loadLatestAttendance()
             }
         } catch (e: Exception) {
             Log.e("AutoRefreshWeekly", "Error checking cache status", e)
             postEvent("Auto-refresh check failed: ${e.message ?: e.toString()}")
             loadHomeSchedule(false)
+            loadLatestAttendance()
         }
     }
 
-    // 注册广播接收器
-    val noAttendanceReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) {
-                try {
-                    val k = intent?.getStringExtra("key") ?: "?"
-                    val date = intent?.getStringExtra("date") ?: "?"
-                    val subj = intent?.getStringExtra("subject")
-                    val td = intent?.getStringExtra("time_display")
-                    val loc = intent?.getStringExtra("location")
-
-                    val display = if (!subj.isNullOrBlank()) {
-                        val parts = listOfNotNull(subj, td, loc).joinToString(" - ")
-                        "Warning: No attendance record: $parts"
-                    } else {
-                        "Warning: No attendance record: $k; please check manually."
-                    }
-                    postEvent(display)
-
-                    if (ctx != null) {
-                        NotificationHelper.sendNoAttendanceNotification(ctx, k, date, subj, td, loc)
-                    }
-                } catch (t: Throwable) {
-                    Log.w("MainActivity", "noAttendanceReceiver failed", t)
-                }
-            }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        val filter = IntentFilter("org.xjtuai.kqchecker.ACTION_NO_ATTENDANCE")
-        try {
-            context.registerReceiver(noAttendanceReceiver, filter)
-        } catch (t: Throwable) {
-            Log.w("MainActivity", "registerReceiver failed", t)
-        }
-        onDispose {
-            try {
-                context.unregisterReceiver(noAttendanceReceiver)
-            } catch (_: Throwable) {}
-        }
-    }
 
     // 登录启动器
     val loginLauncher = rememberLauncherForActivityResult(
@@ -235,12 +241,14 @@ fun AppContent() {
         val token = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN)
         val tokenSource = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN_SOURCE)
         if (token != null) {
+            isLoggedIn = true
             Toast.makeText(context, "Login success", Toast.LENGTH_SHORT).show()
             val srcLabel = LoginHelper.getTokenSourceLabel(tokenSource)
             events.add("Token: ${token.take(40)}... (source: $srcLabel)")
         } else {
             val saved = TokenManager(context).getAccessToken()
             if (saved != null) {
+                isLoggedIn = true
                 Toast.makeText(context, "Login success (saved)", Toast.LENGTH_SHORT).show()
                 events.add("Token: ${saved.take(40)}... (source: saved)")
             } else {
@@ -254,21 +262,15 @@ fun AppContent() {
     MainScreen(
         events = events,
         scheduleItems = scheduleItems,
+        latestAttendance = latestAttendance,
+        isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
-        onCheckCacheStatus = {
+        onManualSync = {
             scope.launch(Dispatchers.IO) {
-                try {
-                    val cacheStatus = weeklyRepository.getCacheStatus()
-                    withContext(Dispatchers.Main) {
-                        events.add("[Home] Cache exists: ${cacheStatus.exists}, expired: ${cacheStatus.isExpired}")
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        events.add("[Home] Cannot read cache status: ${e.message ?: e.toString()}")
-                    }
-                }
+                loadHomeSchedule(true)
+                loadLatestAttendance()
             }
         },
         onLoginRequired = { LoginHelper.launchLogin(context, loginLauncher) }

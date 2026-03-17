@@ -112,18 +112,18 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
 
                                             // 如果 key 中未包含时间，则回退使用 time_display 显示字段（取起始时间）
                                             if (watertimeVal.isBlank()) {
-                                                var startTime = it.optString("time_display", "").trim()
-                                                if (startTime.isNotBlank()) {
-                                                    if (startTime.contains("-")) startTime = startTime.split("-")[0].trim()
+                                                var displayTime = it.optString("time_display", "").trim()
+                                                if (displayTime.isNotBlank()) {
+                                                    if (displayTime.contains("-")) displayTime = displayTime.split("-")[0].trim()
                                                     // 若为节次字符串（如 "7-8"），映射到默认节次时间
-                                                    if (startTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
-                                                        val firstNum = startTime.split(Regex("\\D+"))[0]
+                                                    if (displayTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
+                                                        val firstNum = displayTime.split(Regex("\\D+"))[0]
                                                         val period = firstNum.toIntOrNull()
-                                                        if (period != null && PERIOD_TO_TIME.containsKey(period)) startTime = PERIOD_TO_TIME[period]!!
+                                                        if (period != null && PERIOD_TO_TIME.containsKey(period)) displayTime = PERIOD_TO_TIME[period]!!
                                                     }
-                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) startTime += ":00"
-                                                    if (startTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
-                                                        watertimeVal = "$datePart $startTime"
+                                                    if (displayTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) displayTime += ":00"
+                                                    if (displayTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
+                                                        watertimeVal = "$datePart $displayTime"
                                                     }
                                                 }
                                             }
@@ -176,12 +176,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                             return@withContext Result.failure()
                         }
 
-                        Log.d(TAG, "   - success=true，检查data字段...")
-                        if (resp.data == null) {
-                            Log.e(TAG, "❌ 获取数据失败：data为null")
-                            logWorkResult(Result.failure())
-                            return@withContext Result.failure()
-                        }
+                        Log.d(TAG, "   - success=true")
 
                         Log.d(TAG, "✅ 成功获取weekly数据，共${resp.data.length()}条记录")
                         

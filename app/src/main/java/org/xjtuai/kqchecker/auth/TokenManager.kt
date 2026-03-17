@@ -16,6 +16,7 @@ import android.webkit.WebStorage
 import android.os.Handler
 import android.os.Looper
 
+@Suppress("DEPRECATION") // EncryptedSharedPreferences / MasterKey — 暂无官方替代
 class TokenManager(private val context: Context) {
     private val prefs by lazy {
         val masterKey = MasterKey.Builder(context)
@@ -83,24 +84,14 @@ class TokenManager(private val context: Context) {
         Log.d("TokenManager", "saveAccessToken: saved access token (length=${accessToken.length})")
     }
 
-    fun saveRefreshToken(refreshToken: String?) {
-        if (refreshToken != null) {
-            prefs.edit().putString("refresh_token", refreshToken).apply()
-            Log.d("TokenManager", "saveRefreshToken: saved refresh token (present=true)")
-        } else {
-            Log.d("TokenManager", "saveRefreshToken: refreshToken is null")
-        }
-    }
 
     fun getAccessToken(): String? = prefs.getString("access_token", null)
-    fun getRefreshToken(): String? = prefs.getString("refresh_token", null)
 
     fun clear() {
         try {
             val now = System.currentTimeMillis()
             prefs.edit()
                 .remove("access_token")
-                .remove("refresh_token")
                 .putLong("token_cleared_at", now)
                 .apply()
             clearCookiesBestEffort()

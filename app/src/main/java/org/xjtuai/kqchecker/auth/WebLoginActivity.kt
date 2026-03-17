@@ -36,10 +36,7 @@ class WebLoginActivity : ComponentActivity() {
     private var webViewInstance: WebView? = null
     private var tokenClearedReceiver: BroadcastReceiver? = null
 
-    private data class TokenPayload(
-        val accessToken: String,
-        val refreshToken: String?
-    )
+    private data class TokenPayload(val accessToken: String)
 
     private fun normalizeBearer(token: String): String {
         val normalized = token.trim()
@@ -57,12 +54,7 @@ class WebLoginActivity : ComponentActivity() {
         val token = uri.getQueryParameter("token")
             ?: parseFragmentParameter(uri, "token")
             ?: return null
-        val refreshToken = uri.getQueryParameter("refresh_token")
-            ?: parseFragmentParameter(uri, "refresh_token")
-        return TokenPayload(
-            accessToken = normalizeBearer(token),
-            refreshToken = refreshToken
-        )
+        return TokenPayload(accessToken = normalizeBearer(token))
     }
 
     private fun completeLogin(payload: TokenPayload, source: String, logTag: String) {
@@ -72,7 +64,6 @@ class WebLoginActivity : ComponentActivity() {
                 "$logTag detected token prefix=${payload.accessToken.take(8)}... (len=${payload.accessToken.length})"
             )
             tokenManager.saveAccessToken(payload.accessToken)
-            tokenManager.saveRefreshToken(payload.refreshToken)
             val data = Intent().apply {
                 putExtra(RESULT_TOKEN, payload.accessToken)
                 putExtra(RESULT_TOKEN_SOURCE, source)
@@ -109,7 +100,7 @@ class WebLoginActivity : ComponentActivity() {
         fun postToken(token: String?) {
             if (token == null) return
             try {
-                completeLogin(TokenPayload(normalizeBearer(token), null), "local", "JsBridge.postToken")
+                completeLogin(TokenPayload(normalizeBearer(token)), "local", "JsBridge.postToken")
             } catch (e: Exception) {
                 Log.e("WebLoginActivity", "JsBridge.postToken error", e)
             }
@@ -196,7 +187,7 @@ class WebLoginActivity : ComponentActivity() {
                                 // 直接解析并处理一次（以防 JS 监听未生效）
                                 try {
                                     if (uri.toString().startsWith(redirectPrefix)) {
-                                        var token: String? = null
+                                        var token: String?
                                         token = uri.getQueryParameter("token")
                                         if (token == null) {
                                             val frag = uri.fragment
@@ -206,7 +197,7 @@ class WebLoginActivity : ComponentActivity() {
                                             }
                                         }
                                         if (token != null) {
-                                            val tokenVal = token!!
+                                            val tokenVal = token
                                             val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                                             try {
                                                 try { Log.d("WebLoginActivity", "evaluateJavascript detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
@@ -215,15 +206,6 @@ class WebLoginActivity : ComponentActivity() {
                                             } catch (e: Throwable) {
                                                 Log.e("WebLoginActivity", "evaluateJavascript failed to save token", e)
                                             }
-                                            var refresh: String? = uri.getQueryParameter("refresh_token")
-                                            if (refresh == null) {
-                                                val frag = uri.fragment
-                                                if (frag != null) {
-                                                    val fragUri = Uri.parse("?$frag")
-                                                    refresh = fragUri.getQueryParameter("refresh_token")
-                                                }
-                                            }
-                                            tokenManager.saveRefreshToken(refresh)
                                             val data = Intent()
                                             data.putExtra(RESULT_TOKEN, bearer)
                                             data.putExtra(RESULT_TOKEN_SOURCE, "url")
@@ -235,6 +217,7 @@ class WebLoginActivity : ComponentActivity() {
                                 } catch (t: Throwable) {
                                     Log.e("WebLoginActivity", "evaluateHref handle error", t)
                                 }
+
                             } catch (t: Throwable) {
                                 Log.e("WebLoginActivity", "failed to parse href from evaluateJavascript: $href", t)
                             }
@@ -294,6 +277,7 @@ class WebLoginActivity : ComponentActivity() {
                     return super.shouldInterceptRequest(view, request)
                 }
 
+                @Deprecated("Deprecated in Java")
                 override fun shouldInterceptRequest(view: WebView?, url: String?): android.webkit.WebResourceResponse? {
                     try {
                         Log.d("WebLoginActivity", "shouldInterceptRequest(url) -> $url")
@@ -328,6 +312,7 @@ class WebLoginActivity : ComponentActivity() {
                     return handleUrl(url)
                 }
 
+                @Deprecated("Deprecated in Java")
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                     url ?: return false
                     Log.d("WebLoginActivity", "shouldOverrideUrlLoading url=$url")
@@ -363,7 +348,18 @@ class WebLoginActivity : ComponentActivity() {
                         }
                     }
                 }
-                registerReceiver(tokenClearedReceiver, IntentFilter(TokenManager.ACTION_TOKEN_CLEARED))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    registerReceiver(
+                        tokenClearedReceiver,
+                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED),
+                        Context.RECEIVER_NOT_EXPORTED
+                    )
+                } else {
+                    registerReceiver(
+                        tokenClearedReceiver,
+                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED)
+                    )
+                }
             } catch (_: Throwable) {}
         } catch (t: Throwable) {
             Log.e("WebLoginActivity", "onCreate failed", t)
