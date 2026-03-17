@@ -99,7 +99,7 @@ class WebLoginActivity : ComponentActivity() {
         fun postToken(token: String?) {
             if (token == null) return
             try {
-                completeLogin(TokenPayload(normalizeBearer(token), null), "local", "JsBridge.postToken")
+                completeLogin(TokenPayload(normalizeBearer(token)), "local", "JsBridge.postToken")
             } catch (e: Exception) {
                 Log.e("WebLoginActivity", "JsBridge.postToken error", e)
             }
