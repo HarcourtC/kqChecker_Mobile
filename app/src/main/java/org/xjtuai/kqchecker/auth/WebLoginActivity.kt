@@ -194,7 +194,7 @@ class WebLoginActivity : ComponentActivity() {
                                 // 直接解析并处理一次（以防 JS 监听未生效）
                                 try {
                                     if (uri.toString().startsWith(redirectPrefix)) {
-                                        var token: String? = null
+                                        var token: String?
                                         token = uri.getQueryParameter("token")
                                         if (token == null) {
                                             val frag = uri.fragment
@@ -204,7 +204,7 @@ class WebLoginActivity : ComponentActivity() {
                                             }
                                         }
                                         if (token != null) {
-                                            val tokenVal = token!!
+                                            val tokenVal = token
                                             val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                                             try {
                                                 try { Log.d("WebLoginActivity", "evaluateJavascript detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
@@ -292,6 +292,7 @@ class WebLoginActivity : ComponentActivity() {
                     return super.shouldInterceptRequest(view, request)
                 }
 
+                @Deprecated("Deprecated in Java")
                 override fun shouldInterceptRequest(view: WebView?, url: String?): android.webkit.WebResourceResponse? {
                     try {
                         Log.d("WebLoginActivity", "shouldInterceptRequest(url) -> $url")
@@ -326,6 +327,7 @@ class WebLoginActivity : ComponentActivity() {
                     return handleUrl(url)
                 }
 
+                @Deprecated("Deprecated in Java")
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                     url ?: return false
                     Log.d("WebLoginActivity", "shouldOverrideUrlLoading url=$url")

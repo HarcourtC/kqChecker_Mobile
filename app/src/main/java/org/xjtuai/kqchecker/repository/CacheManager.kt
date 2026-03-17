@@ -83,7 +83,7 @@ class CacheManager(private val context: Context) {
             
             val jsonString = cacheFile.readText()
             val jsonObject = JSONObject(jsonString)
-            return jsonObject.optString("expires", null)
+            return if (jsonObject.has("expires")) jsonObject.getString("expires") else null
             
         } catch (e: Exception) {
             Log.e(TAG, "Error reading weekly cache expires date", e)

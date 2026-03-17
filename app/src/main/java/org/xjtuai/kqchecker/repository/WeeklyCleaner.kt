@@ -153,7 +153,7 @@ class WeeklyCleaner(private val context: Context) {
 
                 try {
                     if (cleanedObj.has(key)) {
-                        val arr = cleanedObj.optJSONArray(key)
+                        val arr = cleanedObj.optJSONArray(key) ?: JSONArray()
                         arr.put(out)
                         cleanedObj.put(key, arr)
                     } else {

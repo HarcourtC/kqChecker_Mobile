@@ -83,7 +83,7 @@ data class CompetitionItem(
                 title = jsonObject.optString("title"),
                 url = jsonObject.optString("url"),
                 date = jsonObject.optString("date"),
-                deadline = jsonObject.optString("deadline", null),
+                deadline = if (jsonObject.has("deadline")) jsonObject.getString("deadline") else null,
                 isNew = jsonObject.optBoolean("isNew")
             )
         }

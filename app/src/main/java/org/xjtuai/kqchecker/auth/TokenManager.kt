@@ -16,6 +16,7 @@ import android.webkit.WebStorage
 import android.os.Handler
 import android.os.Looper
 
+@Suppress("DEPRECATION") // EncryptedSharedPreferences / MasterKey — 暂无官方替代
 class TokenManager(private val context: Context) {
     private val prefs by lazy {
         val masterKey = MasterKey.Builder(context)

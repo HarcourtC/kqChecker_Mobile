@@ -106,20 +106,18 @@ class WaterListRepository(private val context: Context) {
             Log.d(TAG, "api2 resp length: ${respStr.length}")
             val wr = WaterListResponse.fromJson(respStr)
 
-            if (wr == null || wr.data == null || !wr.success) {
-                Log.e(TAG, "Invalid API2 response: code=${wr?.code}, success=${wr?.success}, data=${wr?.data}")
+            if (!wr.success) {
+                Log.e(TAG, "Invalid API2 response: code=${wr.code}, success=${wr.success}, data=${wr.data}")
                 // 若后端认为未登录或返回认证失败，通知用户
                 try {
                     val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
-                    if (wr != null) {
-                        if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                    if (wr.code == 400 || wr.code == 401 || wr.code == 403 || wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
                             // 先清除过期 token，再通知用户
                             tm.clear()
                             tm.notifyTokenInvalid()
                             // 抛出认证异常，交由 UI 层处理（例如弹出登录）
-                            throw org.xjtuai.kqchecker.auth.AuthRequiredException(wr.msg)
+                    throw org.xjtuai.kqchecker.auth.AuthRequiredException(wr.msg)
                         }
-                    }
                 } catch (t: Throwable) {
                     Log.w(TAG, "Failed to notify token invalid", t)
                 }
