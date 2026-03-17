@@ -504,6 +504,7 @@ fun ScheduleItemCard(
 ) {
     // 60.dp per period
     val height = ((item.endPeriod - item.startPeriod + 1) * 60).dp
+    val topOffset = ((item.startPeriod - 1) * 60).dp
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
 
     // Light pastel palette

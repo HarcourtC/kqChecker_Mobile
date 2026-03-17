@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
 import org.xjtuai.kqchecker.repository.RepositoryProvider
@@ -78,7 +79,27 @@ fun AppContent() {
     }
 
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
+    val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
+    var latestAttendance by remember { mutableStateOf<WaterRecord?>(null) }
+
+    fun loadLatestAttendance() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = waterListRepository.getWaterListData(forceRefresh = false)
+                if (response != null && response.success) {
+                    val records = response.data.records
+                    if (records.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            latestAttendance = records.first()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to load latest attendance", e)
+            }
+        }
+    }
 
     fun loadHomeSchedule(forceRefresh: Boolean) {
         scope.launch(Dispatchers.IO) {
@@ -141,6 +162,7 @@ fun AppContent() {
                                 val expiresMsg = updatedStatus.expiresDate ?: "unknown"
                                 postEvent("Cache will expire on: $expiresMsg")
                                 loadHomeSchedule(false)
+                                loadLatestAttendance()
                             } else {
                                 postEvent("Auto-refresh failed: Repository returned null")
                             }
@@ -171,11 +193,13 @@ fun AppContent() {
                     postEvent("Weekly cache is up-to-date")
                 }
                 loadHomeSchedule(false)
+                loadLatestAttendance()
             }
         } catch (e: Exception) {
             Log.e("AutoRefreshWeekly", "Error checking cache status", e)
             postEvent("Auto-refresh check failed: ${e.message ?: e.toString()}")
             loadHomeSchedule(false)
+            loadLatestAttendance()
         }
     }
 
@@ -207,6 +231,7 @@ fun AppContent() {
     MainScreen(
         events = events,
         scheduleItems = scheduleItems,
+        latestAttendance = latestAttendance,
         showEventLog = showEventLog,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },

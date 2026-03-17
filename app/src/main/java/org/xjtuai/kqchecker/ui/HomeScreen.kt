@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
 import java.util.Calendar
@@ -22,6 +23,7 @@ fun HomeScreen(
     onLoginClick: () -> Unit,
     onCheckCacheStatus: () -> Unit,
     scheduleItems: List<ScheduleItem>,
+    latestAttendance: WaterRecord?,
     modifier: Modifier = Modifier
 ) {
     val nextClass = remember(scheduleItems) { findNextClass(scheduleItems) }
@@ -49,6 +51,19 @@ fun HomeScreen(
                 Text(text = "时间：${nextClass.dayText} ${nextClass.timeText}")
                 Text(text = "节次：第${nextClass.item.startPeriod}-${nextClass.item.endPeriod}节")
                 Text(text = "状态：${nextClass.statusText}")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        InfoCard(title = "上次考勤记录") {
+            if (latestAttendance == null) {
+                Text(text = "暂无考勤数据或未登录。")
+            } else {
+                Text(text = "标题：${latestAttendance.waterName}")
+                Text(text = "时间：${latestAttendance.waterTime}")
+                Text(text = "地点：${latestAttendance.waterAddress.ifBlank { "未提供" }}")
+                Text(text = "状态：${latestAttendance.waterStatus}")
             }
         }
 

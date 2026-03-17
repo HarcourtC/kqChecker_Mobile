@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "首页", Icons.Default.Home)
@@ -42,6 +43,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 fun MainScreen(
     events: List<String>,
     scheduleItems: List<ScheduleItem>,
+    latestAttendance: WaterRecord?,
     showEventLog: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -87,7 +89,8 @@ fun MainScreen(
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
                         onCheckCacheStatus = onCheckCacheStatus,
-                        scheduleItems = scheduleItems
+                        scheduleItems = scheduleItems,
+                        latestAttendance = latestAttendance
                     )
                     Screen.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
