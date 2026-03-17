@@ -61,10 +61,10 @@ fun HomeScreen(
             if (latestAttendance == null) {
                 Text(text = "暂无考勤数据或未登录。")
             } else {
-                Text(text = "标题：${latestAttendance.waterName}")
-                Text(text = "时间：${latestAttendance.waterTime}")
-                Text(text = "地点：${latestAttendance.waterAddress.ifBlank { "未提供" }}")
-                Text(text = "状态：${latestAttendance.waterStatus}")
+                Text(text = "地点：${latestAttendance.eqno.ifBlank { "未提供" }}")
+                Text(text = "打卡时间：${latestAttendance.watertime}")
+                Text(text = "状态：${latestAttendance.statusText}")
+                Text(text = "方式：${latestAttendance.fromTypeText}")
             }
         }
 

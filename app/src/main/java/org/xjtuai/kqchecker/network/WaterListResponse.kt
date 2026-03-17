@@ -3,7 +3,7 @@ package org.xjtuai.kqchecker.network
 import org.json.JSONObject
 
 /**
- * 水单数据响应模型
+ * 水单数据响应模型（API2 实际格式）
  */
 data class WaterListResponse(
     val code: Int,
@@ -12,9 +12,6 @@ data class WaterListResponse(
     val msg: String
 ) {
     companion object {
-        /**
-         * 从JSON字符串创建WaterListResponse实例
-         */
         fun fromJson(jsonString: String): WaterListResponse {
             val jsonObject = JSONObject(jsonString)
             return WaterListResponse(
@@ -28,118 +25,84 @@ data class WaterListResponse(
 }
 
 /**
- * 水单数据内容
+ * 水单分页数据（API2 实际格式）
  */
 data class WaterListData(
-    val records: List<WaterRecord>,
-    val total: Int,
-    val size: Int,
-    val current: Int,
-    val orders: List<Order>,
-    val optimizeCountSql: Boolean,
-    val hitCount: Boolean,
-    val countId: String,
-    val maxLimit: String,
-    val searchCount: Boolean,
-    val pages: Int
+    val totalCount: Int,
+    val pageSize: Int,
+    val totalPage: Int,
+    val currPage: Int,
+    val list: List<WaterRecord>
 ) {
     companion object {
-        /**
-         * 从JSONObject创建WaterListData实例
-         */
         fun fromJson(jsonObject: JSONObject): WaterListData {
-            val recordsArray = jsonObject.optJSONArray("records") ?: org.json.JSONArray()
+            val listArray = jsonObject.optJSONArray("list") ?: org.json.JSONArray()
             val records = mutableListOf<WaterRecord>()
-            for (i in 0 until recordsArray.length()) {
-                if (recordsArray[i] is JSONObject) {
-                    records.add(WaterRecord.fromJson(recordsArray.getJSONObject(i)))
-                }
+            for (i in 0 until listArray.length()) {
+                val item = listArray.optJSONObject(i)
+                if (item != null) records.add(WaterRecord.fromJson(item))
             }
-            
-            val ordersArray = jsonObject.optJSONArray("orders") ?: org.json.JSONArray()
-            val orders = mutableListOf<Order>()
-            for (i in 0 until ordersArray.length()) {
-                if (ordersArray[i] is JSONObject) {
-                    orders.add(Order.fromJson(ordersArray.getJSONObject(i)))
-                }
-            }
-            
             return WaterListData(
-                records = records,
-                total = jsonObject.optInt("total"),
-                size = jsonObject.optInt("size"),
-                current = jsonObject.optInt("current"),
-                orders = orders,
-                optimizeCountSql = jsonObject.optBoolean("optimizeCountSql"),
-                hitCount = jsonObject.optBoolean("hitCount"),
-                countId = jsonObject.optString("countId"),
-                maxLimit = jsonObject.optString("maxLimit"),
-                searchCount = jsonObject.optBoolean("searchCount"),
-                pages = jsonObject.optInt("pages")
+                totalCount = jsonObject.optInt("totalCount"),
+                pageSize = jsonObject.optInt("pageSize"),
+                totalPage = jsonObject.optInt("totalPage"),
+                currPage = jsonObject.optInt("currPage"),
+                list = records
             )
         }
     }
 }
 
 /**
- * 水单记录项
+ * 单条考勤打卡记录（API2 实际格式）
+ * - eqno: 打卡地点（例如"教2楼-西307"）
+ * - watertime: 打卡时间
+ * - intime: 系统入库时间
+ * - isdone: 状态码（"0"=未完成, "1"=正常, "2"=迟到, "3"=早退）
+ * - fromtype: 打卡方式（"1"=人脸识别, "2"=手动等）
  */
 data class WaterRecord(
-    val waterBh: String,
-    val waterName: String,
-    val waterTime: String,
-    val waterAddress: String,
-    val waterContent: String,
-    val waterPeople: String,
-    val createTime: String,
-    val updateTime: String,
-    val waterStatus: String,
-    val accountName: String,
-    val accountBh: String,
-    val accountXh: String,
+    val bh: String,
+    val sno: String,
+    val eqno: String,       // 打卡地点
+    val eqname: String,     // 设备名称（通常是编号，不直接显示）
+    val watertime: String,  // 打卡时间
+    val intime: String,     // 入库时间
+    val isdone: String,     // 状态码
+    val fromtype: String,   // 打卡方式
     val calendarBh: String,
-    val calendarName: String
+    val sBh: String
 ) {
+    /** isdone 转可读文字 */
+    val statusText: String get() = when (isdone) {
+        "0" -> "未完成"
+        "1" -> "正常"
+        "2" -> "迟到"
+        "3" -> "早退"
+        else -> "状态($isdone)"
+    }
+
+    /** fromtype 转可读文字 */
+    val fromTypeText: String get() = when (fromtype) {
+        "1" -> "人脸识别"
+        "2" -> "手动"
+        "3" -> "补签"
+        else -> "方式($fromtype)"
+    }
+
     companion object {
-        /**
-         * 从JSONObject创建WaterRecord实例
-         */
         fun fromJson(jsonObject: JSONObject): WaterRecord {
             return WaterRecord(
-                waterBh = jsonObject.optString("waterBh"),
-                waterName = jsonObject.optString("waterName"),
-                waterTime = jsonObject.optString("waterTime"),
-                waterAddress = jsonObject.optString("waterAddress"),
-                waterContent = jsonObject.optString("waterContent"),
-                waterPeople = jsonObject.optString("waterPeople"),
-                createTime = jsonObject.optString("createTime"),
-                updateTime = jsonObject.optString("updateTime"),
-                waterStatus = jsonObject.optString("waterStatus"),
-                accountName = jsonObject.optString("accountName"),
-                accountBh = jsonObject.optString("accountBh"),
-                accountXh = jsonObject.optString("accountXh"),
+                bh = jsonObject.optString("bh"),
+                sno = jsonObject.optString("sno"),
+                eqno = jsonObject.optString("eqno"),
+                eqname = jsonObject.optString("eqname"),
+                watertime = jsonObject.optString("watertime"),
+                intime = jsonObject.optString("intime"),
+                isdone = jsonObject.optString("isdone"),
+                fromtype = jsonObject.optString("fromtype"),
                 calendarBh = jsonObject.optString("calendarBh"),
-                calendarName = jsonObject.optString("calendarName")
-            )
-        }
-    }
-}
-
-/**
- * 排序信息
- */
-data class Order(
-    val column: String,
-    val asc: Boolean
-) {
-    companion object {
-        /**
-         * 从JSONObject创建Order实例
-         */
-        fun fromJson(jsonObject: JSONObject): Order {
-            return Order(
-                column = jsonObject.optString("column"),
-                asc = jsonObject.optBoolean("asc")
+                sBh = jsonObject.optString("sBh")
             )
         }
     }

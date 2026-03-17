@@ -108,9 +108,9 @@ fun AppContent() {
     fun loadLatestAttendance() {
         scope.launch(Dispatchers.IO) {
             try {
-                val response = waterListRepository.getWaterListData(forceRefresh = false)
+                val response = waterListRepository.getWaterListData()
                 if (response != null && response.success) {
-                    val records = response.data.records
+                    val records = response.data.list
                     if (records.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
                             latestAttendance = records.first()
