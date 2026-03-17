@@ -8,6 +8,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.ui.components.AppButton
@@ -44,14 +48,18 @@ fun HomeScreen(
 
         InfoCard(title = "下一节课") {
             if (nextClass == null) {
-                Text(text = "当前没有可用课表数据。请先登录并同步课表。")
+                InfoRow(icon = Icons.Default.Info, text = "当前没有可用课表数据。请先登录并同步课表。")
             } else {
-                Text(text = "课程：${nextClass.item.courseName}")
-                Text(text = "地点：${nextClass.item.location.ifBlank { "未提供" }}")
-                Text(text = "教师：${nextClass.item.teacher.ifBlank { "未提供" }}")
-                Text(text = "时间：${nextClass.dayText} ${nextClass.timeText}")
-                Text(text = "节次：第${nextClass.item.startPeriod}-${nextClass.item.endPeriod}节")
-                Text(text = "状态：${nextClass.statusText}")
+                InfoRow(icon = Icons.Default.List, text = nextClass.item.courseName)
+                InfoRow(icon = Icons.Default.LocationOn, text = nextClass.item.location.ifBlank { "未提供" })
+                InfoRow(icon = Icons.Default.Person, text = nextClass.item.teacher.ifBlank { "未提供" })
+                InfoRow(icon = Icons.Default.DateRange, text = "${nextClass.dayText} ${nextClass.timeText} (第${nextClass.item.startPeriod}-${nextClass.item.endPeriod}节)")
+                
+                val statusColor = when (nextClass.statusText) {
+                    "进行中" -> MaterialTheme.colors.secondary
+                    else -> MaterialTheme.colors.primary
+                }
+                InfoRow(icon = Icons.Default.PlayArrow, text = nextClass.statusText, textColor = statusColor)
             }
         }
 
@@ -59,12 +67,15 @@ fun HomeScreen(
 
         InfoCard(title = "上次考勤记录") {
             if (latestAttendance == null) {
-                Text(text = "暂无考勤数据或未登录。")
+                InfoRow(icon = Icons.Default.Info, text = "暂无考勤数据或未登录。")
             } else {
-                Text(text = "地点：${latestAttendance.eqno.ifBlank { "未提供" }}")
-                Text(text = "打卡时间：${latestAttendance.watertime}")
-                Text(text = "状态：${latestAttendance.statusText}")
-                Text(text = "方式：${latestAttendance.fromTypeText}")
+                InfoRow(icon = Icons.Default.LocationOn, text = latestAttendance.eqno.ifBlank { "未提供" })
+                InfoRow(icon = Icons.Default.DateRange, text = latestAttendance.watertime)
+                
+                val statusIcon = if (latestAttendance.statusText == "正常") Icons.Default.CheckCircle else Icons.Default.Warning
+                val statusColor = if (latestAttendance.statusText == "正常") MaterialTheme.colors.secondary else MaterialTheme.colors.error
+                InfoRow(icon = statusIcon, text = latestAttendance.statusText, textColor = statusColor)
+                InfoRow(icon = Icons.Default.Info, text = latestAttendance.fromTypeText)
             }
         }
 
@@ -194,5 +205,30 @@ private fun weekDayName(dayOfWeek: Int): String {
         6 -> "周六"
         7 -> "周日"
         else -> "未知"
+    }
+}
+
+@Composable
+private fun InfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    textColor: Color = MaterialTheme.colors.onSurface
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colors.primary.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.body1,
+            color = textColor
+        )
     }
 }

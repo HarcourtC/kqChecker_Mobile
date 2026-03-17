@@ -507,84 +507,97 @@ fun ScheduleItemCard(
     val topOffset = ((item.startPeriod - 1) * 60).dp
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
 
-    // Light pastel palette
+    // Light vibrant palette for the side bar
     val lightPalette = listOf(
-        androidx.compose.ui.graphics.Color(0xFFE1F5FE), // Light Blue
-        androidx.compose.ui.graphics.Color(0xFFF3E5F5), // Light Purple
-        androidx.compose.ui.graphics.Color(0xFFE0F2F1), // Light Teal
-        androidx.compose.ui.graphics.Color(0xFFFFF8E1), // Amber
-        androidx.compose.ui.graphics.Color(0xFFFBE9E7), // Deep Orange
-        androidx.compose.ui.graphics.Color(0xFFF1F8E9), // Light Green
-        androidx.compose.ui.graphics.Color(0xFFECEFF1)  // Blue Grey
+        androidx.compose.ui.graphics.Color(0xFF03A9F4), // Light Blue
+        androidx.compose.ui.graphics.Color(0xFF9C27B0), // Purple
+        androidx.compose.ui.graphics.Color(0xFF009688), // Teal
+        androidx.compose.ui.graphics.Color(0xFFFFB300), // Amber
+        androidx.compose.ui.graphics.Color(0xFFFF5722), // Deep Orange
+        androidx.compose.ui.graphics.Color(0xFF8BC34A), // Light Green
+        androidx.compose.ui.graphics.Color(0xFF607D8B)  // Blue Grey
     )
 
-    // Dark muted palette
+    // Dark vibrant palette for the side bar
     val darkPalette = listOf(
-        androidx.compose.ui.graphics.Color(0xFF1E3A47), // Muted Dark Blue
-        androidx.compose.ui.graphics.Color(0xFF382A40), // Muted Dark Purple
-        androidx.compose.ui.graphics.Color(0xFF1E3A39), // Muted Dark Teal
-        androidx.compose.ui.graphics.Color(0xFF3D321F), // Muted Dark Amber
-        androidx.compose.ui.graphics.Color(0xFF3E2824), // Muted Dark Orange
-        androidx.compose.ui.graphics.Color(0xFF283A1F), // Muted Dark Green
-        androidx.compose.ui.graphics.Color(0xFF2E343A)  // Muted Blue Grey
+        androidx.compose.ui.graphics.Color(0xFF4FC3F7),
+        androidx.compose.ui.graphics.Color(0xFFBA68C8),
+        androidx.compose.ui.graphics.Color(0xFF4DB6AC),
+        androidx.compose.ui.graphics.Color(0xFFFFD54F),
+        androidx.compose.ui.graphics.Color(0xFFFF8A65),
+        androidx.compose.ui.graphics.Color(0xFFAED581),
+        androidx.compose.ui.graphics.Color(0xFF90A4AE)
     )
 
     val colorPalette = if (isDark) darkPalette else lightPalette
-    val cardColor = colorPalette[item.colorIndex % colorPalette.size]
-    val textColor = if (isDark) androidx.compose.ui.graphics.Color(0xFFE0E0E0) else androidx.compose.ui.graphics.Color(0xFF263238)
+    val baseColor = colorPalette[item.colorIndex % colorPalette.size]
+    
+    // Background is a very washed out version of the base color
+    val backgroundColor = baseColor.copy(alpha = if (isDark) 0.15f else 0.1f)
+    val textColor = MaterialTheme.colors.onSurface
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
-            .padding(2.dp)
+            .padding(horizontal = 2.dp, vertical = 2.dp)
             .offset(y = topOffset)
             .clickable(onClick = onClick),
-        backgroundColor = cardColor,
-        elevation = 0.5.dp, // Very subtle elevation
-        shape = RoundedCornerShape(8.dp)
+        backgroundColor = backgroundColor,
+        elevation = 0.dp, // Flat design
+        shape = RoundedCornerShape(6.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(vertical = 4.dp, horizontal = 2.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (homeworkCount > 0) {
-                Surface(
-                    color = MaterialTheme.colors.secondary.copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.padding(bottom = 2.dp)
-                ) {
-                    Text(
-                        text = "作业",
-                        color = MaterialTheme.colors.onSecondary,
-                        style = MaterialTheme.typography.overline,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                        fontSize = 8.sp
-                    )
-                }
-            }
-            Text(
-                text = item.courseName,
-                style = MaterialTheme.typography.caption.copy(fontSize = 11.sp),
-                color = textColor,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 4,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+        Row(modifier = Modifier.fillMaxSize()) {
+            // Colored left indicator bar
+            Spacer(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(baseColor)
             )
-            if (item.location.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(2.dp))
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 6.dp, horizontal = 6.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start
+            ) {
+                if (homeworkCount > 0) {
+                    Surface(
+                        color = MaterialTheme.colors.secondary.copy(alpha = 0.8f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    ) {
+                        Text(
+                            text = "作业",
+                            color = MaterialTheme.colors.onSecondary,
+                            style = MaterialTheme.typography.overline,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                            fontSize = 9.sp
+                        )
+                    }
+                }
                 Text(
-                    text = "@${item.location}",
-                    style = MaterialTheme.typography.overline.copy(fontSize = 9.sp),
-                    color = textColor.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    text = item.courseName,
+                    style = MaterialTheme.typography.caption.copy(fontSize = 12.sp),
+                    color = textColor,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 3,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (item.location.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = item.location,
+                        style = MaterialTheme.typography.overline.copy(fontSize = 10.sp, lineHeight = 12.sp),
+                        color = textColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

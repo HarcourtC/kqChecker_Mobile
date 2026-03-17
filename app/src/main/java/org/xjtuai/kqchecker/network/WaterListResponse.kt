@@ -58,7 +58,7 @@ data class WaterListData(
  * - eqno: 打卡地点（例如"教2楼-西307"）
  * - watertime: 打卡时间
  * - intime: 系统入库时间
- * - isdone: 状态码（"0"=未完成, "1"=正常, "2"=迟到, "3"=早退）
+ * - isdone: 状态码（"0"=无效, "1"=有效, "2"=重复）
  * - fromtype: 打卡方式（"1"=人脸识别, "2"=手动等）
  */
 data class WaterRecord(
@@ -75,10 +75,9 @@ data class WaterRecord(
 ) {
     /** isdone 转可读文字 */
     val statusText: String get() = when (isdone) {
-        "0" -> "未完成"
-        "1" -> "正常"
-        "2" -> "迟到"
-        "3" -> "早退"
+        "0" -> "无效"
+        "1" -> "有效"
+        "2" -> "重复"
         else -> "状态($isdone)"
     }
 
