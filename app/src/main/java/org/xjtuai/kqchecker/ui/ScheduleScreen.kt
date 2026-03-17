@@ -504,10 +504,10 @@ fun ScheduleItemCard(
 ) {
     // 60.dp per period
     val height = ((item.endPeriod - item.startPeriod + 1) * 60).dp
-    val topOffset = ((item.startPeriod - 1) * 60).dp
-    
-    // Improved pastel palette for cleaner look
-    val colorPalette = listOf(
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
+    // Light pastel palette
+    val lightPalette = listOf(
         androidx.compose.ui.graphics.Color(0xFFE1F5FE), // Light Blue
         androidx.compose.ui.graphics.Color(0xFFF3E5F5), // Light Purple
         androidx.compose.ui.graphics.Color(0xFFE0F2F1), // Light Teal
@@ -516,9 +516,21 @@ fun ScheduleItemCard(
         androidx.compose.ui.graphics.Color(0xFFF1F8E9), // Light Green
         androidx.compose.ui.graphics.Color(0xFFECEFF1)  // Blue Grey
     )
-    
+
+    // Dark muted palette
+    val darkPalette = listOf(
+        androidx.compose.ui.graphics.Color(0xFF1E3A47), // Muted Dark Blue
+        androidx.compose.ui.graphics.Color(0xFF382A40), // Muted Dark Purple
+        androidx.compose.ui.graphics.Color(0xFF1E3A39), // Muted Dark Teal
+        androidx.compose.ui.graphics.Color(0xFF3D321F), // Muted Dark Amber
+        androidx.compose.ui.graphics.Color(0xFF3E2824), // Muted Dark Orange
+        androidx.compose.ui.graphics.Color(0xFF283A1F), // Muted Dark Green
+        androidx.compose.ui.graphics.Color(0xFF2E343A)  // Muted Blue Grey
+    )
+
+    val colorPalette = if (isDark) darkPalette else lightPalette
     val cardColor = colorPalette[item.colorIndex % colorPalette.size]
-    val textColor = androidx.compose.ui.graphics.Color(0xFF263238)
+    val textColor = if (isDark) androidx.compose.ui.graphics.Color(0xFFE0E0E0) else androidx.compose.ui.graphics.Color(0xFF263238)
 
     Card(
         modifier = Modifier

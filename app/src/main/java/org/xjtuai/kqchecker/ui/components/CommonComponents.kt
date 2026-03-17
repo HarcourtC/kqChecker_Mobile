@@ -84,17 +84,10 @@ fun InfoCard(
         androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .clip(cardShape)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colors.surface,
-                            MaterialTheme.colors.background
-                        )
-                    )
-                )
+                .background(MaterialTheme.colors.surface)
                 .border(
                     width = 1.dp,
-                    color = MaterialTheme.colors.primary.copy(alpha = 0.12f),
+                    color = MaterialTheme.colors.primary.copy(alpha = if (androidx.compose.foundation.isSystemInDarkTheme()) 0.25f else 0.12f),
                     shape = cardShape
                 )
                 .padding(16.dp)

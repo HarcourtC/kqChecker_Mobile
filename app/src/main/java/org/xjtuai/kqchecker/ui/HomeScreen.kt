@@ -111,9 +111,11 @@ private fun findNextClass(items: List<ScheduleItem>): NextClassResult? {
     val candidates = items.mapNotNull { item ->
         val startMinutes = toMinutes(periodStartTimes[item.startPeriod]) ?: return@mapNotNull null
         val endMinutes = toMinutes(periodEndTimes[item.endPeriod]) ?: (startMinutes + 50)
-        val dayOffset = (item.dayOfWeek - nowDay + 7) % 7
+        var dayOffset = (item.dayOfWeek - nowDay + 7) % 7
 
-        if (dayOffset == 0 && endMinutes <= nowMinutes) return@mapNotNull null
+        if (dayOffset == 0 && endMinutes <= nowMinutes) {
+            dayOffset = 7
+        }
 
         val status = if (dayOffset == 0 && startMinutes <= nowMinutes && nowMinutes < endMinutes) {
             "进行中"
@@ -157,9 +159,10 @@ private fun calendarToMonDay(calendarDay: Int): Int {
 }
 
 private fun dayOffsetText(dayOffset: Int, dayOfWeek: Int): String {
-    return when (dayOffset) {
-        0 -> "今天"
-        1 -> "明天"
+    return when {
+        dayOffset == 0 -> "今天"
+        dayOffset == 1 -> "明天"
+        dayOffset >= 7 -> "下" + weekDayName(dayOfWeek)
         else -> weekDayName(dayOfWeek)
     }
 }
