@@ -50,7 +50,6 @@ fun AppButton(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
                 .background(
                     brush = Brush.horizontalGradient(
                         colors = listOf(

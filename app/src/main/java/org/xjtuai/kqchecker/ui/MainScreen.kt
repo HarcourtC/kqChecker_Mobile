@@ -25,7 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.model.ScheduleItem
@@ -54,11 +56,12 @@ fun MainScreen(
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
 
     Scaffold(
-        modifier = Modifier.systemBarsPadding(),
+        modifier = Modifier.fillMaxSize().imePadding(),
         backgroundColor = MaterialTheme.colors.background,
         bottomBar = {
             BottomNavigation(
                 modifier = Modifier
+                    .navigationBarsPadding()
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 backgroundColor = MaterialTheme.colors.surface,
                 contentColor = MaterialTheme.colors.primary,
@@ -79,7 +82,8 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .statusBarsPadding()
         ) {
             Box(
                 modifier = Modifier
