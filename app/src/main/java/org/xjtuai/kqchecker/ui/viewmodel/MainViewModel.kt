@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.xjtuai.kqchecker.domain.usecase.Api2QueryUseCase
 import org.xjtuai.kqchecker.domain.usecase.IntegrationFlowUseCase
 import org.xjtuai.kqchecker.domain.usecase.RefreshWeeklyUseCase
 import org.xjtuai.kqchecker.domain.usecase.WriteCalendarUseCase
@@ -31,7 +30,6 @@ class MainViewModel(
   application: Application,
   private val refreshWeeklyUseCase: RefreshWeeklyUseCase,
   private val writeCalendarUseCase: WriteCalendarUseCase,
-  private val api2QueryUseCase: Api2QueryUseCase,
   private val integrationFlowUseCase: IntegrationFlowUseCase,
   private val weeklyRepository: WeeklyRepository,
   private val weeklyCleaner: WeeklyCleaner
@@ -48,7 +46,6 @@ class MainViewModel(
   init {
     // Perform initialization on app start
     checkAndAutoRefresh()
-    loadApi2Settings()
   }
 
   /**
@@ -99,26 +96,7 @@ class MainViewModel(
     }
   }
 
-  /**
-   * Load API2 settings from SharedPreferences
-   */           
-  private fun loadApi2Settings() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        val api2Auto = api2QueryUseCase.isPeriodicEnabled()
-        val api2Foreground = api2QueryUseCase.isForegroundEnabled()
 
-        _uiState.update { state ->
-          state.copy(
-            api2AutoEnabled = api2Auto,
-            api2ForegroundEnabled = api2Foreground
-          )
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Error loading API2 settings", e)
-      }
-    }
-  }
 
   /**
    * Add an event log entry to the UI
@@ -242,81 +220,7 @@ class MainViewModel(
     }
   }
 
-  /**
-   * Enqueue a manual API2 query
-   */
-  fun onManualApi2Query() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Manual api2 query triggered")
-        val result = api2QueryUseCase.enqueueManualQuery()
 
-        when (result) {
-          is Api2QueryUseCase.QueryResult.Success -> addEventLog(result.message)
-          is Api2QueryUseCase.QueryResult.Error -> addEventLog("Failed to enqueue: ${result.message}")
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Manual API2 query error", e)
-        addEventLog("Failed to enqueue: ${e.message}")
-      }
-    }
-  }
-
-  /**
-   * Toggle periodic API2 queries
-   */
-  fun onToggleApi2Periodic(enabled: Boolean) {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        val result = if (enabled) {
-          api2QueryUseCase.enablePeriodicQueries()
-        } else {
-          api2QueryUseCase.disablePeriodicQueries()
-        }
-
-        when (result) {
-          is Api2QueryUseCase.QueryResult.Success -> {
-            addEventLog(result.message)
-            _uiState.update { it.copy(api2AutoEnabled = enabled) }
-          }
-          is Api2QueryUseCase.QueryResult.Error -> {
-            addEventLog("Failed to toggle periodic queries: ${result.message}")
-          }
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Toggle periodic queries error", e)
-        addEventLog("Failed: ${e.message}")
-      }
-    }
-  }
-
-  /**
-   * Toggle foreground polling
-   */
-  fun onToggleForegroundPolling(enabled: Boolean) {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        val result = if (enabled) {
-          api2QueryUseCase.startForegroundPolling(5)
-        } else {
-          api2QueryUseCase.stopForegroundPolling()
-        }
-
-        when (result) {
-          is Api2QueryUseCase.QueryResult.Success -> {
-            addEventLog(result.message)
-            _uiState.update { it.copy(api2ForegroundEnabled = enabled) }
-          }
-          is Api2QueryUseCase.QueryResult.Error -> {
-            addEventLog("Failed to toggle foreground polling: ${result.message}")
-          }
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Toggle foreground polling error", e)
-        addEventLog("Failed: ${e.message}")
-      }
-    }
-  }
 
   /**
    * Execute integration flow (ensure cleaned weekly and write to calendar)

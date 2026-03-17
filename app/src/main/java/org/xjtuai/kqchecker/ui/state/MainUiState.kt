@@ -13,10 +13,6 @@ data class MainUiState(
   // Schedule Data
   val scheduleItems: List<ScheduleItem> = emptyList(),
 
-  // API2 settings
-  val api2AutoEnabled: Boolean = false,
-  val api2ForegroundEnabled: Boolean = false,
-
   // Integration flow state
   val integrationPending: Boolean = false,
 

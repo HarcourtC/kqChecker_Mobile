@@ -1,33 +1,23 @@
 package org.xjtuai.kqchecker.ui
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.auth.AuthRequiredException
 import org.xjtuai.kqchecker.repository.RepositoryProvider
-import org.xjtuai.kqchecker.sync.Api2AttendanceQueryWorker
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
-import java.util.concurrent.TimeUnit
 
 /**
  * 工具屏幕
@@ -48,10 +38,6 @@ fun ToolsScreen(
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
     val tokenManager = remember { org.xjtuai.kqchecker.auth.TokenManager(context) }
-
-    // Prefs for toggles
-    val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
-    var api2AutoEnabled by remember { mutableStateOf(prefs.getBoolean("api2_auto_enabled", false)) }
 
     suspend fun postEventOnMain(message: String) {
         withContext(Dispatchers.Main) {
@@ -84,36 +70,6 @@ fun ToolsScreen(
             } catch (e: Exception) {
                 postEventOnMain("$tag 失败: ${e.message ?: e.toString()}")
             }
-        }
-    }
-
-    /**
-     * 启用 API2 自动轮询
-     */
-    fun enableApi2Periodic() {
-        try {
-            val workManager = WorkManager.getInstance(context)
-            val periodic = PeriodicWorkRequestBuilder<Api2AttendanceQueryWorker>(15, TimeUnit.MINUTES).build()
-            workManager.enqueueUniquePeriodicWork("api2_att_query_periodic", ExistingPeriodicWorkPolicy.REPLACE, periodic)
-            prefs.edit().putBoolean("api2_auto_enabled", true).apply()
-            onPostEvent("已启用 API2 自动轮询")
-        } catch (e: Exception) {
-            Log.e("Api2Auto", "Failed to enable periodic work", e)
-            onPostEvent("启用 API2 自动轮询失败: ${e.message}")
-        }
-    }
-
-    /**
-     * 禁用 API2 自动轮询
-     */
-    fun disableApi2Periodic() {
-        try {
-            WorkManager.getInstance(context).cancelUniqueWork("api2_att_query_periodic")
-            prefs.edit().putBoolean("api2_auto_enabled", false).apply()
-            onPostEvent("已关闭 API2 自动轮询")
-        } catch (e: Exception) {
-            Log.e("Api2Auto", "Failed to disable periodic work", e)
-            onPostEvent("关闭 API2 自动轮询失败: ${e.message}")
         }
     }
 
@@ -226,34 +182,6 @@ fun ToolsScreen(
                         }
                     }
                 })
-            }
-        }
-
-        if (isDebugBuild) {
-            InfoCard(title = "调试设置") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = 0.dp,
-                    shape = RoundedCornerShape(14.dp),
-                    backgroundColor = MaterialTheme.colors.background
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "启用 API2 自动轮询",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.body2
-                        )
-                        Switch(checked = api2AutoEnabled, onCheckedChange = { checked ->
-                            api2AutoEnabled = checked
-                            if (checked) enableApi2Periodic() else disableApi2Periodic()
-                        })
-                    }
-                }
             }
         }
     }
