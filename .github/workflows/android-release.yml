@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -71,13 +73,84 @@ jobs:
           name: app-release-${{ github.ref_name }}
           path: ${{ steps.apk.outputs.path }}
 
+      - name: Generate Changelog
+        id: changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          CURRENT_TAG="${GITHUB_REF_NAME}"
+          PREV_TAG="$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || true)"
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="${PREV_TAG}..${CURRENT_TAG}"
+            HEADER="## Changes (${PREV_TAG} -> ${CURRENT_TAG})"
+          else
+            RANGE="${CURRENT_TAG}"
+            HEADER="## Changes (${CURRENT_TAG})"
+          fi
+
+          COMMITS="$(git log --no-merges --pretty=format:'%s' $RANGE)"
+
+          FEAT="$(printf '%s\n' "$COMMITS" | grep -E '^feat(\(.+\))?: ' || true)"
+          FIX="$(printf '%s\n' "$COMMITS" | grep -E '^fix(\(.+\))?: ' || true)"
+          PERF="$(printf '%s\n' "$COMMITS" | grep -E '^perf(\(.+\))?: ' || true)"
+          REFACTOR="$(printf '%s\n' "$COMMITS" | grep -E '^refactor(\(.+\))?: ' || true)"
+          DOCS="$(printf '%s\n' "$COMMITS" | grep -E '^docs(\(.+\))?: ' || true)"
+          OTHER="$(printf '%s\n' "$COMMITS" | grep -E -v '^(feat|fix|perf|refactor|docs)(\(.+\))?: ' || true)"
+
+          format_list() {
+            if [ -n "$1" ]; then
+              printf '%s\n' "$1" | sed 's/^/- /'
+            fi
+          }
+
+          {
+            echo "body<<EOF"
+            echo "$HEADER"
+            echo
+            if [ -n "$FEAT" ]; then
+              echo "### Features"
+              format_list "$FEAT"
+              echo
+            fi
+            if [ -n "$FIX" ]; then
+              echo "### Fixes"
+              format_list "$FIX"
+              echo
+            fi
+            if [ -n "$PERF" ]; then
+              echo "### Performance"
+              format_list "$PERF"
+              echo
+            fi
+            if [ -n "$REFACTOR" ]; then
+              echo "### Refactors"
+              format_list "$REFACTOR"
+              echo
+            fi
+            if [ -n "$DOCS" ]; then
+              echo "### Docs"
+              format_list "$DOCS"
+              echo
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "### Others"
+              format_list "$OTHER"
+              echo
+            fi
+            if [ -z "$COMMITS" ]; then
+              echo "- No non-merge commits found in this release range."
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: ${{ steps.apk.outputs.path }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.body }}
 
       - name: Cleanup keystore
         if: always() # 无论成功失败都清理
