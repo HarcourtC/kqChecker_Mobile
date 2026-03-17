@@ -10,6 +10,7 @@ permissions:
   contents: write
 
 jobs:
+  
   build:
     runs-on: ubuntu-latest
 
@@ -44,6 +45,10 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('/*.gradle*', '/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-
+      - name: Decode private config
+        run: |
+          mkdir -p app/src/main/assets
+          echo "${{ secrets.CONFIG_PRIVATE_JSON_BASE64 }}" | base64 --decode > app/src/main/assets/config.private.json
 
       - name: Build Release APK
         # 2. 将密码映射为环境变量，通过命令行参数注入
@@ -155,3 +160,6 @@ jobs:
       - name: Cleanup keystore
         if: always() # 无论成功失败都清理
         run: rm -f release-keystore.jks
+      - name: Cleanup private config
+        if: always()
+        run: rm -f app/src/main/assets/config.private.json
