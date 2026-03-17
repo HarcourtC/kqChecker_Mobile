@@ -1,9 +1,6 @@
 package org.xjtuai.kqchecker
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -13,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,7 +21,6 @@ import org.xjtuai.kqchecker.ui.MainScreen
 import org.xjtuai.kqchecker.ui.components.UpdateDialog
 import org.xjtuai.kqchecker.ui.theme.KqCheckerTheme
 import org.xjtuai.kqchecker.util.LoginHelper
-import org.xjtuai.kqchecker.util.NotificationHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
 import org.xjtuai.kqchecker.util.VersionInfo
@@ -184,48 +179,6 @@ fun AppContent() {
         }
     }
 
-    // 注册广播接收器
-    val noAttendanceReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) {
-                try {
-                    val k = intent?.getStringExtra("key") ?: "?"
-                    val date = intent?.getStringExtra("date") ?: "?"
-                    val subj = intent?.getStringExtra("subject")
-                    val td = intent?.getStringExtra("time_display")
-                    val loc = intent?.getStringExtra("location")
-
-                    val display = if (!subj.isNullOrBlank()) {
-                        val parts = listOfNotNull(subj, td, loc).joinToString(" - ")
-                        "Warning: No attendance record: $parts"
-                    } else {
-                        "Warning: No attendance record: $k; please check manually."
-                    }
-                    postEvent(display)
-
-                    if (ctx != null) {
-                        NotificationHelper.sendNoAttendanceNotification(ctx, k, date, subj, td, loc)
-                    }
-                } catch (t: Throwable) {
-                    Log.w("MainActivity", "noAttendanceReceiver failed", t)
-                }
-            }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        val filter = IntentFilter("org.xjtuai.kqchecker.ACTION_NO_ATTENDANCE")
-        try {
-            context.registerReceiver(noAttendanceReceiver, filter)
-        } catch (t: Throwable) {
-            Log.w("MainActivity", "registerReceiver failed", t)
-        }
-        onDispose {
-            try {
-                context.unregisterReceiver(noAttendanceReceiver)
-            } catch (_: Throwable) {}
-        }
-    }
 
     // 登录启动器
     val loginLauncher = rememberLauncherForActivityResult(
