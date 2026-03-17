@@ -5,7 +5,6 @@ import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import org.xjtuai.kqchecker.auth.TokenAuthenticator
 import org.xjtuai.kqchecker.network.TokenInterceptor
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.util.ConfigHelper
@@ -32,7 +31,6 @@ object NetworkModule {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(TokenInterceptor(tokenManager))
-            .authenticator(TokenAuthenticator(context, normalizedBaseUrl))
             .build()
 
         retrofit = Retrofit.Builder()
