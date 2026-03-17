@@ -182,6 +182,26 @@ fun ToolsScreen(
                         }
                     }
                 })
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AppButton(text = "输出 API2 日志预览", onClick = {
+                    scope.launch {
+                        onPostEvent("正在输出 API2 调试文件...")
+                        try {
+                            val previews = withContext(Dispatchers.IO) { waterListRepository.getApi2FilePreviews() }
+                            if (previews.isEmpty()) {
+                                onPostEvent("没有可输出的 API2 文件")
+                            }
+                            for (p in previews) {
+                                onPostEvent("文件: ${p.name} (${p.size} bytes)")
+                                onPostEvent(p.preview.take(300) + "...")
+                            }
+                        } catch (e: Exception) {
+                            onPostEvent("输出 API2 调试文件失败: ${e.message}")
+                        }
+                    }
+                })
             }
         }
     }

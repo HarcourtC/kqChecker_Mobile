@@ -6,6 +6,7 @@ import android.util.Log
 import java.io.InputStreamReader
 import org.json.JSONObject
 import org.xjtuai.kqchecker.network.NetworkModule
+import org.xjtuai.kqchecker.repository.RepositoryProvider
 
 
 class KqApplication : Application() {
@@ -34,5 +35,6 @@ class KqApplication : Application() {
         }
 
         NetworkModule.init(this, baseUrl)
+        RepositoryProvider.initialize(this)
     }
 }
