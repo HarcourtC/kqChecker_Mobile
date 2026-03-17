@@ -346,7 +346,18 @@ class WebLoginActivity : ComponentActivity() {
                         }
                     }
                 }
-                registerReceiver(tokenClearedReceiver, IntentFilter(TokenManager.ACTION_TOKEN_CLEARED))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    registerReceiver(
+                        tokenClearedReceiver,
+                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED),
+                        Context.RECEIVER_NOT_EXPORTED
+                    )
+                } else {
+                    registerReceiver(
+                        tokenClearedReceiver,
+                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED)
+                    )
+                }
             } catch (_: Throwable) {}
         } catch (t: Throwable) {
             Log.e("WebLoginActivity", "onCreate failed", t)

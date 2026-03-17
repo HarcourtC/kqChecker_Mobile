@@ -3,6 +3,7 @@ package org.xjtuai.kqchecker
 import android.content.Context
 import android.content.IntentFilter
 import android.content.BroadcastReceiver
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -74,7 +75,15 @@ fun AppContent() {
             addAction(TokenManager.ACTION_TOKEN_CLEARED)
             addAction(TokenManager.ACTION_REQUEST_LOGIN)
         }
-        context.registerReceiver(loginStateReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                loginStateReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(loginStateReceiver, filter)
+        }
         onDispose { context.unregisterReceiver(loginStateReceiver) }
     }
 
