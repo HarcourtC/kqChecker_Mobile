@@ -75,6 +75,10 @@ fun ScheduleScreen(
     var pendingCalendarHomework by remember { mutableStateOf<HomeworkRecord?>(null) }
     var pendingManualCalendarSync by remember { mutableStateOf(false) }
 
+    val prefs = remember { context.getSharedPreferences("kq_prefs", android.content.Context.MODE_PRIVATE) }
+    val hideWeekends = prefs.getBoolean("hide_weekends", false)
+    val totalDays = if (hideWeekends) 5 else 7
+
     fun loadHomeworkRecords() {
         scope.launch(Dispatchers.IO) {
             val records = homeworkRepository.getAllRecords()
@@ -392,7 +396,11 @@ fun ScheduleScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(30.dp)) // Placeholder for period numbers
-                val days = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+                val days = if (hideWeekends) {
+                    listOf("周一", "周二", "周三", "周四", "周五")
+                } else {
+                    listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+                }
                 days.forEach { day ->
                     Text(
                         text = day,
@@ -452,7 +460,7 @@ fun ScheduleScreen(
                     // Schedule Items
                     Row(modifier = Modifier.fillMaxSize()) {
                         Spacer(modifier = Modifier.width(30.dp))
-                        for (day in 1..7) {
+                        for (day in 1..totalDays) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)

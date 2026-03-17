@@ -36,7 +36,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Schedule : Screen("schedule", "课表", Icons.Default.DateRange)
     object Competition : Screen("competition", "竞赛", Icons.Default.List)
     object Tools : Screen("tools", "工具", Icons.Default.Build)
-    object Integration : Screen("integration", "集成", Icons.Default.Settings)
+    object Settings : Screen("settings", "设置", Icons.Default.Settings)
 }
 
 @Composable
@@ -64,7 +64,7 @@ fun MainScreen(
                 contentColor = MaterialTheme.colors.primary,
                 elevation = 10.dp
             ) {
-                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Integration)
+                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Settings)
                 screens.forEach { screen ->
                     BottomNavigationItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
@@ -104,7 +104,7 @@ fun MainScreen(
                         onPostEvent = onPostEvent,
                         onLoginRequired = onLoginRequired
                     )
-                    Screen.Integration -> IntegrationScreen(
+                    Screen.Settings -> SettingsScreen(
                         onPostEvent = onPostEvent
                     )
                 }

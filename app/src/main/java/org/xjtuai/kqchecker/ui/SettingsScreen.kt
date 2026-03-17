@@ -19,18 +19,24 @@ import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.ui.components.InfoCard
 
 @Composable
-fun IntegrationScreen(
+fun SettingsScreen(
     onPostEvent: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var eventLogEnabled by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
+    var hideWeekendsEnabled by remember { mutableStateOf(prefs.getBoolean("hide_weekends", false)) }
 
     fun toggleEventLog(enabled: Boolean) {
         prefs.edit().putBoolean("event_log_enabled", enabled).apply()
         eventLogEnabled = enabled
         onPostEvent("事件日志已${if (enabled) "开启" else "关闭"}")
+    }
+
+    fun toggleHideWeekends(enabled: Boolean) {
+        prefs.edit().putBoolean("hide_weekends", enabled).apply()
+        hideWeekendsEnabled = enabled
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
@@ -44,6 +50,18 @@ fun IntegrationScreen(
                     checked = eventLogEnabled,
                     onCheckedChange = { checked ->
                          toggleEventLog(checked)
+                    }
+                )
+            }
+             Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "课表隐藏周末",
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = hideWeekendsEnabled,
+                    onCheckedChange = { checked ->
+                         toggleHideWeekends(checked)
                     }
                 )
             }

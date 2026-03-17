@@ -82,14 +82,19 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (!isLoggedIn) {
-            AppButton(text = "登录", onClick = onLoginClick)
+            AppButton(
+                text = "登录", 
+                onClick = onLoginClick,
+                modifier = Modifier.fillMaxWidth(0.6f)
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
         AppButton(
             text = "手动同步",
             onClick = onManualSync,
-            backgroundColor = MaterialTheme.colors.secondary
+            backgroundColor = MaterialTheme.colors.secondary,
+            modifier = Modifier.fillMaxWidth(0.6f)
         )
     }
 }
