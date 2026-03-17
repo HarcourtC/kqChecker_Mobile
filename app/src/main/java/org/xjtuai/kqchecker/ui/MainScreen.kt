@@ -44,10 +44,11 @@ fun MainScreen(
     events: List<String>,
     scheduleItems: List<ScheduleItem>,
     latestAttendance: WaterRecord?,
+    isLoggedIn: Boolean,
     showEventLog: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
-    onCheckCacheStatus: () -> Unit,
+    onManualSync: () -> Unit,
     onLoginRequired: () -> Unit
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
@@ -88,7 +89,8 @@ fun MainScreen(
                 when (currentScreen) {
                     Screen.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
-                        onCheckCacheStatus = onCheckCacheStatus,
+                        onManualSync = onManualSync,
+                        isLoggedIn = isLoggedIn,
                         scheduleItems = scheduleItems,
                         latestAttendance = latestAttendance
                     )

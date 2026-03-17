@@ -21,7 +21,8 @@ import java.util.Calendar
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit,
-    onCheckCacheStatus: () -> Unit,
+    onManualSync: () -> Unit,
+    isLoggedIn: Boolean,
     scheduleItems: List<ScheduleItem>,
     latestAttendance: WaterRecord?,
     modifier: Modifier = Modifier
@@ -69,13 +70,14 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        AppButton(text = "登录", onClick = onLoginClick)
-
-        Spacer(modifier = Modifier.height(8.dp))
+        if (!isLoggedIn) {
+            AppButton(text = "登录", onClick = onLoginClick)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         AppButton(
-            text = "检查缓存状态",
-            onClick = onCheckCacheStatus,
+            text = "手动同步",
+            onClick = onManualSync,
             backgroundColor = MaterialTheme.colors.secondary
         )
     }

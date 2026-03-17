@@ -1,6 +1,8 @@
 package org.xjtuai.kqchecker
 
 import android.content.Context
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -55,6 +57,26 @@ fun AppContent() {
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var versionCheckDone by remember { mutableStateOf(false) }
+
+    // isLoggedIn 基于 Token 是否存在，在 Token 被清除或登录成功时响应更新
+    var isLoggedIn by remember { mutableStateOf(TokenManager(context).getAccessToken() != null) }
+
+    DisposableEffect(Unit) {
+        val loginStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                when (intent?.action) {
+                    TokenManager.ACTION_TOKEN_CLEARED -> isLoggedIn = false
+                    TokenManager.ACTION_REQUEST_LOGIN -> isLoggedIn = false
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(TokenManager.ACTION_TOKEN_CLEARED)
+            addAction(TokenManager.ACTION_REQUEST_LOGIN)
+        }
+        context.registerReceiver(loginStateReceiver, filter)
+        onDispose { context.unregisterReceiver(loginStateReceiver) }
+    }
 
     DisposableEffect(Unit) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
@@ -212,12 +234,14 @@ fun AppContent() {
         val token = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN)
         val tokenSource = data?.getStringExtra(WebLoginActivity.RESULT_TOKEN_SOURCE)
         if (token != null) {
+            isLoggedIn = true
             Toast.makeText(context, "Login success", Toast.LENGTH_SHORT).show()
             val srcLabel = LoginHelper.getTokenSourceLabel(tokenSource)
             events.add("Token: ${token.take(40)}... (source: $srcLabel)")
         } else {
             val saved = TokenManager(context).getAccessToken()
             if (saved != null) {
+                isLoggedIn = true
                 Toast.makeText(context, "Login success (saved)", Toast.LENGTH_SHORT).show()
                 events.add("Token: ${saved.take(40)}... (source: saved)")
             } else {
@@ -232,21 +256,14 @@ fun AppContent() {
         events = events,
         scheduleItems = scheduleItems,
         latestAttendance = latestAttendance,
+        isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
-        onCheckCacheStatus = {
+        onManualSync = {
             scope.launch(Dispatchers.IO) {
-                try {
-                    val cacheStatus = weeklyRepository.getCacheStatus()
-                    withContext(Dispatchers.Main) {
-                        events.add("[Home] Cache exists: ${cacheStatus.exists}, expired: ${cacheStatus.isExpired}")
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        events.add("[Home] Cannot read cache status: ${e.message ?: e.toString()}")
-                    }
-                }
+                loadHomeSchedule(true)
+                loadLatestAttendance()
             }
         },
         onLoginRequired = { LoginHelper.launchLogin(context, loginLauncher) }
