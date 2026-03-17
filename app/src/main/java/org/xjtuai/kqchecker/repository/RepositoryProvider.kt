@@ -1,7 +1,6 @@
 package org.xjtuai.kqchecker.repository
 
 import android.content.Context
-import org.xjtuai.kqchecker.debug.DebugRepository
 
 /**
  * Repository提供者，提供应用中所有Repository实例的统一访问点
@@ -10,7 +9,6 @@ import org.xjtuai.kqchecker.debug.DebugRepository
 object RepositoryProvider {
     private var weeklyRepository: WeeklyRepository? = null
     private var waterListRepository: WaterListRepository? = null
-    private var debugRepository: DebugRepository? = null
     private var weeklyCleaner: WeeklyCleaner? = null
     private var cacheManager: CacheManager? = null
     private var competitionRepository: CompetitionRepository? = null
@@ -27,7 +25,6 @@ object RepositoryProvider {
         termRepository = TermRepository(appContext)
         weeklyRepository = WeeklyRepository(appContext)
         waterListRepository = WaterListRepository(appContext)
-        debugRepository = DebugRepository(appContext)
         weeklyCleaner = WeeklyCleaner(appContext)
         competitionRepository = CompetitionRepository(appContext)
     }
@@ -57,9 +54,7 @@ object RepositoryProvider {
         return cacheManager ?: throw IllegalStateException("RepositoryProvider not initialized")
     }
 
-    fun getDebugRepository(): DebugRepository {
-        return debugRepository ?: throw IllegalStateException("RepositoryProvider not initialized")
-    }
+
 
     /**
      * 获取CompetitionRepository实例
