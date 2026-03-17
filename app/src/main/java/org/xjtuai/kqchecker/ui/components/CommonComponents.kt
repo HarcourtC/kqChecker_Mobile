@@ -54,7 +54,7 @@ fun AppButton(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             backgroundColor.copy(alpha = 0.9f),
-                            MaterialTheme.colors.primaryVariant
+                            backgroundColor.copy(alpha = 1.0f)
                         )
                     ),
                     shape = buttonShape
