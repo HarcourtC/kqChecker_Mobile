@@ -48,9 +48,11 @@ fun MainScreen(
     latestAttendance: WaterRecord?,
     isLoggedIn: Boolean,
     showEventLog: Boolean,
+    isCheckingUpdate: Boolean,
     onPostEvent: (String) -> Unit,
     onLoginClick: () -> Unit,
     onManualSync: () -> Unit,
+    onCheckUpdate: () -> Unit,
     onLoginRequired: () -> Unit
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
@@ -109,7 +111,9 @@ fun MainScreen(
                         onLoginRequired = onLoginRequired
                     )
                     Screen.Settings -> SettingsScreen(
-                        onPostEvent = onPostEvent
+                        onPostEvent = onPostEvent,
+                        isCheckingUpdate = isCheckingUpdate,
+                        onCheckUpdate = onCheckUpdate
                     )
                 }
             }
