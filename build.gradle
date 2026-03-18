@@ -31,7 +31,7 @@ subprojects {
 }
 buildscript {
     ext {
-        agp_version1 = '8.13.0'
+        agp_version1 = '9.1.0'
     }
     repositories {
         // First try official Gradle Plugin Portal since ktlint usually lives there
@@ -47,11 +47,12 @@ buildscript {
     dependencies {
         // Android Gradle plugin
         classpath "com.android.tools.build:gradle:$agp_version1"
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10'
         // ktlint
         classpath "org.jlleitschuh.gradle:ktlint-gradle:11.3.1"
         // detekt
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7"
+        classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.2.10'
     }
 }
 

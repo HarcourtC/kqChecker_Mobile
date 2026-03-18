@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'org.jlleitschuh.gradle.ktlint'
     id 'io.gitlab.arturbosch.detekt'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 /**
@@ -40,6 +41,7 @@ def getVersionCode = {
 android {
     namespace = "org.xjtuai.kqchecker"
     compileSdk 36
+    buildToolsVersion "36.1.0"
 
     defaultConfig {
         applicationId = "org.xjtuai.kqchecker"
@@ -82,11 +84,8 @@ android {
         // enable generation of BuildConfig so custom buildConfigField is allowed
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = '1.5.3'
-    }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     // Lint configuration
@@ -129,7 +128,7 @@ tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
         xml.required.set(false)
         txt.required.set(false)
     }
-    jvmTarget = "1.8"
+    jvmTarget = "11"
 }
 
 dependencies {

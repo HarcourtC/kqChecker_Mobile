@@ -1,6 +1,5 @@
 package org.xjtuai.kqchecker.util
 
-import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,23 +65,100 @@ object VersionChecker {
      * @return 是否有新版本
      */
     private fun isNewerVersion(latest: String, current: String): Boolean {
-        val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
-        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
+        return compareSemVer(latest, current) > 0
+    }
 
-        val maxLength = maxOf(latestParts.size, currentParts.size)
+    private fun compareSemVer(a: String, b: String): Int {
+        val left = parseSemVer(a)
+        val right = parseSemVer(b)
 
+        // 若版本不满足 semver，回退到“仅数字段”比较，避免崩溃。
+        if (left == null || right == null) return compareLegacyNumeric(a, b)
+
+        if (left.major != right.major) return left.major.compareTo(right.major)
+        if (left.minor != right.minor) return left.minor.compareTo(right.minor)
+        if (left.patch != right.patch) return left.patch.compareTo(right.patch)
+
+        return comparePreRelease(left.preRelease, right.preRelease)
+    }
+
+    private fun comparePreRelease(left: List<String>?, right: List<String>?): Int {
+        // 无预发布标识的版本优先级更高（SemVer 2.0.0）。
+        if (left == null && right == null) return 0
+        if (left == null) return 1
+        if (right == null) return -1
+
+        val maxLength = maxOf(left.size, right.size)
         for (i in 0 until maxLength) {
-            val latestPart = latestParts.getOrElse(i) { 0 }
-            val currentPart = currentParts.getOrElse(i) { 0 }
-
-            when {
-                latestPart > currentPart -> return true
-                latestPart < currentPart -> return false
-            }
+            val l = left.getOrNull(i) ?: return -1
+            val r = right.getOrNull(i) ?: return 1
+            val cmp = comparePreReleaseIdentifier(l, r)
+            if (cmp != 0) return cmp
         }
-        return false
+        return 0
+    }
+
+    private fun comparePreReleaseIdentifier(left: String, right: String): Int {
+        val lNum = left.toLongOrNull()
+        val rNum = right.toLongOrNull()
+
+        return when {
+            lNum != null && rNum != null -> lNum.compareTo(rNum)
+            lNum != null && rNum == null -> -1
+            lNum == null && rNum != null -> 1
+            else -> left.compareTo(right)
+        }
+    }
+
+    private fun parseSemVer(raw: String): SemVer? {
+        val cleaned = raw.trim().removePrefix("v")
+        val match = SEMVER_REGEX.matchEntire(cleaned) ?: return null
+
+        val major = match.groupValues[1].toIntOrNull() ?: return null
+        val minor = match.groupValues[2].toIntOrNull() ?: return null
+        val patch = match.groupValues[3].toIntOrNull() ?: return null
+        val pre = match.groupValues[4].takeIf { it.isNotBlank() }?.split(".")
+
+        return SemVer(
+            major = major,
+            minor = minor,
+            patch = patch,
+            preRelease = pre
+        )
+    }
+
+    private fun compareLegacyNumeric(a: String, b: String): Int {
+        val left = extractNumericParts(a)
+        val right = extractNumericParts(b)
+        val maxLength = maxOf(left.size, right.size)
+        for (i in 0 until maxLength) {
+            val l = left.getOrElse(i) { 0 }
+            val r = right.getOrElse(i) { 0 }
+            if (l != r) return l.compareTo(r)
+        }
+        return 0
+    }
+
+    private fun extractNumericParts(raw: String): List<Int> {
+        return raw.trim()
+            .removePrefix("v")
+            .split('.', '-', '_')
+            .mapNotNull { part -> part.takeWhile { it.isDigit() }.toIntOrNull() }
     }
 }
+
+private data class SemVer(
+    val major: Int,
+    val minor: Int,
+    val patch: Int,
+    val preRelease: List<String>?
+)
+
+private val SEMVER_REGEX = Regex(
+    "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)" +
+        "(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?" +
+        "(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+)
 
 /**
  * 版本信息数据类
