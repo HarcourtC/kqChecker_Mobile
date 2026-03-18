@@ -1,7 +1,5 @@
 package org.xjtuai.kqchecker.ui.components
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.util.VersionInfo
@@ -124,11 +121,11 @@ fun InfoCard(
 @Composable
 fun UpdateDialog(
     versionInfo: VersionInfo,
+    currentVersion: String,
+    isUpdating: Boolean,
     onDismiss: () -> Unit,
     onUpdate: () -> Unit
 ) {
-    val context = LocalContext.current
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -142,7 +139,7 @@ fun UpdateDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "当前版本: ${versionInfo.latestVersion}",
+                    text = "当前版本: $currentVersion",
                     style = MaterialTheme.typography.body2,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                 )
@@ -162,14 +159,10 @@ fun UpdateDialog(
         },
         confirmButton = {
             Button(
-                onClick = {
-                    // 打开 GitHub Release 页面
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(versionInfo.releaseUrl))
-                    context.startActivity(intent)
-                    onUpdate()
-                }
+                onClick = onUpdate,
+                enabled = !isUpdating
             ) {
-                Text("更新")
+                Text(if (isUpdating) "下载中..." else "下载并安装")
             }
         },
         dismissButton = {

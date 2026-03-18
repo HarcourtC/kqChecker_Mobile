@@ -4,9 +4,13 @@ import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,11 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
 
 @Composable
 fun SettingsScreen(
     onPostEvent: (String) -> Unit,
+    isCheckingUpdate: Boolean,
+    onCheckUpdate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -64,6 +71,28 @@ fun SettingsScreen(
                          toggleHideWeekends(checked)
                     }
                 )
+            }
+        }
+
+        InfoCard(title = "应用更新") {
+            Text("检查是否有新版本，并在应用内下载并安装。")
+            Spacer(modifier = Modifier.height(10.dp))
+            AppButton(
+                text = if (isCheckingUpdate) "正在检查更新..." else "检查更新",
+                onClick = {
+                    if (!isCheckingUpdate) onCheckUpdate()
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (isCheckingUpdate) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Text("正在向 GitHub 检查最新版本...")
+                }
             }
         }
     }

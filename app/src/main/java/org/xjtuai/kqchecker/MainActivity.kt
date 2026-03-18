@@ -24,6 +24,7 @@ import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.ui.MainScreen
 import org.xjtuai.kqchecker.ui.components.UpdateDialog
 import org.xjtuai.kqchecker.ui.theme.KqCheckerTheme
+import org.xjtuai.kqchecker.util.AppUpdateInstaller
 import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
@@ -58,6 +59,8 @@ fun AppContent() {
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var versionCheckDone by remember { mutableStateOf(false) }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var isUpdating by remember { mutableStateOf(false) }
 
     // isLoggedIn 基于 Token 是否存在，在 Token 被清除或登录成功时响应更新
     var isLoggedIn by remember { mutableStateOf(TokenManager(context).getAccessToken() != null) }
@@ -109,6 +112,94 @@ fun AppContent() {
         }
     }
 
+    fun getCurrentVersionName(): String {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName ?: "1.0"
+        } catch (e: Exception) {
+            "1.0"
+        }
+    }
+
+    fun checkForUpdates(showNoUpdateMessage: Boolean) {
+        if (isCheckingUpdate) return
+        scope.launch {
+            isCheckingUpdate = true
+            try {
+                val info = VersionChecker.checkForUpdate(getCurrentVersionName())
+                when {
+                    info == null -> {
+                        if (showNoUpdateMessage) {
+                            postEvent("检查更新失败，请稍后重试。")
+                        }
+                    }
+                    info.isUpdateAvailable -> {
+                        versionInfo = info
+                        showUpdateDialog = true
+                        if (showNoUpdateMessage) {
+                            postEvent("发现新版本 v${info.latestVersion}")
+                        }
+                    }
+                    showNoUpdateMessage -> {
+                        postEvent("当前已是最新版本。")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("VersionCheck", "Failed to check version", e)
+                if (showNoUpdateMessage) {
+                    postEvent("检查更新失败: ${e.message ?: e.toString()}")
+                }
+            } finally {
+                isCheckingUpdate = false
+            }
+        }
+    }
+
+    fun startInAppUpdate() {
+        val info = versionInfo ?: return
+        val apkUrl = info.apkUrl
+        if (apkUrl.isNullOrBlank()) {
+            postEvent("当前版本未提供 APK 安装包，暂不支持应用内更新。")
+            return
+        }
+        if (isUpdating) return
+
+        scope.launch {
+            isUpdating = true
+            try {
+                postEvent("开始下载更新包 v${info.latestVersion} ...")
+                val apkFile = AppUpdateInstaller.downloadApk(
+                    context = context,
+                    apkUrl = apkUrl,
+                    version = info.latestVersion
+                )
+                if (apkFile == null) {
+                    postEvent("更新下载失败，请稍后重试。")
+                    return@launch
+                }
+
+                if (!AppUpdateInstaller.canRequestPackageInstalls(context)) {
+                    postEvent("请先允许安装未知来源应用，然后重试更新。")
+                    AppUpdateInstaller.openUnknownSourcesSettings(context)
+                    return@launch
+                }
+
+                val launched = AppUpdateInstaller.launchInstaller(context, apkFile)
+                if (launched) {
+                    showUpdateDialog = false
+                    postEvent("已启动安装器，请确认安装。")
+                } else {
+                    postEvent("无法启动安装器，请检查系统设置。")
+                }
+            } catch (e: Exception) {
+                Log.e("UpdateInstall", "In-app update failed", e)
+                postEvent("应用内更新失败: ${e.message ?: e.toString()}")
+            } finally {
+                isUpdating = false
+            }
+        }
+    }
+
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
@@ -153,18 +244,7 @@ fun AppContent() {
     LaunchedEffect(Unit) {
         if (!versionCheckDone) {
             versionCheckDone = true
-            try {
-                val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                val currentVersion = packageInfo.versionName ?: "1.0"
-
-                val info = VersionChecker.checkForUpdate(currentVersion)
-                if (info != null && info.isUpdateAvailable) {
-                    versionInfo = info
-                    showUpdateDialog = true
-                }
-            } catch (e: Exception) {
-                Log.d("VersionCheck", "Failed to check version", e)
-            }
+            checkForUpdates(showNoUpdateMessage = false)
         }
     }
 
@@ -265,6 +345,7 @@ fun AppContent() {
         latestAttendance = latestAttendance,
         isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,
+        isCheckingUpdate = isCheckingUpdate,
         onPostEvent = { postEvent(it) },
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
         onManualSync = {
@@ -273,6 +354,7 @@ fun AppContent() {
                 loadLatestAttendance()
             }
         },
+        onCheckUpdate = { checkForUpdates(showNoUpdateMessage = true) },
         onLoginRequired = { LoginHelper.launchLogin(context, loginLauncher) }
     )
 
@@ -280,8 +362,10 @@ fun AppContent() {
     if (showUpdateDialog && versionInfo != null) {
         UpdateDialog(
             versionInfo = requireNotNull(versionInfo),
+            currentVersion = getCurrentVersionName(),
+            isUpdating = isUpdating,
             onDismiss = { showUpdateDialog = false },
-            onUpdate = { showUpdateDialog = false }
+            onUpdate = { startInAppUpdate() }
         )
     }
 }

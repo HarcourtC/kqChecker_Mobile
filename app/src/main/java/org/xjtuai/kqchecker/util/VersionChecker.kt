@@ -3,6 +3,7 @@ package org.xjtuai.kqchecker.util
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -38,6 +39,7 @@ object VersionChecker {
                     val tagName = json.getString("tag_name").removePrefix("v")
                     val body = json.optString("body", "")
                     val htmlUrl = json.getString("html_url")
+                    val apkUrl = findApkAssetUrl(json.optJSONArray("assets"))
 
                     Log.d(TAG, "Latest version: $tagName, Current: $currentVersion")
 
@@ -45,6 +47,7 @@ object VersionChecker {
                         latestVersion = tagName,
                         releaseNotes = body,
                         releaseUrl = htmlUrl,
+                        apkUrl = apkUrl,
                         isUpdateAvailable = isNewerVersion(tagName, currentVersion)
                     )
                 } else {
@@ -145,6 +148,22 @@ object VersionChecker {
             .split('.', '-', '_')
             .mapNotNull { part -> part.takeWhile { it.isDigit() }.toIntOrNull() }
     }
+
+    private fun findApkAssetUrl(assets: JSONArray?): String? {
+        if (assets == null) return null
+        for (i in 0 until assets.length()) {
+            val item = assets.optJSONObject(i) ?: continue
+            val contentType = item.optString("content_type", "")
+            val name = item.optString("name", "")
+            val downloadUrl = item.optString("browser_download_url", "")
+            if (downloadUrl.isBlank()) continue
+
+            val isApkContentType = contentType.equals("application/vnd.android.package-archive", ignoreCase = true)
+            val isApkFileName = name.endsWith(".apk", ignoreCase = true)
+            if (isApkContentType || isApkFileName) return downloadUrl
+        }
+        return null
+    }
 }
 
 private data class SemVer(
@@ -167,5 +186,6 @@ data class VersionInfo(
     val latestVersion: String,
     val releaseNotes: String,
     val releaseUrl: String,
+    val apkUrl: String? = null,
     val isUpdateAvailable: Boolean
 )
