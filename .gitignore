@@ -148,3 +148,4 @@ docs-AI/
 .idea/misc.xml
 .idea/vcs.xml
 gradle/gradle-daemon-jvm.properties
+CLAUDE.md
