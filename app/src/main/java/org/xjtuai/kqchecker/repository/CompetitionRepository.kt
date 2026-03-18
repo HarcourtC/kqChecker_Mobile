@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.CompetitionApiInterceptor
 import org.xjtuai.kqchecker.network.CompetitionResponse
+import org.xjtuai.kqchecker.util.ConfigHelper
 import java.util.concurrent.TimeUnit
 
 /**
@@ -16,22 +17,24 @@ import java.util.concurrent.TimeUnit
 class CompetitionRepository(private val context: Context) {
     companion object {
         private const val TAG = "CompetitionRepository"
-        private const val COMPETITION_BASE_URL = "https://api.harco.top/"
     }
 
     private val competitionApiService: ApiService
     private val cacheManager = CacheManager(context)
+    private val config = ConfigHelper.getConfig(context)
+    private val competitionBaseUrl = ConfigHelper.getCompetitionBaseUrl(context)
+    private val competitionEndpoint = config.competitionEndpoint
 
     init {
         val client = createCompetitionClient()
-        competitionApiService = ApiService.create(client, COMPETITION_BASE_URL)
+        competitionApiService = ApiService.create(client, competitionBaseUrl)
     }
 
     private fun createCompetitionClient(): OkHttpClient {
         return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(CompetitionApiInterceptor())
+            .addInterceptor(CompetitionApiInterceptor(config.competitionApiKey))
             .build()
     }
 
@@ -112,8 +115,8 @@ class CompetitionRepository(private val context: Context) {
     private suspend fun getCompetitionDataFromApi(): CompetitionResponse? {
         Log.d(TAG, "开始API请求...")
         return try {
-            Log.d(TAG, "发送API请求到: ${COMPETITION_BASE_URL}xjtudean")
-            val respBody = competitionApiService.getCompetitionData()
+            Log.d(TAG, "发送竞赛数据请求到配置化端点")
+            val respBody = competitionApiService.getCompetitionData(competitionEndpoint)
 
             // 验证响应
             if (respBody == null) {

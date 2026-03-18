@@ -177,7 +177,8 @@ Cache files stored in `/data/data/org.xjtuai.kqchecker/files/`:
 
 ### Base URL
 - **Default**: Defined in `app/build.gradle` `buildConfigField "BASE_URL"`
-- **Override**: Create `assets/config.json` with `{"base_url": "..."}`
+- **Public sample**: `assets/config.json`
+- **Local private override**: create `assets/config.private.json`
 - **Loaded in**: `KqApplication.onCreate()` via `ConfigHelper`
 
 ### Token Lifecycle
@@ -197,19 +198,19 @@ Cache files stored in `/data/data/org.xjtuai.kqchecker/files/`:
 ## API Endpoints & Data Models
 
 **Internal APIs** (require authentication):
-- **API1** (Weekly Attendance): `/attendance-student/rankClass/getWeekSchedule2`
+- **API1** (Weekly Attendance): configured via `weekly_endpoint`
   - Repository: `WeeklyRepository.fetchWeeklyData()`
   - Response: `WeeklyResponse`
 
-- **API2** (Water List / 考情流水): `/attendance-student/waterList/page`
+- **API2** (Water List / 考情流水): configured via `water_list_endpoint`
   - Repository: `WaterListRepository.fetchWaterListData()`
   - Response: `WaterListResponse`
   - Payload: `calendarBh` (term number), `startdate`, `enddate`, `pageSize`, `current`
 
 **External APIs**:
-- **Competition API**: `https://api.harco.top/xjtudean`
+- **Competition API**: configured via `competition_base_url` + `competition_endpoint`
   - Repository: `CompetitionRepository`
-  - Auth: `X-API-KEY` header via `CompetitionApiInterceptor`
+  - Auth: `X-API-KEY` header via `CompetitionApiInterceptor`, sourced from private config
   - Caches to: `competition_data.json`
 
 ## Development Workflow

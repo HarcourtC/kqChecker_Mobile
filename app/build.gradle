@@ -49,8 +49,8 @@ android {
         targetSdk = 36
         versionCode = getVersionCode()
         versionName = getVersionName()
-        // default base url (can be overridden by assets/config.json at runtime)
-        buildConfigField "String", "BASE_URL", '"http://bkkq.xjtu.edu.cn/attendance-student-pc"'
+        // Public repo default only. Provide real values in assets/config.private.json for local use.
+        buildConfigField "String", "BASE_URL", '"https://example.invalid/"'
     }
 
     signingConfigs {

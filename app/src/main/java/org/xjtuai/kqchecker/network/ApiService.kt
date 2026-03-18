@@ -11,6 +11,7 @@ import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Url
 import java.nio.charset.StandardCharsets
 
 /**
@@ -20,26 +21,32 @@ interface ApiService {
     /**
      * 获取周课表数据（API1）
      */
-    @POST("attendance-student/rankClass/getWeekSchedule2")
-    suspend fun getWeeklyData(@Body requestBody: RequestBody): ResponseBody?
+    @POST
+    suspend fun getWeeklyData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?
     
     /**
      * 获取水课表数据（API2）
      */
-    @POST("attendance-student/waterList/page")
+    @POST
     suspend fun getWaterListData(@Body requestBody: RequestBody): ResponseBody?
+
+    /**
+     * 获取水课表数据（API2，兼容旧调用）
+     */
+    @POST
+    suspend fun getWaterListData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?
 
     /**
      * 获取竞赛数据
      */
-    @GET("xjtudean")
-    suspend fun getCompetitionData(): ResponseBody?
+    @GET
+    suspend fun getCompetitionData(@Url url: String): ResponseBody?
 
     /**
      * 获取当前学期信息
      */
-    @POST("attendance-student/global/getCurrentTerm")
-    suspend fun getCurrentTerm(@Body requestBody: RequestBody): ResponseBody?
+    @POST
+    suspend fun getCurrentTerm(@Url url: String, @Body requestBody: RequestBody): ResponseBody?
     
     companion object {
         /**

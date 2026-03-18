@@ -7,19 +7,22 @@ import android.util.Log
 /**
  * 竞赛API拦截器：添加 X-API-KEY 请求头
  */
-class CompetitionApiInterceptor : Interceptor {
+class CompetitionApiInterceptor(private val apiKey: String) : Interceptor {
     companion object {
         private const val TAG = "CompetitionApiInterceptor"
-        private const val API_KEY = "HarcoSecret2026XJTUDeanApi"
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
         val requestBuilder = original.newBuilder()
-            .header("X-API-KEY", API_KEY)
-            .build()
 
-        Log.d(TAG, "Adding X-API-KEY header to request")
-        return chain.proceed(requestBuilder)
+        if (apiKey.isNotBlank()) {
+            requestBuilder.header("X-API-KEY", apiKey)
+            Log.d(TAG, "Adding X-API-KEY header to request")
+        } else {
+            Log.w(TAG, "Competition API key is empty; sending request without X-API-KEY")
+        }
+
+        return chain.proceed(requestBuilder.build())
     }
 }

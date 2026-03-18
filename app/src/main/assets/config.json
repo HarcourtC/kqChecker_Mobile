@@ -1,5 +1,11 @@
 {
-  "base_url": "http://bkkq.xjtu.edu.cn/",
-  "auth_login_url": "http://bkkq.xjtu.edu.cn",
-  "auth_redirect_prefix": "http://bkkq.xjtu.edu.cn/attendance-student-pc/#/home"
+  "base_url": "https://example.invalid/",
+  "auth_login_url": "https://example.invalid/login",
+  "auth_redirect_prefix": "https://example.invalid/app/#/home",
+  "weekly_endpoint": "api/schedule/weekly",
+  "water_list_endpoint": "api/attendance/water-list",
+  "current_term_endpoint": "api/term/current",
+  "competition_base_url": "https://example.invalid/",
+  "competition_endpoint": "api/competition",
+  "competition_api_key": "REPLACE_WITH_PRIVATE_KEY"
 }
