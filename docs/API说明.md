@@ -20,12 +20,12 @@
   - 调用方: `WeeklyRepository`（`app/src/main/java/.../repository/WeeklyRepository.kt`）
   - 请求示例 RequestBody: JSON
     {
-      "termNo": 20241,
+      "termNo": "1",
       "week": 10
     }
   - 返回: 服务端返回 JSON（示例 `{ "code":200, "success":true, "data": [...] }`），仓库通过 `ResponseBody.string()` 手动解析为 `JSONObject`。
 
-- 获取水课表（API2）
+- 获取考勤流水（API2）
   - 配置键: `water_list_endpoint`
   - Retrofit 方法: `suspend fun getWaterListData(@Url url: String, @Body requestBody: RequestBody): ResponseBody?`
   - 调用方: `WaterListRepository`（`app/src/main/java/.../repository/WaterListRepository.kt`）以及 `Api2AttendanceQueryWorker` 在后台使用
@@ -99,15 +99,15 @@
 **调试与日志收集（实用命令）**
 - 列出并读取缓存文件（在可调试 APK 下可用 `run-as`）：
   ```powershell
-  adb shell run-as org.example.kqchecker ls -l /data/data/org.example.kqchecker/files
-  adb shell run-as org.example.kqchecker cat /data/data/org.example.kqchecker/files/weekly_raw.json
-  adb shell run-as org.example.kqchecker cat /data/data/org.example.kqchecker/files/weekly.json
+  adb shell run-as org.xjtuai.kqchecker ls -l /data/data/org.xjtuai.kqchecker/files
+  adb shell run-as org.xjtuai.kqchecker cat /data/data/org.xjtuai.kqchecker/files/weekly_raw.json
+  adb shell run-as org.xjtuai.kqchecker cat /data/data/org.xjtuai.kqchecker/files/weekly.json
   ```
 - 删除缓存以强制从网络拉取（用于复现）：
   ```powershell
-  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly.json
-  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly_raw.json
-  adb shell run-as org.example.kqchecker rm /data/data/org.example.kqchecker/files/weekly_cleaned.json
+  adb shell run-as org.xjtuai.kqchecker rm /data/data/org.xjtuai.kqchecker/files/weekly.json
+  adb shell run-as org.xjtuai.kqchecker rm /data/data/org.xjtuai.kqchecker/files/weekly_raw.json
+  adb shell run-as org.xjtuai.kqchecker rm /data/data/org.xjtuai.kqchecker/files/weekly_cleaned.json
   ```
 - 抓取过滤后的 Logcat（捕获 `WeeklyRepository` / `WeeklyCleaner` / 调试标签）：
   ```powershell

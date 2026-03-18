@@ -62,10 +62,18 @@ class WeeklyRepository(private val context: Context) {
                 
                 if (apiData != null) {
                     Log.d(TAG, "✅ API数据获取成功")
+                    return@withContext apiData
                 } else {
                     Log.e(TAG, "❌ API数据获取失败")
+                    // 断网或接口异常时回退到本地缓存，保证首页“下一节课”可用。
+                    val fallbackCache = getWeeklyDataFromCache()
+                    if (fallbackCache != null && fallbackCache.success && fallbackCache.data.length() > 0) {
+                        Log.w(TAG, "⚠️ API失败，已回退到本地缓存数据")
+                        return@withContext fallbackCache
+                    }
+                    Log.w(TAG, "⚠️ API失败，且无可用缓存可回退")
                 }
-                return@withContext apiData
+                return@withContext null
             } catch (e: Exception) {
                 Log.e(TAG, "❌ 获取周课表数据时发生异常", e)
                 null

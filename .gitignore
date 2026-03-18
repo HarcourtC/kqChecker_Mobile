@@ -25,7 +25,6 @@ project.xcworkspace
 # Android/IntelliJ
 #
 build/
-.idea/
 .gradle
 local.properties
 *.iml
@@ -109,7 +108,6 @@ new-release-key.jks
 # IDE Local Settings
 #
 .vscode/settings.local.json
-.idea/local.xml
 *.iws
 .project
 .classpath
@@ -123,10 +121,13 @@ new-release-key.jks
 *.swo
 *~
 .viminfo
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/dictionaries
+
+# IntelliJ / Android Studio (.idea)
+# Ignore all IDE metadata by default.
+.idea/*
+
+# Local-only .idea files
+.idea/
 
 # Temporary and Cache Files
 #
@@ -143,3 +144,8 @@ logs/
 *.log
 app/release
 docs-AI/
+.idea/gradle.xml
+.idea/misc.xml
+.idea/vcs.xml
+gradle/gradle-daemon-jvm.properties
+CLAUDE.md

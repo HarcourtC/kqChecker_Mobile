@@ -29,7 +29,7 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-36 build-tools;34.0.0'
+          packages: 'platforms;android-36 build-tools;36.1.0'
 
       # 1. 直接解码，不判断是否存在 (如果没配置 Secret，这里会报错，也算是一种检查)
       - name: Decode Keystore

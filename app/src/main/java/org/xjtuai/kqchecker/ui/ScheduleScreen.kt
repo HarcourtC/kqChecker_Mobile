@@ -74,6 +74,7 @@ fun ScheduleScreen(
     var homeworkDraft by remember { mutableStateOf<HomeworkDraft?>(null) }
     var pendingCalendarHomework by remember { mutableStateOf<HomeworkRecord?>(null) }
     var pendingManualCalendarSync by remember { mutableStateOf(false) }
+    var pendingCapturePath by remember { mutableStateOf<String?>(null) }
 
     val prefs = remember { context.getSharedPreferences("kq_prefs", android.content.Context.MODE_PRIVATE) }
     val hideWeekends = prefs.getBoolean("hide_weekends", false)
@@ -115,7 +116,11 @@ fun ScheduleScreen(
                 CalendarHelper.upsertEvent(
                     context = context,
                     calendarId = calendarId,
-                    title = "${record.courseName} 作业: ${record.title}",
+                    title = if (record.title.isBlank()) {
+                        "${record.courseName} 作业"
+                    } else {
+                        "${record.courseName} 作业: ${record.title}"
+                    },
                     startMillis = timeRange.first,
                     endMillis = timeRange.second,
                     description = buildString {
@@ -263,6 +268,34 @@ fun ScheduleScreen(
         }
     }
 
+    val cameraCaptureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        val capturedPath = pendingCapturePath
+        pendingCapturePath = null
+        if (!success) {
+            homeworkRepository.deleteImage(capturedPath)
+            onPostEvent("Failed to capture homework photo.")
+            return@rememberLauncherForActivityResult
+        }
+        if (capturedPath.isNullOrBlank() || !File(capturedPath).exists()) {
+            onPostEvent("Failed to capture homework photo.")
+            return@rememberLauncherForActivityResult
+        }
+        homeworkDraft = homeworkDraft?.copy(photoPath = capturedPath)
+        onPostEvent("Homework photo captured.")
+    }
+
+    fun startHomeworkCameraCapture() {
+        val destination = homeworkRepository.createImageCaptureDestination()
+        if (destination == null) {
+            onPostEvent("Failed to start camera.")
+            return
+        }
+        pendingCapturePath = destination.absolutePath
+        cameraCaptureLauncher.launch(destination.uri)
+    }
+
     fun openHomeworkEditor(course: ScheduleItem) {
         selectedCourse = course
         val existingRecord = homeworkRecords.firstOrNull {
@@ -285,10 +318,6 @@ fun ScheduleScreen(
 
     fun saveHomework(course: ScheduleItem, draft: HomeworkDraft) {
         val title = draft.title.trim()
-        if (title.isEmpty()) {
-            onPostEvent("Please enter a homework title.")
-            return
-        }
         scope.launch(Dispatchers.IO) {
             val existingRecord = homeworkRecords.firstOrNull {
                 it.courseName == course.courseName &&
@@ -499,6 +528,7 @@ fun ScheduleScreen(
             },
             onDraftChange = { homeworkDraft = it },
             onPickPhoto = { imagePickerLauncher.launch("image/*") },
+            onTakePhoto = { startHomeworkCameraCapture() },
             onSave = { saveHomework(selectedCourse!!, it) }
         )
     }
@@ -618,6 +648,7 @@ private fun HomeworkDialog(
     onDismiss: () -> Unit,
     onDraftChange: (HomeworkDraft) -> Unit,
     onPickPhoto: () -> Unit,
+    onTakePhoto: () -> Unit,
     onSave: (HomeworkDraft) -> Unit
 ) {
     val context = LocalContext.current
@@ -674,11 +705,19 @@ private fun HomeworkDialog(
                 ) {
                     Text("截止日期: ${formatter.format(draft.dueDateMillis)}")
                 }
-                OutlinedButton(
-                    onClick = onPickPhoto,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (draft.photoPath == null) "上传作业照片" else "重新选择照片")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onTakePhoto,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("拍照")
+                    }
+                    OutlinedButton(
+                        onClick = onPickPhoto,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(if (draft.photoPath == null) "从图库选择" else "重新选择")
+                    }
                 }
                 if (previewBitmap != null) {
                     Image(
