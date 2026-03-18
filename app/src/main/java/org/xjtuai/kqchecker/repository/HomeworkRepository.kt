@@ -3,6 +3,7 @@ package org.xjtuai.kqchecker.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.content.FileProvider
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xjtuai.kqchecker.model.HomeworkRecord
@@ -18,6 +19,11 @@ class HomeworkRepository(private val context: Context) {
 
     private val homeworkFile: File
         get() = File(context.filesDir, HOMEWORK_FILE)
+
+    data class ImageCaptureDestination(
+        val uri: Uri,
+        val absolutePath: String
+    )
 
     fun getAllRecords(): List<HomeworkRecord> {
         if (!homeworkFile.exists()) return emptyList()
@@ -93,6 +99,28 @@ class HomeworkRepository(private val context: Context) {
             Log.e(TAG, "Failed to copy homework image", e)
             null
         }
+    }
+
+    fun createImageCaptureDestination(): ImageCaptureDestination? {
+        return try {
+            val imageDir = File(context.filesDir, IMAGE_DIR).apply { mkdirs() }
+            val destination = File(imageDir, "${UUID.randomUUID()}.jpg")
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                destination
+            )
+            ImageCaptureDestination(uri = uri, absolutePath = destination.absolutePath)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create image capture destination", e)
+            null
+        }
+    }
+
+    fun deleteImage(path: String?) {
+        if (path.isNullOrBlank()) return
+        runCatching { File(path).takeIf { it.exists() }?.delete() }
+            .onFailure { Log.w(TAG, "Failed to delete image: $path", it) }
     }
 
     private fun writeRecords(records: List<HomeworkRecord>) {
