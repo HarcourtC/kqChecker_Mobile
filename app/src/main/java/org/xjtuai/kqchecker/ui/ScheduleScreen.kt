@@ -101,6 +101,7 @@ fun ScheduleScreen(
                 }
 
                 val timeRange = ScheduleTimeHelper.buildClassTimeRange(
+                    context = context,
                     dueDateMillis = record.dueDateMillis,
                     startPeriod = record.startPeriod,
                     endPeriod = record.endPeriod

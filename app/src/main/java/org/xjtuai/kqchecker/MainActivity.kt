@@ -204,39 +204,56 @@ fun AppContent() {
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
     var latestAttendance by remember { mutableStateOf<WaterRecord?>(null) }
+    var homeRefreshToken by remember { mutableStateOf(0L) }
+
+    suspend fun refreshLatestAttendanceInternal(): Boolean {
+        return try {
+            val response = waterListRepository.getWaterListData()
+            if (response != null && response.success) {
+                val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
+                withContext(Dispatchers.Main) {
+                    latestAttendance = latestValidRecord
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to load latest attendance", e)
+            false
+        }
+    }
+
+    suspend fun refreshHomeScheduleInternal(forceRefresh: Boolean): Boolean {
+        return try {
+            val response = weeklyRepository.getWeeklyData(forceRefresh)
+            if (response != null && response.success) {
+                val parsed = ScheduleParser.parse(response.data)
+                withContext(Dispatchers.Main) {
+                    scheduleItems = parsed
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to load home schedule", e)
+            withContext(Dispatchers.Main) {
+                postEvent("Failed to load home schedule: ${e.message ?: e.toString()}")
+            }
+            false
+        }
+    }
 
     fun loadLatestAttendance() {
         scope.launch(Dispatchers.IO) {
-            try {
-                val response = waterListRepository.getWaterListData()
-                if (response != null && response.success) {
-                    val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
-                    withContext(Dispatchers.Main) {
-                        latestAttendance = latestValidRecord
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to load latest attendance", e)
-            }
+            refreshLatestAttendanceInternal()
         }
     }
 
     fun loadHomeSchedule(forceRefresh: Boolean) {
         scope.launch(Dispatchers.IO) {
-            try {
-                val response = weeklyRepository.getWeeklyData(forceRefresh)
-                if (response != null && response.success) {
-                    val parsed = ScheduleParser.parse(response.data)
-                    withContext(Dispatchers.Main) {
-                        scheduleItems = parsed
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to load home schedule", e)
-                withContext(Dispatchers.Main) {
-                    postEvent("Failed to load home schedule: ${e.message ?: e.toString()}")
-                }
-            }
+            refreshHomeScheduleInternal(forceRefresh)
         }
     }
 
@@ -343,6 +360,7 @@ fun AppContent() {
         events = events,
         scheduleItems = scheduleItems,
         latestAttendance = latestAttendance,
+        homeRefreshToken = homeRefreshToken,
         isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,
         isCheckingUpdate = isCheckingUpdate,
@@ -350,8 +368,16 @@ fun AppContent() {
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
         onManualSync = {
             scope.launch(Dispatchers.IO) {
-                loadHomeSchedule(true)
-                loadLatestAttendance()
+                val scheduleOk = refreshHomeScheduleInternal(forceRefresh = true)
+                refreshLatestAttendanceInternal()
+                withContext(Dispatchers.Main) {
+                    homeRefreshToken = System.currentTimeMillis()
+                    if (scheduleOk) {
+                        postEvent("Manual sync completed")
+                    } else {
+                        postEvent("Manual sync completed, but schedule refresh failed")
+                    }
+                }
             }
         },
         onCheckUpdate = { checkForUpdates(showNoUpdateMessage = true) },

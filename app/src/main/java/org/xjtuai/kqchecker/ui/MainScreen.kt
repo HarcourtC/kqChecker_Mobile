@@ -46,6 +46,7 @@ fun MainScreen(
     events: List<String>,
     scheduleItems: List<ScheduleItem>,
     latestAttendance: WaterRecord?,
+    homeRefreshToken: Long,
     isLoggedIn: Boolean,
     showEventLog: Boolean,
     isCheckingUpdate: Boolean,
@@ -98,7 +99,8 @@ fun MainScreen(
                         onManualSync = onManualSync,
                         isLoggedIn = isLoggedIn,
                         scheduleItems = scheduleItems,
-                        latestAttendance = latestAttendance
+                        latestAttendance = latestAttendance,
+                        refreshToken = homeRefreshToken
                     )
                     Screen.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
