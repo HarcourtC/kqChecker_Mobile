@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.unit.dp
-import org.xjtuai.kqchecker.BuildConfig
 import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.network.WaterRecord
 
@@ -46,6 +45,7 @@ fun MainScreen(
     events: List<String>,
     scheduleItems: List<ScheduleItem>,
     latestAttendance: WaterRecord?,
+    latestAttendanceHint: String?,
     homeRefreshToken: Long,
     isLoggedIn: Boolean,
     showEventLog: Boolean,
@@ -100,6 +100,7 @@ fun MainScreen(
                         isLoggedIn = isLoggedIn,
                         scheduleItems = scheduleItems,
                         latestAttendance = latestAttendance,
+                        latestAttendanceHint = latestAttendanceHint,
                         refreshToken = homeRefreshToken
                     )
                     Screen.Schedule -> ScheduleScreen(
@@ -122,7 +123,7 @@ fun MainScreen(
 
             Divider(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f))
 
-            if (BuildConfig.DEBUG && showEventLog) {
+            if (showEventLog) {
                 LogDisplay(
                     events = events,
                     modifier = Modifier.fillMaxWidth()

@@ -8,7 +8,9 @@ import okhttp3.OkHttpClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.CompetitionApiInterceptor
 import org.xjtuai.kqchecker.network.CompetitionResponse
+import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
+import org.xjtuai.kqchecker.util.RateLimitNotifier
 import java.util.concurrent.TimeUnit
 
 /**
@@ -114,6 +116,11 @@ class CompetitionRepository(private val context: Context) {
      */
     private suspend fun getCompetitionDataFromApi(): CompetitionResponse? {
         Log.d(TAG, "开始API请求...")
+        if (!ApiRateLimiter.tryAcquire("competition")) {
+            Log.w(TAG, "Rate limited: competition API exceeded 5 requests / 10 minutes")
+            RateLimitNotifier.show(context)
+            return null
+        }
         return try {
             Log.d(TAG, "发送竞赛数据请求到配置化端点")
             val respBody = competitionApiService.getCompetitionData(competitionEndpoint)

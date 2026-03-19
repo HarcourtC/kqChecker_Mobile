@@ -31,6 +31,7 @@ fun HomeScreen(
     isLoggedIn: Boolean,
     scheduleItems: List<ScheduleItem>,
     latestAttendance: WaterRecord?,
+    latestAttendanceHint: String?,
     refreshToken: Long = 0L,
     modifier: Modifier = Modifier
 ) {
@@ -75,7 +76,9 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         InfoCard(title = "上次有效考勤记录") {
-            if (latestAttendance == null) {
+            if (!latestAttendanceHint.isNullOrBlank()) {
+                InfoRow(icon = Icons.Default.Info, text = latestAttendanceHint)
+            } else if (latestAttendance == null) {
                 InfoRow(icon = Icons.Default.Info, text = "暂无考勤数据或未登录。")
             } else {
                 InfoRow(icon = Icons.Default.LocationOn, text = latestAttendance.eqno.ifBlank { "未提供" })

@@ -8,7 +8,9 @@ import org.json.JSONObject
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.CurrentTermResponse
+import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
+import org.xjtuai.kqchecker.util.RateLimitNotifier
 
 /**
  * 学期信息仓库，负责获取当前学期、周次等全局配置信息
@@ -30,6 +32,11 @@ class TermRepository(private val context: Context) {
     suspend fun fetchCurrentTerm(): CurrentTermResponse? {
         Log.d(TAG, "Fetching current term info...")
         return try {
+            if (!ApiRateLimiter.tryAcquire("current_term")) {
+                Log.w(TAG, "Rate limited: current-term API exceeded 5 requests / 10 minutes")
+                RateLimitNotifier.show(context)
+                return null
+            }
             // Empty JSON body for the request
             val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
             val requestBody = "{}".toRequestBody(mediaType)

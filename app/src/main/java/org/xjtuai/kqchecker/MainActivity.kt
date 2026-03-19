@@ -204,22 +204,35 @@ fun AppContent() {
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
     var latestAttendance by remember { mutableStateOf<WaterRecord?>(null) }
+    var latestAttendanceHint by remember { mutableStateOf<String?>(null) }
     var homeRefreshToken by remember { mutableStateOf(0L) }
 
     suspend fun refreshLatestAttendanceInternal(): Boolean {
         return try {
             val response = waterListRepository.getWaterListData()
             if (response != null && response.success) {
+                val isEmpty200 = response.code == 200 && response.data.list.isEmpty()
                 val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
                 withContext(Dispatchers.Main) {
                     latestAttendance = latestValidRecord
+                    latestAttendanceHint = if (isEmpty200) {
+                        "考勤系统异常，请稍后再试"
+                    } else {
+                        null
+                    }
                 }
                 true
             } else {
+                withContext(Dispatchers.Main) {
+                    latestAttendanceHint = null
+                }
                 false
             }
         } catch (e: Exception) {
             Log.w("MainActivity", "Failed to load latest attendance", e)
+            withContext(Dispatchers.Main) {
+                latestAttendanceHint = null
+            }
             false
         }
     }
@@ -360,6 +373,7 @@ fun AppContent() {
         events = events,
         scheduleItems = scheduleItems,
         latestAttendance = latestAttendance,
+        latestAttendanceHint = latestAttendanceHint,
         homeRefreshToken = homeRefreshToken,
         isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,

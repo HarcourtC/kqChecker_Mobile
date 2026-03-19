@@ -8,7 +8,9 @@ import okhttp3.RequestBody
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WeeklyResponse
+import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
+import org.xjtuai.kqchecker.util.RateLimitNotifier
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 
@@ -107,6 +109,11 @@ class WeeklyRepository(private val context: Context) {
      */
     private suspend fun getWeeklyDataFromApi(): WeeklyResponse? {
         Log.d(TAG, "开始API请求...")
+        if (!ApiRateLimiter.tryAcquire("weekly")) {
+            Log.w(TAG, "Rate limited: weekly API exceeded 5 requests / 10 minutes")
+            RateLimitNotifier.show(context)
+            return null
+        }
         
         // 尝试获取当前学期信息
         var termNo: Int? = null
@@ -221,6 +228,11 @@ class WeeklyRepository(private val context: Context) {
         Log.d(TAG, "fetchWeeklyRawFromApi() called")
         return withContext(Dispatchers.IO) {
             try {
+                if (!ApiRateLimiter.tryAcquire("weekly")) {
+                    Log.w(TAG, "Rate limited: weekly API exceeded 5 requests / 10 minutes")
+                    RateLimitNotifier.show(context)
+                    return@withContext null
+                }
                 var termNo: Int? = null
                 var week: Int? = null
                 try {

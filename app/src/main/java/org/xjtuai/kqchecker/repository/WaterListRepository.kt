@@ -7,7 +7,9 @@ import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WaterListResponse
+import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
+import org.xjtuai.kqchecker.util.RateLimitNotifier
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 
@@ -31,6 +33,11 @@ class WaterListRepository(private val context: Context) {
     suspend fun getWaterListData(termno: String? = null): WaterListResponse? {
         return withContext(Dispatchers.IO) {
             try {
+                if (!ApiRateLimiter.tryAcquire("water_list")) {
+                    Log.w(TAG, "Rate limited: water-list API exceeded 5 requests / 10 minutes")
+                    RateLimitNotifier.show(context)
+                    return@withContext null
+                }
                 val payload = buildRequestPayload(termno)
                 Log.i(TAG, "API2 request: date=${payload.optString("date")}, calendarBh=${payload.optString("calendarBh")}")
                 val requestBody = ApiService.jsonToRequestBody(payload)
