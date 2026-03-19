@@ -75,8 +75,8 @@ object AppUpdateInstaller {
                 "${context.packageName}.fileprovider",
                 apkFile
             )
-            val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-                data = uri
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }

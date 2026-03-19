@@ -90,9 +90,9 @@ android {
 
     // Lint configuration
     lint {
-        abortOnError false
-        checkReleaseBuilds false
-        warningsAsErrors false
+        abortOnError = false
+        checkReleaseBuilds = false
+        warningsAsErrors = false
         disable 'TypographyFractions', 'TypographyQuotes'
     }
 }

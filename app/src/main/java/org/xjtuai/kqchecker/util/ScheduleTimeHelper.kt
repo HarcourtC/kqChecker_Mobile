@@ -41,16 +41,6 @@ object ScheduleTimeHelper {
     }
 
     fun buildClassTimeRange(
-        dueDateMillis: Long,
-        startPeriod: Int,
-        endPeriod: Int
-    ): Pair<Long, Long>? {
-        val startSlot = fallbackSlots[startPeriod] ?: return null
-        val endSlot = fallbackSlots[endPeriod] ?: return null
-        return buildRange(dueDateMillis, startSlot, endSlot)
-    }
-
-    fun buildClassTimeRange(
         context: Context,
         dueDateMillis: Long,
         startPeriod: Int,
