@@ -2,14 +2,16 @@ package org.xjtuai.kqchecker.repository
 
 import android.content.Context
 import android.util.Log
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.CompetitionApiInterceptor
 import org.xjtuai.kqchecker.network.CompetitionResponse
+import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
-import java.util.concurrent.TimeUnit
+import org.xjtuai.kqchecker.util.RateLimitNotifier
 
 /**
  * 竞赛数据仓库类，负责处理竞赛数据的获取、缓存和业务逻辑
@@ -98,7 +100,10 @@ class CompetitionRepository(private val context: Context) {
             if (jsonContent != null) {
                 Log.d(TAG, "缓存数据长度: ${jsonContent.length} 字符")
                 val response = CompetitionResponse.fromJson(jsonContent)
-                Log.d(TAG, "缓存数据解析结果 - status: ${response.status}, itemCount: ${response.data.size}")
+                Log.d(
+                    TAG,
+                    "缓存数据解析结果 - status: ${response.status}, itemCount: ${response.data.size}"
+                )
                 response
             } else {
                 null
@@ -114,6 +119,11 @@ class CompetitionRepository(private val context: Context) {
      */
     private suspend fun getCompetitionDataFromApi(): CompetitionResponse? {
         Log.d(TAG, "开始API请求...")
+        if (!ApiRateLimiter.tryAcquire("competition")) {
+            Log.w(TAG, "Rate limited: competition API exceeded 5 requests / 10 minutes")
+            RateLimitNotifier.show(context)
+            return null
+        }
         return try {
             Log.d(TAG, "发送竞赛数据请求到配置化端点")
             val respBody = competitionApiService.getCompetitionData(competitionEndpoint)

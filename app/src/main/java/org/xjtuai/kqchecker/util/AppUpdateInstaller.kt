@@ -7,11 +7,11 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object AppUpdateInstaller {
     private const val TAG = "AppUpdateInstaller"
@@ -75,8 +75,8 @@ object AppUpdateInstaller {
                 "${context.packageName}.fileprovider",
                 apkFile
             )
-            val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-                data = uri
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }

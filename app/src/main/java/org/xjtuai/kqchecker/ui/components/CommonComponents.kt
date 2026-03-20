@@ -3,9 +3,9 @@ package org.xjtuai.kqchecker.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -75,7 +75,7 @@ fun InfoCard(
 ) {
     val cardShape = RoundedCornerShape(20.dp)
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    
+
     Card(
         elevation = if (isDark) 4.dp else 10.dp,
         shape = cardShape,

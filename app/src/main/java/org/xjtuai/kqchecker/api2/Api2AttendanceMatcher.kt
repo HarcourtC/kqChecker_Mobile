@@ -1,10 +1,10 @@
 package org.xjtuai.kqchecker.api2
 
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import org.json.JSONObject
 
 object Api2AttendanceMatcher {
     private const val MATCH_WINDOW_MINUTES = 15L
@@ -45,7 +45,9 @@ object Api2AttendanceMatcher {
             if (diffMin > MATCH_WINDOW_MINUTES) return false
 
             if (!expectedLoc.isNullOrBlank()) {
-                val a = expectedLoc.replace("\u00A0", " ").replace(" ", "").lowercase(Locale.getDefault())
+                val a = expectedLoc.replace("\u00A0", " ").replace(" ", "").lowercase(
+                    Locale.getDefault()
+                )
                 val b = eqno.replace("\u00A0", " ").replace(" ", "").lowercase(Locale.getDefault())
                 if (a.isNotBlank() && b.isNotBlank()) {
                     return a.contains(b) || b.contains(a)

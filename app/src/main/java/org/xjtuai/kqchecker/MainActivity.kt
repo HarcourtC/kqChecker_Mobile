@@ -1,9 +1,8 @@
 package org.xjtuai.kqchecker
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
-import android.content.BroadcastReceiver
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -13,13 +12,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.xjtuai.kqchecker.model.ScheduleItem
-import org.xjtuai.kqchecker.network.WaterRecord
+import org.json.JSONObject
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
+import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.ui.MainScreen
 import org.xjtuai.kqchecker.ui.components.UpdateDialog
@@ -29,8 +31,6 @@ import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
 import org.xjtuai.kqchecker.util.VersionInfo
-import org.json.JSONObject
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +53,9 @@ fun AppContent() {
     val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
-    var startupSyncEnabled by remember { mutableStateOf(prefs.getBoolean("startup_sync_enabled", true)) }
+    var startupSyncEnabled by remember {
+        mutableStateOf(prefs.getBoolean("startup_sync_enabled", true))
+    }
 
     // 版本更新状态
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
@@ -78,15 +80,12 @@ fun AppContent() {
             addAction(TokenManager.ACTION_TOKEN_CLEARED)
             addAction(TokenManager.ACTION_REQUEST_LOGIN)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(
-                loginStateReceiver,
-                filter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            context.registerReceiver(loginStateReceiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            context,
+            loginStateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         onDispose { context.unregisterReceiver(loginStateReceiver) }
     }
 
@@ -117,6 +116,7 @@ fun AppContent() {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName ?: "1.0"
         } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to resolve app version name, fallback to 1.0", e)
             "1.0"
         }
     }
@@ -159,7 +159,7 @@ fun AppContent() {
         val info = versionInfo ?: return
         val apkUrl = info.apkUrl
         if (apkUrl.isNullOrBlank()) {
-            postEvent("当前版本未提供 APK 安装包，暂不支持应用内更新。")
+            postEvent("当前版本未提供 APK 安装包。")
             return
         }
         if (isUpdating) return
@@ -193,7 +193,7 @@ fun AppContent() {
                 }
             } catch (e: Exception) {
                 Log.e("UpdateInstall", "In-app update failed", e)
-                postEvent("应用内更新失败: ${e.message ?: e.toString()}")
+                postEvent("更新失败: ${e.message ?: e.toString()}")
             } finally {
                 isUpdating = false
             }
@@ -204,39 +204,71 @@ fun AppContent() {
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     var scheduleItems by remember { mutableStateOf<List<ScheduleItem>>(emptyList()) }
     var latestAttendance by remember { mutableStateOf<WaterRecord?>(null) }
+    var latestAttendanceHint by remember { mutableStateOf<String?>(null) }
+    var homeRefreshToken by remember { mutableStateOf(0L) }
+
+    suspend fun refreshLatestAttendanceInternal(): Boolean {
+        return try {
+            val response = waterListRepository.getWaterListData()
+            if (response != null && response.success) {
+                val isEmpty200 = response.code == 200 && response.data.list.isEmpty()
+                val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
+                withContext(Dispatchers.Main) {
+                    latestAttendance = latestValidRecord
+                    latestAttendanceHint = if (isEmpty200) {
+                        "考勤系统异常，请稍后再试"
+                    } else if (latestValidRecord == null && response.data.list.isNotEmpty()) {
+                        "暂无有效考勤记录"
+                    } else {
+                        null
+                    }
+                }
+                true
+            } else {
+                withContext(Dispatchers.Main) {
+                    latestAttendanceHint = null
+                }
+                false
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to load latest attendance", e)
+            withContext(Dispatchers.Main) {
+                latestAttendanceHint = null
+            }
+            false
+        }
+    }
+
+    suspend fun refreshHomeScheduleInternal(forceRefresh: Boolean): Boolean {
+        return try {
+            val response = weeklyRepository.getWeeklyData(forceRefresh)
+            if (response != null && response.success) {
+                val parsed = ScheduleParser.parse(response.data)
+                withContext(Dispatchers.Main) {
+                    scheduleItems = parsed
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to load home schedule", e)
+            withContext(Dispatchers.Main) {
+                postEvent("Failed to load home schedule: ${e.message ?: e.toString()}")
+            }
+            false
+        }
+    }
 
     fun loadLatestAttendance() {
         scope.launch(Dispatchers.IO) {
-            try {
-                val response = waterListRepository.getWaterListData()
-                if (response != null && response.success) {
-                    val latestValidRecord = response.data.list.firstOrNull { it.isdone == "1" }
-                    withContext(Dispatchers.Main) {
-                        latestAttendance = latestValidRecord
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to load latest attendance", e)
-            }
+            refreshLatestAttendanceInternal()
         }
     }
 
     fun loadHomeSchedule(forceRefresh: Boolean) {
         scope.launch(Dispatchers.IO) {
-            try {
-                val response = weeklyRepository.getWeeklyData(forceRefresh)
-                if (response != null && response.success) {
-                    val parsed = ScheduleParser.parse(response.data)
-                    withContext(Dispatchers.Main) {
-                        scheduleItems = parsed
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to load home schedule", e)
-                withContext(Dispatchers.Main) {
-                    postEvent("Failed to load home schedule: ${e.message ?: e.toString()}")
-                }
-            }
+            refreshHomeScheduleInternal(forceRefresh)
         }
     }
 
@@ -296,7 +328,7 @@ fun AppContent() {
                         val expires = JSONObject(f.readText()).optString("expires", "Unknown")
                         postEvent("Weekly cache is up-to-date, expires on: $expires")
                     } catch (e: Exception) {
-                         postEvent("Weekly cache check error: ${e.message}")
+                        postEvent("Weekly cache check error: ${e.message}")
                     }
                 } else {
                     postEvent("Weekly cache is up-to-date")
@@ -311,7 +343,6 @@ fun AppContent() {
             loadLatestAttendance()
         }
     }
-
 
     // 登录启动器
     val loginLauncher = rememberLauncherForActivityResult(
@@ -343,6 +374,8 @@ fun AppContent() {
         events = events,
         scheduleItems = scheduleItems,
         latestAttendance = latestAttendance,
+        latestAttendanceHint = latestAttendanceHint,
+        homeRefreshToken = homeRefreshToken,
         isLoggedIn = isLoggedIn,
         showEventLog = showEventLog,
         isCheckingUpdate = isCheckingUpdate,
@@ -350,8 +383,16 @@ fun AppContent() {
         onLoginClick = { LoginHelper.launchLogin(context, loginLauncher) },
         onManualSync = {
             scope.launch(Dispatchers.IO) {
-                loadHomeSchedule(true)
-                loadLatestAttendance()
+                val scheduleOk = refreshHomeScheduleInternal(forceRefresh = true)
+                refreshLatestAttendanceInternal()
+                withContext(Dispatchers.Main) {
+                    homeRefreshToken = System.currentTimeMillis()
+                    if (scheduleOk) {
+                        postEvent("Manual sync completed")
+                    } else {
+                        postEvent("Manual sync completed, but schedule refresh failed")
+                    }
+                }
             }
         },
         onCheckUpdate = { checkForUpdates(showNoUpdateMessage = true) },

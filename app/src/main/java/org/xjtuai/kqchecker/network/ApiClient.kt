@@ -1,9 +1,9 @@
 package org.xjtuai.kqchecker.network
 
 import android.content.Context
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.xjtuai.kqchecker.auth.TokenManager
-import java.util.concurrent.TimeUnit
 
 /**
  * API客户端工厂，负责创建和配置OkHttpClient
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class ApiClient(context: Context) {
     private val tokenManager = TokenManager(context)
     private val tokenInterceptor = TokenInterceptor(tokenManager)
-    
+
     // 创建OkHttpClient实例
     val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -21,7 +21,7 @@ class ApiClient(context: Context) {
             .addInterceptor(tokenInterceptor)
             .build()
     }
-    
+
     /**
      * 创建带基础URL的API服务
      */

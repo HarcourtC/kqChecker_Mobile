@@ -1,20 +1,23 @@
 package org.xjtuai.kqchecker.auth
 
-import android.content.Context
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
-import android.util.Log
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
-import android.webkit.CookieManager
+import android.content.pm.PackageManager
 import android.os.Build
-import androidx.core.app.NotificationCompat
-import org.xjtuai.kqchecker.auth.WebLoginActivity
-import android.webkit.WebStorage
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.webkit.CookieManager
+import android.webkit.WebStorage
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 @Suppress("DEPRECATION") // EncryptedSharedPreferences / MasterKey — 暂无官方替代
 class TokenManager(private val context: Context) {
@@ -53,7 +56,7 @@ class TokenManager(private val context: Context) {
 
     private fun broadcastTokenClearedBestEffort() {
         runBestEffort("broadcastTokenCleared") {
-            context.sendBroadcast(Intent(ACTION_TOKEN_CLEARED))
+            context.sendBroadcast(Intent(ACTION_TOKEN_CLEARED).setPackage(context.packageName))
         }
     }
 
@@ -70,7 +73,7 @@ class TokenManager(private val context: Context) {
 
     private fun broadcastLoginRequestBestEffort() {
         runBestEffort("broadcastLoginRequest") {
-            context.sendBroadcast(Intent(ACTION_REQUEST_LOGIN))
+            context.sendBroadcast(Intent(ACTION_REQUEST_LOGIN).setPackage(context.packageName))
             Log.d("TokenManager", "notifyTokenInvalid: broadcasted ACTION_REQUEST_LOGIN")
         }
     }
@@ -83,7 +86,6 @@ class TokenManager(private val context: Context) {
             .apply()
         Log.d("TokenManager", "saveAccessToken: saved access token (length=${accessToken.length})")
     }
-
 
     fun getAccessToken(): String? = prefs.getString("access_token", null)
 
@@ -105,8 +107,19 @@ class TokenManager(private val context: Context) {
     /**
      * 在检测到 token 无效或认证失败时，发送一个通知提示用户重新登录。
      */
+    @SuppressLint("MissingPermission", "NotificationPermission")
     fun notifyTokenInvalid() {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.w(
+                    "TokenManager",
+                    "POST_NOTIFICATIONS not granted, skip auth-invalid notification"
+                )
+                broadcastLoginRequestBestEffort()
+                return
+            }
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channelId = "auth_invalid_channel"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -116,7 +129,12 @@ class TokenManager(private val context: Context) {
             // Intent to open WebLoginActivity so user can re-login
             val loginIntent = Intent(context, WebLoginActivity::class.java)
             loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+            val pendingFlags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             val pi = PendingIntent.getActivity(context, 2001, loginIntent, pendingFlags)
 
             val notif = NotificationCompat.Builder(context, channelId)
@@ -126,6 +144,13 @@ class TokenManager(private val context: Context) {
                 .setAutoCancel(true)
                 .setContentIntent(pi)
                 .build()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.w("TokenManager", "POST_NOTIFICATIONS not granted before notify; skip")
+                broadcastLoginRequestBestEffort()
+                return
+            }
             nm.notify(2001, notif)
             broadcastLoginRequestBestEffort()
         } catch (e: Exception) {

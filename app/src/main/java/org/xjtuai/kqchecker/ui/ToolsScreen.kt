@@ -1,5 +1,6 @@
 package org.xjtuai.kqchecker.ui
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,11 +34,20 @@ fun ToolsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
 
     val weeklyRepository = remember { RepositoryProvider.getWeeklyRepository() }
     val waterListRepository = remember { RepositoryProvider.getWaterListRepository() }
     val weeklyCleaner = remember { RepositoryProvider.getWeeklyCleaner() }
     val tokenManager = remember { org.xjtuai.kqchecker.auth.TokenManager(context) }
+
+    val activityScoreKey = "group_activity_score_tenths"
+    val maxScoreTenths = 30
+    var activityScoreTenths by remember {
+        mutableStateOf(
+            prefs.getInt(activityScoreKey, 0).coerceIn(0, maxScoreTenths)
+        )
+    }
 
     suspend fun postEventOnMain(message: String) {
         withContext(Dispatchers.Main) {
@@ -73,6 +83,19 @@ fun ToolsScreen(
         }
     }
 
+    fun formatActivityScore(scoreTenths: Int): String {
+        val safeScore = scoreTenths.coerceIn(0, maxScoreTenths)
+        val integerPart = safeScore / 10
+        val decimalPart = safeScore % 10
+        return if (decimalPart == 0) integerPart.toString() else "$integerPart.$decimalPart"
+    }
+
+    fun updateActivityScore(newScoreTenths: Int) {
+        val clamped = newScoreTenths.coerceIn(0, maxScoreTenths)
+        activityScoreTenths = clamped
+        prefs.edit().putInt(activityScoreKey, clamped).apply()
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -96,6 +119,35 @@ fun ToolsScreen(
                 } catch (e: Exception) {
                     onPostEvent("清除登录状态失败: ${e.message}")
                 }
+            })
+        }
+
+        InfoCard(title = "集体活动分助手") {
+            Text(
+                text = "${formatActivityScore(activityScoreTenths)}/3",
+                style = MaterialTheme.typography.h5,
+                color = MaterialTheme.colors.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AppButton(text = "重置", onClick = {
+                updateActivityScore(0)
+                onPostEvent("集体活动分已重置：0/3")
+            })
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AppButton(text = "+0.3", onClick = {
+                updateActivityScore(activityScoreTenths + 3)
+                onPostEvent("集体活动分已更新：${formatActivityScore(activityScoreTenths)}/3")
+            })
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AppButton(text = "+0.6", onClick = {
+                updateActivityScore(activityScoreTenths + 6)
+                onPostEvent("集体活动分已更新：${formatActivityScore(activityScoreTenths)}/3")
             })
         }
 
@@ -133,7 +185,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在拉取课表原始响应...")
                         try {
-                            val rawResp = withContext(Dispatchers.IO) { weeklyRepository.fetchWeeklyRawFromApi() }
+                            val rawResp = withContext(Dispatchers.IO) {
+                                weeklyRepository.fetchWeeklyRawFromApi()
+                            }
                             if (!rawResp.isNullOrBlank()) {
                                 onPostEvent("拉取成功（${rawResp.length} bytes）")
                                 onPostEvent(rawResp.take(500) + "...")
@@ -151,7 +205,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在输出 weekly 文件...")
                         try {
-                            val previews = withContext(Dispatchers.IO) { weeklyRepository.getWeeklyFilePreviews() }
+                            val previews = withContext(Dispatchers.IO) {
+                                weeklyRepository.getWeeklyFilePreviews()
+                            }
                             if (previews.isEmpty()) {
                                 onPostEvent("没有可输出的 weekly 文件")
                             }
@@ -171,7 +227,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在生成 cleaned weekly...")
                         try {
-                            val ok = withContext(Dispatchers.IO) { weeklyCleaner.generateCleanedWeekly() }
+                            val ok = withContext(Dispatchers.IO) {
+                                weeklyCleaner.generateCleanedWeekly()
+                            }
                             if (ok) {
                                 onPostEvent("生成成功")
                             } else {
@@ -189,7 +247,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在输出 API2 调试文件...")
                         try {
-                            val previews = withContext(Dispatchers.IO) { waterListRepository.getApi2FilePreviews() }
+                            val previews = withContext(Dispatchers.IO) {
+                                waterListRepository.getApi2FilePreviews()
+                            }
                             if (previews.isEmpty()) {
                                 onPostEvent("没有可输出的 API2 文件")
                             }

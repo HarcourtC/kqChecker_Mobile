@@ -7,19 +7,19 @@ import org.xjtuai.kqchecker.model.ScheduleItem
  * Centralizes all state management for easier testing and composition
  */
 data class MainUiState(
-  // Navigation state
-  val currentPage: Int = 0, // 0 = Home, 1 = Tools, 2 = Integration
+    // Navigation state
+    val currentPage: Int = 0, // 0 = Home, 1 = Tools, 2 = Integration
 
-  // Schedule Data
-  val scheduleItems: List<ScheduleItem> = emptyList(),
+    // Schedule Data
+    val scheduleItems: List<ScheduleItem> = emptyList(),
 
-  // Integration flow state
-  val integrationPending: Boolean = false,
+    // Integration flow state
+    val integrationPending: Boolean = false,
 
-  // Event logs for UI display
-  val eventLogs: List<String> = emptyList(),
+    // Event logs for UI display
+    val eventLogs: List<String> = emptyList(),
 
-  // Loading/UI state flags
-  val isLoading: Boolean = false,
-  val needsLogin: Boolean = false
+    // Loading/UI state flags
+    val isLoading: Boolean = false,
+    val needsLogin: Boolean = false
 )

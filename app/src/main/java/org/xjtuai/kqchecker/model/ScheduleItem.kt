@@ -7,5 +7,5 @@ data class ScheduleItem(
     val courseName: String,
     val location: String,
     val teacher: String,
-    val colorIndex: Int = 0 
+    val colorIndex: Int = 0
 )

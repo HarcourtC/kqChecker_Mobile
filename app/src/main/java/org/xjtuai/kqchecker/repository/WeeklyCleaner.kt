@@ -79,22 +79,20 @@ class WeeklyCleaner(private val context: Context) {
             cal.firstDayOfWeek = java.util.Calendar.MONDAY
             // set to Monday of current week
             cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
-            val weekStartDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(cal.time)
+            val weekStartDate = java.text.SimpleDateFormat(
+                "yyyy-MM-dd",
+                java.util.Locale.getDefault()
+            ).format(cal.time)
 
             for (i in 0 until dataArray.length()) {
-                val item = dataArray.optJSONObject(i) ?: continue
-
-                // weekday number
-                val wk = item.optString("accountWeeknum", "").trim()
-                val wkInt = try {
-                    wk.toInt()
-                } catch (e: Exception) {
-                    null
-                }
-                if (wkInt == null) continue
+                val item = dataArray.optJSONObject(i)
+                val wk = item?.optString("accountWeeknum", "")?.trim()
+                val wkInt = wk?.toIntOrNull()
                 // normalize 0 -> 7
                 val wkNorm = if (wkInt == 0) 7 else wkInt
-                if (wkNorm < 1 || wkNorm > 7) continue
+                if (item == null || wkNorm == null || wkNorm !in 1..7) {
+                    continue
+                }
 
                 // calculate date: Monday + (wkNorm -1) days
                 val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
@@ -142,7 +140,7 @@ class WeeklyCleaner(private val context: Context) {
                     5 -> "Friday"
                     6 -> "Saturday"
                     7 -> "Sunday"
-                    else -> wk
+                    else -> wk ?: ""
                 }
 
                 val out = JSONObject()
@@ -169,12 +167,11 @@ class WeeklyCleaner(private val context: Context) {
             // 保存到缓存
             val saved = cacheManager.saveToCache(CLEANED_WEEKLY_FILE, cleanedObj.toString(2))
             if (saved) {
-                Log.d(TAG, "已生成并保存清洗后的周课表: ${CLEANED_WEEKLY_FILE}")
+                Log.d(TAG, "已生成并保存清洗后的周课表: $CLEANED_WEEKLY_FILE")
             } else {
                 Log.e(TAG, "保存清洗后的周课表失败")
             }
             return saved
-
         } catch (e: Exception) {
             Log.e(TAG, "生成清洗周课表时发生异常", e)
             return false

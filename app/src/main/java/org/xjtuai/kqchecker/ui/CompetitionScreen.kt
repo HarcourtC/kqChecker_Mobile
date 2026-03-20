@@ -72,7 +72,9 @@ fun CompetitionScreen(
     fun loadData(force: Boolean) {
         scope.launch {
             isLoading = true
-            onPostEvent(if (force) "Refreshing competition data (API)..." else "Loading competition data...")
+            onPostEvent(
+                if (force) "Refreshing competition data (API)..." else "Loading competition data..."
+            )
 
             try {
                 val response = repo.getCompetitionData(forceRefresh = force)
@@ -225,7 +227,11 @@ fun CompetitionScreen(
 
             if (items.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("暂无数据。\n请点击刷新按钮。", color = Color.Gray, style = MaterialTheme.typography.body2)
+                    Text(
+                        "暂无数据。\n请点击刷新按钮。",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.body2
+                    )
                 }
             } else if (filteredItems.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

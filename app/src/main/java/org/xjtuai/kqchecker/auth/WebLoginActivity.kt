@@ -1,25 +1,26 @@
 package org.xjtuai.kqchecker.auth
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
-import android.os.Bundle
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
 import android.webkit.ConsoleMessage
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.os.Build
-import android.webkit.JavascriptInterface
 import androidx.activity.ComponentActivity
-import android.util.Log
-import android.webkit.CookieManager
+import androidx.core.content.ContextCompat
 import org.xjtuai.kqchecker.util.ConfigHelper
 
 class WebLoginActivity : ComponentActivity() {
@@ -117,7 +118,10 @@ class WebLoginActivity : ComponentActivity() {
             val doClear = intent?.getBooleanExtra(EXTRA_FORCE_CLEAR, false) ?: false
             if (doClear) {
                 try {
-                    Log.d("WebLoginActivity", "EXTRA_FORCE_CLEAR received — calling TokenManager.clear()")
+                    Log.d(
+                        "WebLoginActivity",
+                        "EXTRA_FORCE_CLEAR received — calling TokenManager.clear()"
+                    )
                 } catch (_: Throwable) {}
                 try { tokenManager.clear() } catch (_: Throwable) {}
                 finish()
@@ -149,7 +153,10 @@ class WebLoginActivity : ComponentActivity() {
 
             webView.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                    Log.d("WebLoginActivity", "Console: ${consoleMessage?.message()} -- ${consoleMessage?.sourceId()}:${consoleMessage?.lineNumber()}")
+                    Log.d(
+                        "WebLoginActivity",
+                        "Console: ${consoleMessage?.message()} -- ${consoleMessage?.sourceId()}:${consoleMessage?.lineNumber()}"
+                    )
                     return super.onConsoleMessage(consoleMessage)
                 }
             }
@@ -166,9 +173,9 @@ class WebLoginActivity : ComponentActivity() {
                     super.onPageFinished(view, url)
                     Log.d("WebLoginActivity", "onPageFinished url=$url")
 
-                    //页面加载完成后，通过 JS 获取完整的 location.href（包含 fragment），
-                    //因为有些站点通过 hash(#) 传递 token，原生的 shouldOverrideUrlLoading
-                    //不一定会在 hash 变化时被触发。
+                    // 页面加载完成后，通过 JS 获取完整的 location.href（包含 fragment），
+                    // 因为有些站点通过 hash(#) 传递 token，原生的 shouldOverrideUrlLoading
+                    // 不一定会在 hash 变化时被触发。
                     try {
                         // 1) 立即获取一次 href 以覆盖页面初始状态
                         view?.evaluateJavascript("(function(){return window.location.href;})()") { value ->
@@ -200,11 +207,27 @@ class WebLoginActivity : ComponentActivity() {
                                             val tokenVal = token
                                             val bearer = if (tokenVal.startsWith("bearer ", true)) tokenVal else "bearer $tokenVal"
                                             try {
-                                                try { Log.d("WebLoginActivity", "evaluateJavascript detected token prefix=${tokenVal.take(8)}... (len=${tokenVal.length})") } catch (_: Throwable) {}
+                                                try { Log.d(
+                                                    "WebLoginActivity",
+                                                    "evaluateJavascript detected token prefix=${tokenVal.take(
+                                                        8
+                                                    )}... (len=${tokenVal.length})"
+                                                ) } catch (
+                                                    _: Throwable
+                                                ) {}
                                                 tokenManager.saveAccessToken(bearer)
-                                                try { Log.d("WebLoginActivity", "saved access token (len=${bearer.length}) from evaluateJavascript (source=url)") } catch (_: Throwable) {}
+                                                try { Log.d(
+                                                    "WebLoginActivity",
+                                                    "saved access token (len=${bearer.length}) from evaluateJavascript (source=url)"
+                                                ) } catch (
+                                                    _: Throwable
+                                                ) {}
                                             } catch (e: Throwable) {
-                                                Log.e("WebLoginActivity", "evaluateJavascript failed to save token", e)
+                                                Log.e(
+                                                    "WebLoginActivity",
+                                                    "evaluateJavascript failed to save token",
+                                                    e
+                                                )
                                             }
                                             val data = Intent()
                                             data.putExtra(RESULT_TOKEN, bearer)
@@ -217,15 +240,34 @@ class WebLoginActivity : ComponentActivity() {
                                 } catch (t: Throwable) {
                                     Log.e("WebLoginActivity", "evaluateHref handle error", t)
                                 }
-
                             } catch (t: Throwable) {
-                                Log.e("WebLoginActivity", "failed to parse href from evaluateJavascript: $href", t)
+                                Log.e(
+                                    "WebLoginActivity",
+                                    "failed to parse href from evaluateJavascript: $href",
+                                    t
+                                )
                             }
                         }
 
                         // 2) 注入 JS 监听器：监听 hashchange/popstate/history API 调用，回传 href 到 AndroidBridge
                         //    并包装 localStorage.setItem，主动回传 localStorage 中常见 token key，以及把 native token 写入 localStorage（如果存在）
-                        val inject = "(function(){try{function notify(){try{AndroidBridge.postUrl(window.location.href);}catch(e){console.log('AndroidBridge.postUrl err', e);} }notify();window.addEventListener('hashchange', notify, false);window.addEventListener('popstate', notify, false);var _push=history.pushState;history.pushState=function(){_push.apply(this, arguments);notify();};var _replace=history.replaceState;history.replaceState=function(){_replace.apply(this, arguments);notify();};try{var _ls_set=localStorage.setItem;localStorage.setItem=function(k,v){try{_ls_set.apply(this,arguments);}catch(e){};try{if(k==='access_token'||k==='token'||k==='auth_token'){AndroidBridge.postToken(v);} }catch(e){console.log('postToken err',e);} };var keys=['access_token','token','auth_token'];for(var i=0;i<keys.length;i++){try{var v=localStorage.getItem(keys[i]);if(v)AndroidBridge.postToken(v);}catch(e){}}}catch(e){console.log('localStorage wrap failed', e);} }catch(e){console.log('bridge inject failed', e);} })();"
+                        val inject =
+                            "(function(){try{" +
+                                "function notify(){try{AndroidBridge.postUrl(window.location.href);}catch(e){console.log('AndroidBridge.postUrl err', e);} }" +
+                                "notify();" +
+                                "window.addEventListener('hashchange', notify, false);" +
+                                "window.addEventListener('popstate', notify, false);" +
+                                "var _push=history.pushState;history.pushState=function(){_push.apply(this, arguments);notify();};" +
+                                "var _replace=history.replaceState;history.replaceState=function(){_replace.apply(this, arguments);notify();};" +
+                                "try{" +
+                                "var _ls_set=localStorage.setItem;" +
+                                "localStorage.setItem=function(k,v){try{_ls_set.apply(this,arguments);}catch(e){};" +
+                                "try{if(k==='access_token'||k==='token'||k==='auth_token'){AndroidBridge.postToken(v);} " +
+                                "}catch(e){console.log('postToken err',e);} };" +
+                                "var keys=['access_token','token','auth_token'];" +
+                                "for(var i=0;i<keys.length;i++){try{var v=localStorage.getItem(keys[i]);if(v)AndroidBridge.postToken(v);}catch(e){}}" +
+                                "}catch(e){console.log('localStorage wrap failed', e);}" +
+                                "}catch(e){console.log('bridge inject failed', e);} })();"
                         view?.evaluateJavascript(inject, null)
 
                         // 3) 如果 native 端已有 token，注入到页面 localStorage（写入 raw token without 'bearer ' 前缀）
@@ -237,24 +279,60 @@ class WebLoginActivity : ComponentActivity() {
                             if (nativeToken != null && savedAt > clearedAt) {
                                 // remove optional bearer prefix
                                 var tokenPlain = nativeToken
-                                if (tokenPlain.startsWith("bearer ", true)) tokenPlain = tokenPlain.substring(7)
+                                if (tokenPlain.startsWith("bearer ", true)) {
+                                    tokenPlain = tokenPlain.substring(
+                                        7
+                                    )
+                                }
                                 // escape for JS single-quoted string
-                                tokenPlain = tokenPlain.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
-                                val setScript = "(function(){try{localStorage.setItem('access_token', '$tokenPlain');}catch(e){console.log('set localStorage failed', e);} })();"
+                                tokenPlain =
+                                    tokenPlain
+                                        .replace("\\", "\\\\")
+                                        .replace("'", "\\'")
+                                        .replace("\n", "\\n")
+                                        .replace("\r", "\\r")
+                                val setScript =
+                                    "(function(){try{localStorage.setItem('access_token', '$tokenPlain');}" +
+                                        "catch(e){console.log('set localStorage failed', e);} })();"
                                 view?.evaluateJavascript(setScript, null)
-                                Log.d("WebLoginActivity", "injected native token into localStorage (len=${tokenPlain.length})")
+                                Log.d(
+                                    "WebLoginActivity",
+                                    "injected native token into localStorage (len=${tokenPlain.length})"
+                                )
                             } else {
-                                Log.d("WebLoginActivity", "skip injecting native token: savedAt=$savedAt clearedAt=$clearedAt")
+                                Log.d(
+                                    "WebLoginActivity",
+                                    "skip injecting native token: savedAt=$savedAt clearedAt=$clearedAt"
+                                )
                             }
                         } catch (t: Throwable) {
-                            Log.e("WebLoginActivity", "failed to inject native token into localStorage", t)
+                            Log.e(
+                                "WebLoginActivity",
+                                "failed to inject native token into localStorage",
+                                t
+                            )
                         }
 
                         // 4) 立即扫描 localStorage / sessionStorage 中可能的 token（例如 JWT 格式），并回传到 native
                         try {
-                            val scanScript = "(function(){try{var jwtRegex=/^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;var found=0;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);if(v&& (jwtRegex.test(v)||v.indexOf('eyJ')===0)){try{AndroidBridge.postToken(v);}catch(e){};found++;}}for(var j=0;j<sessionStorage.length;j++){var k=sessionStorage.key(j);var v=sessionStorage.getItem(k);if(v&& (jwtRegex.test(v)||v.indexOf('eyJ')===0)){try{AndroidBridge.postToken(v);}catch(e){};found++;}}return 'scanned:'+found;}catch(e){return 'scanerr:'+e.message;}})();"
+                            val scanScript =
+                                "(function(){try{" +
+                                    "var jwtRegex=/^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;" +
+                                    "var found=0;" +
+                                    "for(var i=0;i<localStorage.length;i++){" +
+                                    "var k=localStorage.key(i);var v=localStorage.getItem(k);" +
+                                    "if(v&& (jwtRegex.test(v)||v.indexOf('eyJ')===0)){try{AndroidBridge.postToken(v);}catch(e){};found++;}" +
+                                    "}" +
+                                    "for(var j=0;j<sessionStorage.length;j++){" +
+                                    "var k=sessionStorage.key(j);var v=sessionStorage.getItem(k);" +
+                                    "if(v&& (jwtRegex.test(v)||v.indexOf('eyJ')===0)){try{AndroidBridge.postToken(v);}catch(e){};found++;}" +
+                                    "}" +
+                                    "return 'scanned:'+found;" +
+                                    "}catch(e){return 'scanerr:'+e.message;}})();"
                             view?.evaluateJavascript(scanScript) { res ->
-                                try { Log.d("WebLoginActivity", "storage scan result=$res") } catch (_: Throwable) {}
+                                try { Log.d("WebLoginActivity", "storage scan result=$res") } catch (
+                                    _: Throwable
+                                ) {}
                             }
                         } catch (t: Throwable) {
                             Log.e("WebLoginActivity", "failed to inject storage scanner", t)
@@ -270,7 +348,10 @@ class WebLoginActivity : ComponentActivity() {
                         val method = request?.method
                         val headers = request?.requestHeaders
                         val forMain = request?.isForMainFrame
-                        Log.d("WebLoginActivity", "shouldInterceptRequest url=$reqUrl method=$method isForMainFrame=$forMain headers=$headers")
+                        Log.d(
+                            "WebLoginActivity",
+                            "shouldInterceptRequest url=$reqUrl method=$method isForMainFrame=$forMain headers=$headers"
+                        )
                     } catch (t: Throwable) {
                         Log.e("WebLoginActivity", "shouldInterceptRequest log failed", t)
                     }
@@ -286,7 +367,11 @@ class WebLoginActivity : ComponentActivity() {
                     }
                     return super.shouldInterceptRequest(view, url)
                 }
-                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: android.webkit.WebResourceError?
+                ) {
                     super.onReceivedError(view, request, error)
                     val errorDesc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         error?.description?.toString() ?: "Unknown error"
@@ -298,17 +383,27 @@ class WebLoginActivity : ComponentActivity() {
                     } else {
                         "unknown"
                     }
-                    Log.e("WebLoginActivity", "onReceivedError url=${request?.url} code=$errorCode desc=$errorDesc")
+                    Log.e(
+                        "WebLoginActivity",
+                        "onReceivedError url=${request?.url} code=$errorCode desc=$errorDesc"
+                    )
                 }
 
-                override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    errorResponse: android.webkit.WebResourceResponse?
+                ) {
                     super.onReceivedHttpError(view, request, errorResponse)
-                    Log.e("WebLoginActivity", "onReceivedHttpError url=${request?.url} status=${errorResponse?.statusCode}")
+                    Log.e(
+                        "WebLoginActivity",
+                        "onReceivedHttpError url=${request?.url} status=${errorResponse?.statusCode}"
+                    )
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url ?: return false
-                    Log.d("WebLoginActivity", "shouldOverrideUrlLoading request=${url}")
+                    Log.d("WebLoginActivity", "shouldOverrideUrlLoading request=$url")
                     return handleUrl(url)
                 }
 
@@ -337,29 +432,41 @@ class WebLoginActivity : ComponentActivity() {
                 tokenClearedReceiver = object : BroadcastReceiver() {
                     override fun onReceive(ctx: Context?, intent: Intent?) {
                         try {
-                            Log.d("WebLoginActivity", "received token cleared broadcast, clearing WebView storage")
-                            webView.evaluateJavascript("(function(){try{localStorage.removeItem('access_token');localStorage.removeItem('token');localStorage.removeItem('auth_token');}catch(e){} })();", null)
+                            Log.d(
+                                "WebLoginActivity",
+                                "received token cleared broadcast, clearing WebView storage"
+                            )
+                            val clearStorageScript =
+                                "(function(){" +
+                                    "try{" +
+                                    "localStorage.removeItem('access_token');" +
+                                    "localStorage.removeItem('token');" +
+                                    "localStorage.removeItem('auth_token');" +
+                                    "}catch(e){}" +
+                                    " })();"
+                            webView.evaluateJavascript(
+                                clearStorageScript,
+                                null
+                            )
                             try {
                                 CookieManager.getInstance().removeAllCookies(null)
                                 CookieManager.getInstance().flush()
                             } catch (_: Throwable) {}
                         } catch (t: Throwable) {
-                            Log.e("WebLoginActivity", "failed to clear WebView storage on broadcast", t)
+                            Log.e(
+                                "WebLoginActivity",
+                                "failed to clear WebView storage on broadcast",
+                                t
+                            )
                         }
                     }
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    registerReceiver(
-                        tokenClearedReceiver,
-                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED),
-                        Context.RECEIVER_NOT_EXPORTED
-                    )
-                } else {
-                    registerReceiver(
-                        tokenClearedReceiver,
-                        IntentFilter(TokenManager.ACTION_TOKEN_CLEARED)
-                    )
-                }
+                ContextCompat.registerReceiver(
+                    this,
+                    tokenClearedReceiver,
+                    IntentFilter(TokenManager.ACTION_TOKEN_CLEARED),
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
             } catch (_: Throwable) {}
         } catch (t: Throwable) {
             Log.e("WebLoginActivity", "onCreate failed", t)

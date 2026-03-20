@@ -1,29 +1,25 @@
 package org.xjtuai.kqchecker.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import androidx.work.WorkManager
-import androidx.work.WorkInfo
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.xjtuai.kqchecker.repository.WeeklyRepository
-import org.xjtuai.kqchecker.repository.WeeklyCleaner
-import org.xjtuai.kqchecker.repository.CacheManager
-import org.xjtuai.kqchecker.util.CalendarHelper
-import org.json.JSONArray
-import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Calendar
-import android.util.Log
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import org.xjtuai.kqchecker.auth.AuthRequiredException
 import org.xjtuai.kqchecker.auth.TokenManager
-import kotlinx.coroutines.flow.collect
+import org.xjtuai.kqchecker.repository.CacheManager
+import org.xjtuai.kqchecker.repository.WeeklyCleaner
+import org.xjtuai.kqchecker.repository.WeeklyRepository
+import org.xjtuai.kqchecker.util.CalendarHelper
 
 private const val TAG = "WriteCalendar"
-
 
 /**
  * 从后端获取weekly数据并写入日历的功能
@@ -54,11 +50,11 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
         // 生成唯一的工作ID用于日志追踪
         val workId = System.currentTimeMillis().toString().takeLast(8)
         Log.d(TAG, "========== WriteCalendar Worker 开始执行 (追踪ID: $workId) ==========")
-        Log.d(TAG, "工作ID: ${id}")
-        
+        Log.d(TAG, "工作ID: $id")
+
         // 记录开始时间，用于计算总执行时间
         val startTime = System.currentTimeMillis()
-        
+
         return try {
             withContext(Dispatchers.IO) {
                 try {
@@ -92,7 +88,9 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                     try {
                                         val keyTrim = key.trim()
                                         // 如果 key 已经是完整的 yyyy-MM-dd HH:mm:ss，直接使用
-                                        val fullDtRegex = Regex("^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}")
+                                        val fullDtRegex = Regex(
+                                            "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}"
+                                        )
                                         if (fullDtRegex.matches(keyTrim)) {
                                             watertimeVal = keyTrim
                                         } else {
@@ -101,8 +99,12 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
 
                                             // 尝试在 key 的剩余部分中查找时间（HH:mm 或 HH:mm:ss）
                                             if (parts.size >= 2) {
-                                                val rest = parts.subList(1, parts.size).joinToString(" ")
-                                                val timeMatch = Regex("(\\d{1,2}:\\d{2}(?::\\d{2})?)").find(rest)
+                                                val rest = parts.subList(1, parts.size).joinToString(
+                                                    " "
+                                                )
+                                                val timeMatch = Regex(
+                                                    "(\\d{1,2}:\\d{2}(?::\\d{2})?)"
+                                                ).find(rest)
                                                 if (timeMatch != null) {
                                                     var t = timeMatch.value
                                                     if (t.matches(Regex("^\\d{1,2}:\\d{2}$"))) t += ":00"
@@ -114,15 +116,37 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                             if (watertimeVal.isBlank()) {
                                                 var displayTime = it.optString("time_display", "").trim()
                                                 if (displayTime.isNotBlank()) {
-                                                    if (displayTime.contains("-")) displayTime = displayTime.split("-")[0].trim()
-                                                    // 若为节次字符串（如 "7-8"），映射到默认节次时间
-                                                    if (displayTime.matches(Regex("^\\d+(?:-\\d+)*$"))) {
-                                                        val firstNum = displayTime.split(Regex("\\D+"))[0]
-                                                        val period = firstNum.toIntOrNull()
-                                                        if (period != null && PERIOD_TO_TIME.containsKey(period)) displayTime = PERIOD_TO_TIME[period]!!
+                                                    if (displayTime.contains("-")) {
+                                                        displayTime = displayTime.split(
+                                                            "-"
+                                                        )[0].trim()
                                                     }
-                                                    if (displayTime.matches(Regex("^\\d{1,2}:\\d{2}$"))) displayTime += ":00"
-                                                    if (displayTime.matches(Regex("^\\d{1,2}:\\d{2}:\\d{2}$")) && datePart.isNotBlank()) {
+                                                    // 若为节次字符串（如 "7-8"），映射到默认节次时间
+                                                    if (displayTime.matches(
+                                                            Regex("^\\d+(?:-\\d+)*$")
+                                                        )
+                                                    ) {
+                                                        val firstNum = displayTime.split(
+                                                            Regex("\\D+")
+                                                        )[0]
+                                                        val period = firstNum.toIntOrNull()
+                                                        if (period != null && PERIOD_TO_TIME.containsKey(
+                                                                period
+                                                            )
+                                                        ) {
+                                                            displayTime = PERIOD_TO_TIME[period]!!
+                                                        }
+                                                    }
+                                                    if (displayTime.matches(
+                                                            Regex("^\\d{1,2}:\\d{2}$")
+                                                        )
+                                                    ) {
+                                                        displayTime += ":00"
+                                                    }
+                                                    if (displayTime.matches(
+                                                            Regex("^\\d{1,2}:\\d{2}:\\d{2}$")
+                                                        ) && datePart.isNotBlank()
+                                                    ) {
                                                         watertimeVal = "$datePart $displayTime"
                                                     }
                                                 }
@@ -132,7 +156,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                     }
                                     obj.put("watertime", watertimeVal)
                                     // 生成唯一事件ID（基于 key + index）
-                                    obj.put("bh", "cleaned_${key}_${i}")
+                                    obj.put("bh", "cleaned_${key}_$i")
                                     obj.put("isdone", "0")
                                     converted.put(obj)
                                 }
@@ -179,7 +203,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                         Log.d(TAG, "   - success=true")
 
                         Log.d(TAG, "✅ 成功获取weekly数据，共${resp.data.length()}条记录")
-                        
+
                         try {
                             // 检查日历权限和获取日历ID
                             Log.d(TAG, "🔄 3. 开始检查日历权限和获取日历ID...")
@@ -194,11 +218,11 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
 
                             Log.d(TAG, "✅ 成功获取日历ID: $calId")
                             Log.d(TAG, "🔄 4. 开始处理数据并写入日历...")
-                            
+
                             try {
                                 // 处理后端返回的weekly数据
                                 processWeeklyData(weeklyResponse.data, calId)
-                                
+
                                 // 计算总执行时间
                                 val totalTime = System.currentTimeMillis() - startTime
                                 Log.d(TAG, "✅ 5. 数据处理完成，日历更新成功")
@@ -206,28 +230,28 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                 Log.d(TAG, "📱 结果将显示在应用界面上")
                                 logWorkResult(Result.success())
                                 Result.success()
-                            } catch (dataProcessingError: Exception) {
+                            } catch (dataProcessingError: RuntimeException) {
                                 Log.e(TAG, "❌ 数据处理过程失败: ${dataProcessingError.message}")
                                 Log.e(TAG, "❌ 错误详情: ${dataProcessingError.javaClass.simpleName}")
                                 Log.e(TAG, "🔍 请查看堆栈信息进行调试:", dataProcessingError)
                                 logWorkResult(Result.failure())
                                 Result.failure()
                             }
-                        } catch (calendarError: Exception) {
+                        } catch (calendarError: RuntimeException) {
                             Log.e(TAG, "❌ 日历操作失败: ${calendarError.message}")
                             Log.e(TAG, "❌ 错误详情: ${calendarError.javaClass.simpleName}")
                             Log.e(TAG, "🔍 请查看堆栈信息进行调试:", calendarError)
                             logWorkResult(Result.failure())
                             Result.failure()
                         }
-                    } catch (dataValidationError: Exception) {
+                    } catch (dataValidationError: RuntimeException) {
                         Log.e(TAG, "❌ 数据验证失败: ${dataValidationError.message}")
                         Log.e(TAG, "❌ 错误详情: ${dataValidationError.javaClass.simpleName}")
                         Log.e(TAG, "🔍 请查看堆栈信息进行调试:", dataValidationError)
                         logWorkResult(Result.failure())
                         Result.failure()
                     }
-                } catch (dataFetchError: Exception) {
+                } catch (dataFetchError: RuntimeException) {
                     Log.e(TAG, "❌ 数据获取失败: ${dataFetchError.message}")
                     Log.e(TAG, "❌ 错误详情: ${dataFetchError.javaClass.simpleName}")
                     Log.e(TAG, "❌ 根据用户要求，不尝试从API获取数据")
@@ -238,11 +262,15 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
             }
         } catch (e: AuthRequiredException) {
             try {
-                Log.w(TAG, "AuthRequiredException caught in WriteCalendar.doWork(): clearing token and notifying user", e)
+                Log.w(
+                    TAG,
+                    "AuthRequiredException caught in WriteCalendar.doWork(): clearing token and notifying user",
+                    e
+                )
                 val tm = TokenManager(applicationContext)
                 tm.clear()
                 tm.notifyTokenInvalid()
-            } catch (ex: Exception) {
+            } catch (ex: RuntimeException) {
                 Log.e(TAG, "Failed to clear/token notify in WriteCalendar", ex)
             }
             logWorkResult(Result.failure())
@@ -258,13 +286,9 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
             Log.d(TAG, "========== WriteCalendar Worker 执行结束 (总耗时: ${totalTime}ms) ==========")
         }
     }
-    
+
     private fun logWorkResult(result: Result) {
-        when (result) {
-            is Result.Success -> Log.d(TAG, "工作结果: 成功")
-            is Result.Failure -> Log.d(TAG, "工作结果: 失败")
-            is Result.Retry -> Log.d(TAG, "工作结果: 重试")
-        }
+        Log.d(TAG, "工作结果: $result")
     }
 
     /**
@@ -272,16 +296,16 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
      * 根据新的数据结构，使用bh作为唯一标识，eqname作为标题，eqno作为地点，watertime作为时间
      */
     private fun processWeeklyData(weeklyData: JSONArray, calId: Long) {
-        val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         var insertedCount = 0
         var skippedCount = 0
         var errors = 0
-        
+
         Log.d(TAG, "📅 开始处理${weeklyData.length()}条日历数据...")
         // 遍历JSONArray中的每个元素
         for (i in 0 until weeklyData.length()) {
-            Log.d(TAG, "🔄 处理事件 #${i+1}/${weeklyData.length()}")
-            
+            Log.d(TAG, "🔄 处理事件 #${i + 1}/${weeklyData.length()}")
+
             val item = weeklyData.optJSONObject(i)
             if (item != null) {
                 try {
@@ -320,7 +344,10 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
 
                                     // 格式化为与现有逻辑一致的字符串形式
                                     watertime = fmt.format(cal.time)
-                                    Log.d(TAG, "   - 使用回退解析生成时间: $watertime (由 accountJtNo=$accountJt accountWeeknum=$accountWeeknum)")
+                                    Log.d(
+                                        TAG,
+                                        "   - 使用回退解析生成时间: $watertime (由 accountJtNo=$accountJt accountWeeknum=$accountWeeknum)"
+                                    )
                                 }
                             } catch (_: Exception) {
                                 // 解析回退失败，则保留 watertime 为空，后面会跳过
@@ -329,13 +356,13 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                     }
                     val isdone = item.optString("isdone", "0") // 是否完成
                     val fromtype = item.optString("fromtype", "") // 来源类型
-                    
+
                     Log.d(TAG, "   - 事件ID: $bh")
                     Log.d(TAG, "   - 标题: $eqname")
                     Log.d(TAG, "   - 时间: $watertime")
                     Log.d(TAG, "   - 地点: $eqno")
                     Log.d(TAG, "   - 状态: ${if (isdone == "1") "已完成" else "未完成"}")
-                    
+
                     if (watertime.isNotEmpty()) {
                         val date = try {
                             fmt.parse(watertime)
@@ -344,11 +371,11 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                             skippedCount++
                             continue
                         }
-                        
+
                         val startMillis = date.time
                         // 设置30分钟的持续时间（打卡事件通常时间较短）
                         val endMillis = startMillis + 30 * 60 * 1000
-                        
+
                         // 构建事件标题，包含状态信息
                         val eventTitle = buildString {
                             append(eqname)
@@ -358,7 +385,7 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                                 append(" (未完成)")
                             }
                         }
-                        
+
                         // 构建详细描述信息
                         val description = buildString {
                             append("打卡信息：\n")
@@ -368,19 +395,24 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                             append("- 完成状态: ${if (isdone == "1") "已完成" else "未完成"}\n")
                             if (fromtype.isNotEmpty()) append("- 来源类型: $fromtype\n")
                         }
-                        
+
                         // 使用事件ID进行精确匹配，防止重复
                         Log.d(TAG, "   - 🔍 检查是否存在重复事件...")
-                        val existing = CalendarHelper.findExistingEvent(applicationContext, eventTitle, startMillis, bh)
+                        val existing = CalendarHelper.findExistingEvent(
+                            applicationContext,
+                            eventTitle,
+                            startMillis,
+                            bh
+                        )
                         if (existing == null) {
                             Log.d(TAG, "   - ➕ 准备添加新事件到日历")
                             CalendarHelper.insertEvent(
-                                applicationContext, 
-                                calId, 
-                                eventTitle, 
-                                startMillis, 
-                                endMillis, 
-                                description, 
+                                applicationContext,
+                                calId,
+                                eventTitle,
+                                startMillis,
+                                endMillis,
+                                description,
                                 bh, // 传递唯一标识用于后续匹配
                                 eqno // 传递地点信息
                             )
@@ -405,13 +437,16 @@ class WriteCalendar(appContext: Context, workerParams: WorkerParameters) :
                 errors++
             }
         }
-        
+
         // 输出详细的统计结果
         Log.d(TAG, "📊 日历事件处理统计:")
         Log.d(TAG, "   - 总计处理: ${weeklyData.length()} 条数据")
-        Log.d(TAG, "   - 成功创建: ${insertedCount} 个事件")
-        Log.d(TAG, "   - 跳过事件: ${skippedCount} 个事件")
-        Log.d(TAG, "   - 处理错误: ${errors} 个错误")
-        Log.d(TAG, "💡 处理总结：成功${insertedCount}条，失败${skippedCount}条，总计${insertedCount+skippedCount}条")
+        Log.d(TAG, "   - 成功创建: $insertedCount 个事件")
+        Log.d(TAG, "   - 跳过事件: $skippedCount 个事件")
+        Log.d(TAG, "   - 处理错误: $errors 个错误")
+        Log.d(
+            TAG,
+            "💡 处理总结：成功${insertedCount}条，失败${skippedCount}条，总计${insertedCount + skippedCount}条"
+        )
     }
 }
