@@ -75,7 +75,7 @@ fun SettingsScreen(
         }
 
         InfoCard(title = "应用更新") {
-            Text("检查是否有新版本，并在应用内下载并安装。")
+            Text("检查新版本并下载安装。")
             Spacer(modifier = Modifier.height(10.dp))
             AppButton(
                 text = if (isCheckingUpdate) "正在检查更新..." else "检查更新",

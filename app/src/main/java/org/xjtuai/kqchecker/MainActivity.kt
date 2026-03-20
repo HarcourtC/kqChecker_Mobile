@@ -159,7 +159,7 @@ fun AppContent() {
         val info = versionInfo ?: return
         val apkUrl = info.apkUrl
         if (apkUrl.isNullOrBlank()) {
-            postEvent("当前版本未提供 APK 安装包，暂不支持应用内更新。")
+            postEvent("当前版本未提供 APK 安装包。")
             return
         }
         if (isUpdating) return
@@ -193,7 +193,7 @@ fun AppContent() {
                 }
             } catch (e: Exception) {
                 Log.e("UpdateInstall", "In-app update failed", e)
-                postEvent("应用内更新失败: ${e.message ?: e.toString()}")
+                postEvent("更新失败: ${e.message ?: e.toString()}")
             } finally {
                 isUpdating = false
             }
