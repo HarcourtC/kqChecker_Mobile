@@ -7,7 +7,10 @@ import android.content.SharedPreferences
  * Simple token store placeholder. Replace with EncryptedSharedPreferences in production.
  */
 class TokenStore(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(
+        "auth",
+        Context.MODE_PRIVATE
+    )
 
     fun saveAccessToken(token: String) {
         prefs.edit().putString("access_token", token).apply()

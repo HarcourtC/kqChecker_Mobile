@@ -3,7 +3,6 @@ package org.xjtuai.kqchecker
 import android.app.Application
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 
-
 class KqApplication : Application() {
     override fun onCreate() {
         super.onCreate()

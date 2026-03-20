@@ -2,16 +2,16 @@ package org.xjtuai.kqchecker.repository
 
 import android.content.Context
 import android.util.Log
+import java.net.SocketTimeoutException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WaterListResponse
 import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
 import org.xjtuai.kqchecker.util.RateLimitNotifier
-import org.json.JSONObject
-import java.net.SocketTimeoutException
 
 /**
  * 考勤打卡记录仓库（API2）
@@ -39,7 +39,12 @@ class WaterListRepository(private val context: Context) {
                     return@withContext null
                 }
                 val payload = buildRequestPayload(termno)
-                Log.i(TAG, "API2 request: date=${payload.optString("date")}, calendarBh=${payload.optString("calendarBh")}")
+                Log.i(
+                    TAG,
+                    "API2 request: date=${payload.optString("date")}, calendarBh=${payload.optString(
+                        "calendarBh"
+                    )}"
+                )
                 val requestBody = ApiService.jsonToRequestBody(payload)
                 val respBody = apiService.getWaterListData(requestBody)
 
@@ -59,7 +64,8 @@ class WaterListRepository(private val context: Context) {
                 if (!wr.success) {
                     Log.e(TAG, "API2 failed: code=${wr.code}, msg=${wr.msg}")
                     if (wr.code == 400 || wr.code == 401 || wr.code == 403 ||
-                        wr.msg.contains("请登录") || wr.msg.contains("未登录")) {
+                        wr.msg.contains("请登录") || wr.msg.contains("未登录")
+                    ) {
                         val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
                         tm.clear()
                         tm.notifyTokenInvalid()
@@ -69,9 +75,11 @@ class WaterListRepository(private val context: Context) {
                 }
 
                 cacheManager.saveToCache(CacheManager.WATER_LIST_CACHE_FILE, respStr)
-                Log.i(TAG, "API2 success: ${wr.data.list.size} records, total=${wr.data.totalCount}")
+                Log.i(
+                    TAG,
+                    "API2 success: ${wr.data.list.size} records, total=${wr.data.totalCount}"
+                )
                 wr
-
             } catch (e: SocketTimeoutException) {
                 Log.e(TAG, "API2 timeout", e)
                 throw e
@@ -147,7 +155,15 @@ class WaterListRepository(private val context: Context) {
                     val info = cacheManager.getCacheFileInfo(fname) ?: continue
                     val content = cacheManager.readFromCache(fname) ?: ""
                     val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
-                    result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
+                    result.add(
+                        FilePreview(
+                            name = fname,
+                            path = info.path,
+                            size = info.size,
+                            lastModified = info.lastModified,
+                            preview = preview
+                        )
+                    )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error preparing API2 preview for $fname", e)
                 }

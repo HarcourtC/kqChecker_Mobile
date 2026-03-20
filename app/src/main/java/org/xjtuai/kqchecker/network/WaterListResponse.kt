@@ -64,12 +64,12 @@ data class WaterListData(
 data class WaterRecord(
     val bh: String,
     val sno: String,
-    val eqno: String,       // 打卡地点
-    val eqname: String,     // 设备名称（通常是编号，不直接显示）
-    val watertime: String,  // 打卡时间
-    val intime: String,     // 入库时间
-    val isdone: String,     // 状态码
-    val fromtype: String,   // 打卡方式
+    val eqno: String, // 打卡地点
+    val eqname: String, // 设备名称（通常是编号，不直接显示）
+    val watertime: String, // 打卡时间
+    val intime: String, // 入库时间
+    val isdone: String, // 状态码
+    val fromtype: String, // 打卡方式
     val calendarBh: String,
     val sBh: String
 ) {

@@ -19,7 +19,7 @@ object ApiRateLimiter {
     private val buckets = ConcurrentHashMap<String, Bucket>()
 
     fun tryAcquire(apiKey: String, nowMillis: Long = System.currentTimeMillis()): Boolean {
-        val bucket = buckets.computeIfAbsent(apiKey) { Bucket() }
+        val bucket = getOrCreateBucket(apiKey)
         synchronized(bucket.lock) {
             while (bucket.timestamps.isNotEmpty()) {
                 val head = bucket.timestamps.first()
@@ -35,5 +35,12 @@ object ApiRateLimiter {
             bucket.timestamps.addLast(nowMillis)
             return true
         }
+    }
+
+    private fun getOrCreateBucket(apiKey: String): Bucket {
+        val existing = buckets[apiKey]
+        if (existing != null) return existing
+        val created = Bucket()
+        return buckets.putIfAbsent(apiKey, created) ?: created
     }
 }

@@ -21,7 +21,7 @@ data class CurrentTermResponse(
         fun fromJson(jsonString: String): CurrentTermResponse {
             val obj = JSONObject(jsonString)
             val data = obj.optJSONObject("data") ?: JSONObject()
-            
+
             return CurrentTermResponse(
                 code = obj.optInt("code"),
                 success = obj.optBoolean("success"),
@@ -30,7 +30,7 @@ data class CurrentTermResponse(
                 startDate = data.optString("startdate", ""),
                 endDate = data.optString("enddate", ""),
                 weeks = data.optInt("weeks", 0),
-                currentWeek = try { data.optString("currentWeek", "1").toInt() } catch (e: Exception) { 1 },
+                currentWeek = data.optString("currentWeek", "1").toIntOrNull() ?: 1,
                 currentDate = data.optString("currentDate", ""),
                 msg = obj.optString("msg", "")
             )

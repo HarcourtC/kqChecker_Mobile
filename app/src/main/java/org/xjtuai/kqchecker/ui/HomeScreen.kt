@@ -1,24 +1,24 @@
 package org.xjtuai.kqchecker.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import java.util.Calendar
 import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.ui.components.AppButton
 import org.xjtuai.kqchecker.ui.components.InfoCard
 import org.xjtuai.kqchecker.util.ScheduleTimeHelper
-import java.util.Calendar
 
 /**
  * 首页屏幕
@@ -61,15 +61,32 @@ fun HomeScreen(
                 InfoRow(icon = Icons.Default.Info, text = "当前没有可用课表数据。请先登录并同步课表。")
             } else {
                 InfoRow(icon = Icons.Default.List, text = nextClass.item.courseName)
-                InfoRow(icon = Icons.Default.LocationOn, text = nextClass.item.location.ifBlank { "未提供" })
-                InfoRow(icon = Icons.Default.Person, text = nextClass.item.teacher.ifBlank { "未提供" })
-                InfoRow(icon = Icons.Default.DateRange, text = "${nextClass.dayText} ${nextClass.timeText} (第${nextClass.item.startPeriod}-${nextClass.item.endPeriod}节)")
-                
+                InfoRow(
+                    icon = Icons.Default.LocationOn,
+                    text = nextClass.item.location.ifBlank {
+                        "未提供"
+                    }
+                )
+                InfoRow(
+                    icon = Icons.Default.Person,
+                    text = nextClass.item.teacher.ifBlank {
+                        "未提供"
+                    }
+                )
+                InfoRow(
+                    icon = Icons.Default.DateRange,
+                    text = "${nextClass.dayText} ${nextClass.timeText} (第${nextClass.item.startPeriod}-${nextClass.item.endPeriod}节)"
+                )
+
                 val statusColor = when (nextClass.statusText) {
                     "进行中" -> MaterialTheme.colors.secondary
                     else -> MaterialTheme.colors.primary
                 }
-                InfoRow(icon = Icons.Default.PlayArrow, text = nextClass.statusText, textColor = statusColor)
+                InfoRow(
+                    icon = Icons.Default.PlayArrow,
+                    text = nextClass.statusText,
+                    textColor = statusColor
+                )
             }
         }
 
@@ -79,9 +96,19 @@ fun HomeScreen(
             if (!latestAttendanceHint.isNullOrBlank()) {
                 InfoRow(icon = Icons.Default.Info, text = latestAttendanceHint)
             } else if (latestAttendance == null) {
-                InfoRow(icon = Icons.Default.Info, text = "暂无考勤数据或未登录。")
+                val msg = if (isLoggedIn) {
+                    "暂无有效考勤记录"
+                } else {
+                    "未登录或暂无考勤数据"
+                }
+                InfoRow(icon = Icons.Default.Info, text = msg)
             } else {
-                InfoRow(icon = Icons.Default.LocationOn, text = latestAttendance.eqno.ifBlank { "未提供" })
+                InfoRow(
+                    icon = Icons.Default.LocationOn,
+                    text = latestAttendance.eqno.ifBlank {
+                        "未提供"
+                    }
+                )
                 InfoRow(icon = Icons.Default.DateRange, text = latestAttendance.watertime)
                 InfoRow(icon = Icons.Default.Info, text = latestAttendance.fromTypeText)
             }
@@ -91,7 +118,7 @@ fun HomeScreen(
 
         if (!isLoggedIn) {
             AppButton(
-                text = "登录", 
+                text = "登录",
                 onClick = onLoginClick,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -146,7 +173,11 @@ private fun findNextClass(
         Candidate(item, dayOffset, startMinutes, status)
     }
 
-    val next = candidates.minWithOrNull(compareBy<Candidate> { it.dayOffset }.thenBy { it.startMinutes }) ?: return null
+    val next = candidates.minWithOrNull(
+        compareBy<Candidate> {
+            it.dayOffset
+        }.thenBy { it.startMinutes }
+    ) ?: return null
     val dayText = dayOffsetText(next.dayOffset, next.item.dayOfWeek)
     val startText = periodSlots[next.item.startPeriod]?.startText ?: "--:--"
     val endText = periodSlots[next.item.endPeriod]?.endText ?: "--:--"

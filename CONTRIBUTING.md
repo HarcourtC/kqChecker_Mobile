@@ -155,14 +155,14 @@ feat(usecase): 增加作业图片同步上传与识别能力
 Closes #29
 ```
 
-### 规范检查器 (Ktlint) 拦截检查
-你必须在每次发起 PR 提交前调用 Gradle 的检查项：
+### 代码质量检查
+在每次发起 PR 前，请至少执行以下检查项：
 ```bash
-# 执行校验是否违背缩进、换行或命名约定（PascalCase / camelCase 等）
-./gradlew ktlintCheck
+# 静态分析
+./gradlew detekt
 
-# 委托 Gradle 直接为您完成基础代码的自动美化排版
-./gradlew ktlintFormat
+# Android Lint
+./gradlew lintDebug
 ```
 
 ### 🐛 Issue与讨论

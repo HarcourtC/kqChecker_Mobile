@@ -3,14 +3,14 @@ package org.xjtuai.kqchecker.ui
 import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +48,7 @@ fun SettingsScreen(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
         InfoCard(title = "界面设置") {
-             Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "显示事件日志面板",
                     modifier = Modifier.weight(1f)
@@ -56,11 +56,11 @@ fun SettingsScreen(
                 Switch(
                     checked = eventLogEnabled,
                     onCheckedChange = { checked ->
-                         toggleEventLog(checked)
+                        toggleEventLog(checked)
                     }
                 )
             }
-             Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "课表隐藏周末",
                     modifier = Modifier.weight(1f)
@@ -68,7 +68,7 @@ fun SettingsScreen(
                 Switch(
                     checked = hideWeekendsEnabled,
                     onCheckedChange = { checked ->
-                         toggleHideWeekends(checked)
+                        toggleHideWeekends(checked)
                     }
                 )
             }

@@ -1,9 +1,8 @@
 package org.xjtuai.kqchecker
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
-import android.content.BroadcastReceiver
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -13,13 +12,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.xjtuai.kqchecker.model.ScheduleItem
-import org.xjtuai.kqchecker.network.WaterRecord
+import org.json.JSONObject
 import org.xjtuai.kqchecker.auth.TokenManager
 import org.xjtuai.kqchecker.auth.WebLoginActivity
+import org.xjtuai.kqchecker.model.ScheduleItem
+import org.xjtuai.kqchecker.network.WaterRecord
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.ui.MainScreen
 import org.xjtuai.kqchecker.ui.components.UpdateDialog
@@ -29,8 +31,6 @@ import org.xjtuai.kqchecker.util.LoginHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.VersionChecker
 import org.xjtuai.kqchecker.util.VersionInfo
-import org.json.JSONObject
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +53,9 @@ fun AppContent() {
     val mainHandler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     val prefs = remember { context.getSharedPreferences("kq_prefs", Context.MODE_PRIVATE) }
     var showEventLog by remember { mutableStateOf(prefs.getBoolean("event_log_enabled", true)) }
-    var startupSyncEnabled by remember { mutableStateOf(prefs.getBoolean("startup_sync_enabled", true)) }
+    var startupSyncEnabled by remember {
+        mutableStateOf(prefs.getBoolean("startup_sync_enabled", true))
+    }
 
     // 版本更新状态
     var versionInfo by remember { mutableStateOf<VersionInfo?>(null) }
@@ -78,15 +80,12 @@ fun AppContent() {
             addAction(TokenManager.ACTION_TOKEN_CLEARED)
             addAction(TokenManager.ACTION_REQUEST_LOGIN)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(
-                loginStateReceiver,
-                filter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            context.registerReceiver(loginStateReceiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            context,
+            loginStateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         onDispose { context.unregisterReceiver(loginStateReceiver) }
     }
 
@@ -117,6 +116,7 @@ fun AppContent() {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName ?: "1.0"
         } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to resolve app version name, fallback to 1.0", e)
             "1.0"
         }
     }
@@ -217,6 +217,8 @@ fun AppContent() {
                     latestAttendance = latestValidRecord
                     latestAttendanceHint = if (isEmpty200) {
                         "考勤系统异常，请稍后再试"
+                    } else if (latestValidRecord == null && response.data.list.isNotEmpty()) {
+                        "暂无有效考勤记录"
                     } else {
                         null
                     }
@@ -326,7 +328,7 @@ fun AppContent() {
                         val expires = JSONObject(f.readText()).optString("expires", "Unknown")
                         postEvent("Weekly cache is up-to-date, expires on: $expires")
                     } catch (e: Exception) {
-                         postEvent("Weekly cache check error: ${e.message}")
+                        postEvent("Weekly cache check error: ${e.message}")
                     }
                 } else {
                     postEvent("Weekly cache is up-to-date")
@@ -341,7 +343,6 @@ fun AppContent() {
             loadLatestAttendance()
         }
     }
-
 
     // 登录启动器
     val loginLauncher = rememberLauncherForActivityResult(

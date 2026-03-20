@@ -2,19 +2,17 @@ package org.xjtuai.kqchecker.repository
 
 import android.content.Context
 import android.util.Log
+import java.net.SocketTimeoutException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.RequestBody
+import org.json.JSONObject
 import org.xjtuai.kqchecker.network.ApiClient
 import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.WeeklyResponse
 import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
 import org.xjtuai.kqchecker.util.RateLimitNotifier
-import org.json.JSONObject
-import java.net.SocketTimeoutException
-
-import org.xjtuai.kqchecker.network.CurrentTermResponse
 
 /**
  * 周课表仓库类，负责处理周课表数据的获取、缓存和业务逻辑
@@ -23,7 +21,7 @@ class WeeklyRepository(private val context: Context) {
     companion object {
         private const val TAG = "WeeklyRepository"
     }
-    
+
     private val apiClient = ApiClient(context)
     private val baseUrl: String = ConfigHelper.getBaseUrl(context)
     private val apiService = apiClient.createService(baseUrl)
@@ -53,15 +51,15 @@ class WeeklyRepository(private val context: Context) {
                 } else {
                     Log.d(TAG, "强制刷新模式，跳过缓存检查，直接从API获取")
                 }
-                
+
                 // 从API获取新数据
                 Log.d(TAG, "开始从API获取数据...")
                 val startTime = System.currentTimeMillis()
                 val apiData = getWeeklyDataFromApi()
                 val endTime = System.currentTimeMillis()
-                
+
                 Log.d(TAG, "API请求耗时: ${endTime - startTime}ms")
-                
+
                 if (apiData != null) {
                     Log.d(TAG, "✅ API数据获取成功")
                     return@withContext apiData
@@ -82,7 +80,7 @@ class WeeklyRepository(private val context: Context) {
             }
         }
     }
-    
+
     /**
      * 从缓存中获取周课表数据
      */
@@ -91,11 +89,14 @@ class WeeklyRepository(private val context: Context) {
         try {
             val jsonContent = cacheManager.readFromCache(CacheManager.WEEKLY_CACHE_FILE)
             Log.d(TAG, "缓存数据存在: ${jsonContent != null}")
-            
-                if (jsonContent != null) {
+
+            if (jsonContent != null) {
                 Log.d(TAG, "缓存数据长度: ${jsonContent.length} 字符")
                 val response = WeeklyResponse.fromJson(jsonContent)
-                Log.d(TAG, "缓存数据解析结果 - success: ${response.success}, dataCount: ${response.data.length()}")
+                Log.d(
+                    TAG,
+                    "缓存数据解析结果 - success: ${response.success}, dataCount: ${response.data.length()}"
+                )
                 return response
             }
         } catch (e: Exception) {
@@ -103,7 +104,7 @@ class WeeklyRepository(private val context: Context) {
         }
         return null
     }
-    
+
     /**
      * 从API获取周课表数据
      */
@@ -114,7 +115,7 @@ class WeeklyRepository(private val context: Context) {
             RateLimitNotifier.show(context)
             return null
         }
-        
+
         // 尝试获取当前学期信息
         var termNo: Int? = null
         var week: Int? = null
@@ -133,7 +134,7 @@ class WeeklyRepository(private val context: Context) {
             // 创建请求体
             Log.d(TAG, "准备请求参数...")
             val requestBody = createWeeklyRequest(termNo, week)
-            
+
             Log.d(TAG, "发送课表请求到配置化端点")
             val respBody = apiService.getWeeklyData(config.weeklyEndpoint, requestBody)
 
@@ -154,13 +155,19 @@ class WeeklyRepository(private val context: Context) {
             // 转换为WeeklyResponse
             Log.d(TAG, "解析API响应数据...")
             val response = WeeklyResponse.fromJson(responseString)
-            
+
             if (!response.success || response.data.length() == 0) {
-                Log.e(TAG, "❌ Invalid API response: success=${response.success}, dataCount=${response.data.length()}")
+                Log.e(
+                    TAG,
+                    "❌ Invalid API response: success=${response.success}, dataCount=${response.data.length()}"
+                )
                 // 若后端提示未登录或返回认证类错误（code 400/401/403 或 msg 包含登录提示），通知用户重新登录
                 try {
                     val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
-                    if (response.code == 400 || response.code == 401 || response.code == 403 || response.msg.contains("请登录") || response.msg.contains("未登录")) {
+                    if (response.code == 400 || response.code == 401 || response.code == 403 || response.msg.contains(
+                            "请登录"
+                        ) || response.msg.contains("未登录")
+                    ) {
                         // 先清除过期 token，再通知用户
                         tm.clear()
                         tm.notifyTokenInvalid()
@@ -172,13 +179,13 @@ class WeeklyRepository(private val context: Context) {
                 }
                 return null
             }
-            
+
             Log.d(TAG, "✅ API数据解析成功")
-            
+
             // 添加缓存过期信息
             val weekendDate = cacheManager.getCurrentWeekendDate()
             Log.d(TAG, "设置缓存过期时间: $weekendDate")
-            
+
             // 构建可修改的 JSON 对象，并确保覆盖/设置 expires 字段，避免字符串替换导致的重复 key 问题
             try {
                 val parsedObj = JSONObject(response.toJson())
@@ -208,10 +215,9 @@ class WeeklyRepository(private val context: Context) {
             // 保存元数据
             val metaData = "{\"last_fetched\":\"${cacheManager.getCurrentDate()}\",\"expires\":\"$weekendDate\"}"
             cacheManager.saveToCache(CacheManager.WEEKLY_RAW_META_FILE, metaData)
-            
+
             Log.d(TAG, "✅ 成功获取并缓存周课表数据")
             return response
-            
         } catch (e: SocketTimeoutException) {
             Log.e(TAG, "❌ 网络请求超时", e)
             throw e
@@ -261,7 +267,10 @@ class WeeklyRepository(private val context: Context) {
                 // 尝试解析以检测认证类错误（保持与 getWeeklyDataFromApi 中一致的认证检测行为）
                 try {
                     val parsed = WeeklyResponse.fromJson(responseString)
-                    if (parsed.code == 400 || parsed.code == 401 || parsed.code == 403 || parsed.msg.contains("请登录") || parsed.msg.contains("未登录")) {
+                    if (parsed.code == 400 || parsed.code == 401 || parsed.code == 403 || parsed.msg.contains(
+                            "请登录"
+                        ) || parsed.msg.contains("未登录")
+                    ) {
                         try {
                             val tm = org.xjtuai.kqchecker.auth.TokenManager(context)
                             // 先清除过期 token，再通知用户
@@ -274,7 +283,11 @@ class WeeklyRepository(private val context: Context) {
                     }
                 } catch (e: Exception) {
                     // 如果解析失败，则忽略解析错误，仅返回原始字符串
-                    Log.d(TAG, "Raw response could not be parsed as WeeklyResponse (this may be fine for raw printing)")
+                    Log.d(
+                        TAG,
+                        "Raw response could not be parsed as WeeklyResponse (this may be fine for raw printing)",
+                        e
+                    )
                 }
 
                 Log.d(TAG, "Fetched raw response length: ${responseString.length}")
@@ -285,13 +298,13 @@ class WeeklyRepository(private val context: Context) {
             }
         }
     }
-    
+
     /**
      * 创建周课表请求体
      */
     private fun createWeeklyRequest(termNo: Int? = null, week: Int? = null): RequestBody {
         val payloadObj = JSONObject()
-        
+
         if (termNo != null) payloadObj.put("termNo", termNo)
         if (week != null) payloadObj.put("week", week)
 
@@ -308,22 +321,25 @@ class WeeklyRepository(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.d(TAG, "No termNo/week in config.json or file read failed")
+            Log.d(TAG, "No termNo/week in config.json or file read failed", e)
         }
-        
+
         return ApiService.jsonToRequestBody(payloadObj)
     }
-    
+
     /**
      * 强制刷新周课表数据
      */
     suspend fun refreshWeeklyData(): WeeklyResponse? {
         Log.d(TAG, "========== refreshWeeklyData() 调用开始 ==========")
         val result = getWeeklyData(forceRefresh = true)
-        Log.d(TAG, "========== refreshWeeklyData() 调用结束，结果: ${if (result != null) "成功" else "失败"} ==========")
+        Log.d(
+            TAG,
+            "========== refreshWeeklyData() 调用结束，结果: ${if (result != null) "成功" else "失败"} =========="
+        )
         return result
     }
-    
+
     /**
      * 检查缓存状态
      */
@@ -332,7 +348,7 @@ class WeeklyRepository(private val context: Context) {
         val isExpired = if (cacheExists) cacheManager.isWeeklyCacheExpired() else true
         val expiresDate = cacheManager.getWeeklyCacheExpiresDate()
         val cacheInfo = cacheManager.getCacheFileInfo(CacheManager.WEEKLY_CACHE_FILE)
-        
+
         return CacheStatus(
             exists = cacheExists,
             isExpired = isExpired,
@@ -340,7 +356,7 @@ class WeeklyRepository(private val context: Context) {
             fileInfo = cacheInfo
         )
     }
-    
+
     /**
      * 获取缓存文件路径（用于导出）
      */
@@ -366,7 +382,15 @@ class WeeklyRepository(private val context: Context) {
                     if (info == null) continue
                     val content = cacheManager.readFromCache(fname) ?: ""
                     val preview = if (content.length > 4000) content.substring(0, 4000) + "... (truncated)" else content
-                    result.add(FilePreview(name = fname, path = info.path, size = info.size, lastModified = info.lastModified, preview = preview))
+                    result.add(
+                        FilePreview(
+                            name = fname,
+                            path = info.path,
+                            size = info.size,
+                            lastModified = info.lastModified,
+                            preview = preview
+                        )
+                    )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error preparing preview for $fname", e)
                 }

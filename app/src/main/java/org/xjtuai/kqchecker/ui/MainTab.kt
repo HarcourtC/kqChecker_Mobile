@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Divider
@@ -25,19 +28,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.unit.dp
 import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.network.WaterRecord
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Home : Screen("home", "首页", Icons.Default.Home)
-    object Schedule : Screen("schedule", "课表", Icons.Default.DateRange)
-    object Competition : Screen("competition", "竞赛", Icons.Default.List)
-    object Tools : Screen("tools", "工具", Icons.Default.Build)
-    object Settings : Screen("settings", "设置", Icons.Default.Settings)
+sealed class MainTab(val route: String, val label: String, val icon: ImageVector) {
+    object Home : MainTab("home", "首页", Icons.Default.Home)
+    object Schedule : MainTab("schedule", "课表", Icons.Default.DateRange)
+    object Competition : MainTab("competition", "竞赛", Icons.Default.List)
+    object Tools : MainTab("tools", "工具", Icons.Default.Build)
+    object Settings : MainTab("settings", "设置", Icons.Default.Settings)
 }
 
 @Composable
@@ -56,7 +56,7 @@ fun MainScreen(
     onCheckUpdate: () -> Unit,
     onLoginRequired: () -> Unit
 ) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
+    var currentScreen by remember { mutableStateOf<MainTab>(MainTab.Home) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
@@ -70,7 +70,13 @@ fun MainScreen(
                 contentColor = MaterialTheme.colors.primary,
                 elevation = 10.dp
             ) {
-                val screens = listOf(Screen.Home, Screen.Schedule, Screen.Competition, Screen.Tools, Screen.Settings)
+                val screens = listOf(
+                    MainTab.Home,
+                    MainTab.Schedule,
+                    MainTab.Competition,
+                    MainTab.Tools,
+                    MainTab.Settings
+                )
                 screens.forEach { screen ->
                     BottomNavigationItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
@@ -94,7 +100,7 @@ fun MainScreen(
                     .fillMaxWidth()
             ) {
                 when (currentScreen) {
-                    Screen.Home -> HomeScreen(
+                    MainTab.Home -> HomeScreen(
                         onLoginClick = onLoginClick,
                         onManualSync = onManualSync,
                         isLoggedIn = isLoggedIn,
@@ -103,17 +109,17 @@ fun MainScreen(
                         latestAttendanceHint = latestAttendanceHint,
                         refreshToken = homeRefreshToken
                     )
-                    Screen.Schedule -> ScheduleScreen(
+                    MainTab.Schedule -> ScheduleScreen(
                         onPostEvent = onPostEvent
                     )
-                    Screen.Competition -> CompetitionScreen(
+                    MainTab.Competition -> CompetitionScreen(
                         onPostEvent = onPostEvent
                     )
-                    Screen.Tools -> ToolsScreen(
+                    MainTab.Tools -> ToolsScreen(
                         onPostEvent = onPostEvent,
                         onLoginRequired = onLoginRequired
                     )
-                    Screen.Settings -> SettingsScreen(
+                    MainTab.Settings -> SettingsScreen(
                         onPostEvent = onPostEvent,
                         isCheckingUpdate = isCheckingUpdate,
                         onCheckUpdate = onCheckUpdate

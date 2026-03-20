@@ -4,9 +4,7 @@ import android.content.Context
 import android.util.Log
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import org.xjtuai.kqchecker.network.ApiClient
-import org.xjtuai.kqchecker.network.ApiService
 import org.xjtuai.kqchecker.network.CurrentTermResponse
 import org.xjtuai.kqchecker.util.ApiRateLimiter
 import org.xjtuai.kqchecker.util.ConfigHelper
@@ -40,7 +38,7 @@ class TermRepository(private val context: Context) {
             // Empty JSON body for the request
             val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
             val requestBody = "{}".toRequestBody(mediaType)
-            
+
             val responseBody = apiService.getCurrentTerm(config.currentTermEndpoint, requestBody) ?: return null
             val json = responseBody.string()
             Log.d(TAG, "Current term response: $json")

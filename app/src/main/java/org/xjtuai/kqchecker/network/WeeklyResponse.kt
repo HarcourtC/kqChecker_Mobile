@@ -29,7 +29,7 @@ data class WeeklyResponse(
                 expires = jsonObject.optString("expires", "")
             )
         }
-        
+
         /**
          * 创建带日期和过期信息的WeeklyResponse
          */
@@ -44,7 +44,7 @@ data class WeeklyResponse(
             )
         }
     }
-    
+
     /**
      * 转换为JSON字符串
      */

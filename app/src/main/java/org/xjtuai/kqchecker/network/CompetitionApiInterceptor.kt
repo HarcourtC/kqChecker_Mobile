@@ -1,15 +1,15 @@
 package org.xjtuai.kqchecker.network
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
-import android.util.Log
 
 /**
  * 竞赛API拦截器：添加 X-API-KEY 请求头
  */
 class CompetitionApiInterceptor(private val apiKey: String) : Interceptor {
     companion object {
-        private const val TAG = "CompetitionApiInterceptor"
+        private const val TAG = "CompetitionApi"
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {

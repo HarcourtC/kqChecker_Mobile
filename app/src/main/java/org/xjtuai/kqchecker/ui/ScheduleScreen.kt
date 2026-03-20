@@ -7,10 +7,10 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,24 +19,29 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import org.xjtuai.kqchecker.model.HomeworkRecord
-import org.xjtuai.kqchecker.model.ScheduleItem
-
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.xjtuai.kqchecker.model.HomeworkRecord
+import org.xjtuai.kqchecker.model.ScheduleItem
 import org.xjtuai.kqchecker.repository.HomeworkRepository
 import org.xjtuai.kqchecker.repository.RepositoryProvider
 import org.xjtuai.kqchecker.sync.WriteCalendar
@@ -44,12 +49,6 @@ import org.xjtuai.kqchecker.util.CalendarHelper
 import org.xjtuai.kqchecker.util.ScheduleParser
 import org.xjtuai.kqchecker.util.ScheduleTimeHelper
 import org.xjtuai.kqchecker.util.WorkManagerHelper
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 private data class HomeworkDraft(
     val title: String = "",
@@ -76,7 +75,9 @@ fun ScheduleScreen(
     var pendingManualCalendarSync by remember { mutableStateOf(false) }
     var pendingCapturePath by remember { mutableStateOf<String?>(null) }
 
-    val prefs = remember { context.getSharedPreferences("kq_prefs", android.content.Context.MODE_PRIVATE) }
+    val prefs = remember {
+        context.getSharedPreferences("kq_prefs", android.content.Context.MODE_PRIVATE)
+    }
     val hideWeekends = prefs.getBoolean("hide_weekends", false)
     val totalDays = if (hideWeekends) 5 else 7
 
@@ -554,7 +555,7 @@ fun ScheduleItemCard(
         androidx.compose.ui.graphics.Color(0xFFFFB300), // Amber
         androidx.compose.ui.graphics.Color(0xFFFF5722), // Deep Orange
         androidx.compose.ui.graphics.Color(0xFF8BC34A), // Light Green
-        androidx.compose.ui.graphics.Color(0xFF607D8B)  // Blue Grey
+        androidx.compose.ui.graphics.Color(0xFF607D8B) // Blue Grey
     )
 
     // Dark vibrant palette for the side bar
@@ -570,7 +571,7 @@ fun ScheduleItemCard(
 
     val colorPalette = if (isDark) darkPalette else lightPalette
     val baseColor = colorPalette[item.colorIndex % colorPalette.size]
-    
+
     // Background is a very washed out version of the base color
     val backgroundColor = baseColor.copy(alpha = if (isDark) 0.15f else 0.1f)
     val textColor = MaterialTheme.colors.onSurface
@@ -629,7 +630,10 @@ fun ScheduleItemCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = item.location,
-                        style = MaterialTheme.typography.overline.copy(fontSize = 10.sp, lineHeight = 12.sp),
+                        style = MaterialTheme.typography.overline.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp
+                        ),
                         color = textColor.copy(alpha = 0.7f),
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Medium,
@@ -682,7 +686,9 @@ private fun HomeworkDialog(
                 )
                 Button(
                     onClick = {
-                        val calendar = Calendar.getInstance().apply { timeInMillis = draft.dueDateMillis }
+                        val calendar = Calendar.getInstance().apply {
+                            timeInMillis = draft.dueDateMillis
+                        }
                         DatePickerDialog(
                             context,
                             { _, year, month, dayOfMonth ->

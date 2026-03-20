@@ -1,12 +1,12 @@
 package org.xjtuai.kqchecker.util
 
 import android.util.Log
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * 版本检查工具
@@ -152,15 +152,20 @@ object VersionChecker {
     private fun findApkAssetUrl(assets: JSONArray?): String? {
         if (assets == null) return null
         for (i in 0 until assets.length()) {
-            val item = assets.optJSONObject(i) ?: continue
-            val contentType = item.optString("content_type", "")
-            val name = item.optString("name", "")
-            val downloadUrl = item.optString("browser_download_url", "")
-            if (downloadUrl.isBlank()) continue
-
-            val isApkContentType = contentType.equals("application/vnd.android.package-archive", ignoreCase = true)
-            val isApkFileName = name.endsWith(".apk", ignoreCase = true)
-            if (isApkContentType || isApkFileName) return downloadUrl
+            val item = assets.optJSONObject(i)
+            if (item != null) {
+                val contentType = item.optString("content_type", "")
+                val name = item.optString("name", "")
+                val downloadUrl = item.optString("browser_download_url", "")
+                if (downloadUrl.isNotBlank()) {
+                    val isApkContentType = contentType.equals(
+                        "application/vnd.android.package-archive",
+                        ignoreCase = true
+                    )
+                    val isApkFileName = name.endsWith(".apk", ignoreCase = true)
+                    if (isApkContentType || isApkFileName) return downloadUrl
+                }
+            }
         }
         return null
     }

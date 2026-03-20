@@ -133,7 +133,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在拉取课表原始响应...")
                         try {
-                            val rawResp = withContext(Dispatchers.IO) { weeklyRepository.fetchWeeklyRawFromApi() }
+                            val rawResp = withContext(Dispatchers.IO) {
+                                weeklyRepository.fetchWeeklyRawFromApi()
+                            }
                             if (!rawResp.isNullOrBlank()) {
                                 onPostEvent("拉取成功（${rawResp.length} bytes）")
                                 onPostEvent(rawResp.take(500) + "...")
@@ -151,7 +153,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在输出 weekly 文件...")
                         try {
-                            val previews = withContext(Dispatchers.IO) { weeklyRepository.getWeeklyFilePreviews() }
+                            val previews = withContext(Dispatchers.IO) {
+                                weeklyRepository.getWeeklyFilePreviews()
+                            }
                             if (previews.isEmpty()) {
                                 onPostEvent("没有可输出的 weekly 文件")
                             }
@@ -171,7 +175,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在生成 cleaned weekly...")
                         try {
-                            val ok = withContext(Dispatchers.IO) { weeklyCleaner.generateCleanedWeekly() }
+                            val ok = withContext(Dispatchers.IO) {
+                                weeklyCleaner.generateCleanedWeekly()
+                            }
                             if (ok) {
                                 onPostEvent("生成成功")
                             } else {
@@ -189,7 +195,9 @@ fun ToolsScreen(
                     scope.launch {
                         onPostEvent("正在输出 API2 调试文件...")
                         try {
-                            val previews = withContext(Dispatchers.IO) { waterListRepository.getApi2FilePreviews() }
+                            val previews = withContext(Dispatchers.IO) {
+                                waterListRepository.getApi2FilePreviews()
+                            }
                             if (previews.isEmpty()) {
                                 onPostEvent("没有可输出的 API2 文件")
                             }

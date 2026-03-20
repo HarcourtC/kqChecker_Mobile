@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.xjtuai.kqchecker.domain.usecase.IntegrationFlowUseCase
 import org.xjtuai.kqchecker.domain.usecase.RefreshWeeklyUseCase
 import org.xjtuai.kqchecker.domain.usecase.WriteCalendarUseCase
@@ -27,347 +26,342 @@ import org.xjtuai.kqchecker.util.ScheduleParser
  * Eliminates ~350 lines from MainActivity through delegation
  */
 class MainViewModel(
-  application: Application,
-  private val refreshWeeklyUseCase: RefreshWeeklyUseCase,
-  private val writeCalendarUseCase: WriteCalendarUseCase,
-  private val integrationFlowUseCase: IntegrationFlowUseCase,
-  private val weeklyRepository: WeeklyRepository,
-  private val weeklyCleaner: WeeklyCleaner
+    application: Application,
+    private val refreshWeeklyUseCase: RefreshWeeklyUseCase,
+    private val writeCalendarUseCase: WriteCalendarUseCase,
+    private val integrationFlowUseCase: IntegrationFlowUseCase,
+    private val weeklyRepository: WeeklyRepository,
+    private val weeklyCleaner: WeeklyCleaner
 ) : AndroidViewModel(application) {
 
-  private val context = application.applicationContext
-  private val _uiState = MutableStateFlow(MainUiState())
-  val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+    private val context = application.applicationContext
+    private val _uiState = MutableStateFlow(MainUiState())
+    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-  companion object {
-    private const val TAG = "MainViewModel"
-  }
-
-  init {
-    // Perform initialization on app start
-    checkAndAutoRefresh()
-  }
-
-  /**
-   * Check cache expiration and auto-refresh if needed
-   */
-  private fun checkAndAutoRefresh() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Checking weekly.json cache expiration...")
-        val result = refreshWeeklyUseCase.autoRefresh()
-
-        when (result) {
-          is RefreshWeeklyUseCase.RefreshResult.Success -> {
-            addEventLog(result.message)
-            addEventLog("Cache will expire on: ${result.cacheStatus.expiresDate ?: "unknown"}")
-            loadSchedule()
-          }
-          is RefreshWeeklyUseCase.RefreshResult.CacheValid -> {
-            addEventLog(result.message)
-            addEventLog("Expires on: ${result.expiresDate}")
-            loadSchedule()
-          }
-          is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
-            addEventLog(result.message)
-            _uiState.update { it.copy(needsLogin = true) }
-          }
-          is RefreshWeeklyUseCase.RefreshResult.Error -> {
-            addEventLog("Auto-refresh check failed: ${result.message}")
-          }
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Error during auto-refresh check", e)
-        addEventLog("Auto-refresh check failed: ${e.message ?: e.toString()}")
-      }
+    companion object {
+        private const val TAG = "MainViewModel"
     }
-  }
 
-
-  private suspend fun loadSchedule() {
-    try {
-        val response = weeklyRepository.getWeeklyData(false)
-        if (response != null && response.success) {
-            val items = ScheduleParser.parse(response.data)
-            _uiState.update { it.copy(scheduleItems = items) }
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to load schedule", e)
+    init {
+        // Perform initialization on app start
+        checkAndAutoRefresh()
     }
-  }
 
+    /**
+     * Check cache expiration and auto-refresh if needed
+     */
+    private fun checkAndAutoRefresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Checking weekly.json cache expiration...")
+                val result = refreshWeeklyUseCase.autoRefresh()
 
-
-  /**
-   * Add an event log entry to the UI
-   */
-  fun addEventLog(message: String) {
-    viewModelScope.launch(Dispatchers.Main) {
-      _uiState.update { state ->
-        state.copy(eventLogs = state.eventLogs + message)
-      }
-    }
-  }
-
-  /**
-   * Clear all event logs
-   */
-  fun clearEventLogs() {
-    _uiState.update { it.copy(eventLogs = emptyList()) }
-  }
-
-  /**
-   * Navigate to a specific page
-   */
-  fun onPageChange(newPage: Int) {
-    _uiState.update { it.copy(currentPage = newPage) }
-  }
-
-  /**
-   * Perform manual refresh of weekly data
-   */
-  fun onRefreshWeekly() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Triggering manual sync...")
-        val result = refreshWeeklyUseCase.manualRefresh()
-
-        when (result) {
-          is RefreshWeeklyUseCase.RefreshResult.Success -> {
-            addEventLog(result.message)
-            addEventLog("Cache status: ${if (result.cacheStatus.isExpired) "Expired" else "Valid"}")
-            addEventLog("Cache expires on: ${result.cacheStatus.expiresDate ?: "unknown"}")
-            loadSchedule()
-          }
-          is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
-            addEventLog(result.message)
-            _uiState.update { it.copy(needsLogin = true) }
-          }
-          is RefreshWeeklyUseCase.RefreshResult.Error -> {
-            addEventLog("Sync exception: ${result.message}")
-          }
-          else -> addEventLog("Sync: unexpected result state")
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Refresh weekly error", e)
-        addEventLog("Sync exception: ${e.message}")
-      }
-    }
-  }
-
-  /**
-   * Check cache status
-   */
-  fun onCheckCacheStatus() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        val cacheStatus = refreshWeeklyUseCase.checkCacheStatus()
-        addEventLog("[Home] Cache exists: ${cacheStatus.exists}, expired: ${cacheStatus.isExpired}")
-      } catch (e: Exception) {
-        addEventLog("[Home] Cannot read cache status: ${e.message ?: e.toString()}")
-      }
-    }
-  }
-
-  /**
-   * Initiate calendar write operation
-   */
-  fun onWriteCalendar() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Writing calendar from backend...")
-        val result = writeCalendarUseCase.writeCalendarFromBackend()
-
-        when (result) {
-          is WriteCalendarUseCase.WriteResult.Enqueued -> {
-            addEventLog(result.message)
-            // Start observing the work
-            writeCalendarUseCase.observeCalendarWriteStatus(result.workId) { status ->
-              addEventLog(status)
+                when (result) {
+                    is RefreshWeeklyUseCase.RefreshResult.Success -> {
+                        addEventLog(result.message)
+                        addEventLog("Cache will expire on: ${result.cacheStatus.expiresDate ?: "unknown"}")
+                        loadSchedule()
+                    }
+                    is RefreshWeeklyUseCase.RefreshResult.CacheValid -> {
+                        addEventLog(result.message)
+                        addEventLog("Expires on: ${result.expiresDate}")
+                        loadSchedule()
+                    }
+                    is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
+                        addEventLog(result.message)
+                        _uiState.update { it.copy(needsLogin = true) }
+                    }
+                    is RefreshWeeklyUseCase.RefreshResult.Error -> {
+                        addEventLog("Auto-refresh check failed: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during auto-refresh check", e)
+                addEventLog("Auto-refresh check failed: ${e.message ?: e.toString()}")
             }
-          }
-          is WriteCalendarUseCase.WriteResult.Error -> {
-            addEventLog("Calendar write error: ${result.message}")
-          }
         }
-      } catch (e: Exception) {
-        Log.e(TAG, "Write calendar error", e)
-        addEventLog("Calendar write error: ${e.message ?: e.toString()}")
-      }
     }
-  }
 
-  /**
-   * Execute experimental sync (API2)
-   */
-  fun onExperimentalSync() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Running experimental sync (API2)...")
-        val waterListRepo = RepositoryProvider.getWaterListRepository()
-        val result = waterListRepo.refreshWaterListData()
-
-        if (result != null) {
-          addEventLog("Experimental sync completed successfully")
-          addEventLog("API2 data fetched and saved")
-        } else {
-          addEventLog("Experimental sync failed - null result")
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Experimental sync error", e)
-        addEventLog("Experimental sync exception: ${e.message ?: e.toString()}")
-      }
-    }
-  }
-
-
-
-  /**
-   * Execute integration flow (ensure cleaned weekly and write to calendar)
-   */
-  fun onStartIntegration() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("[Integration] Starting integration flow...")
-
-        // Step 1: Execute integration flow
-        val flowResult = integrationFlowUseCase.executeIntegrationFlow()
-        when (flowResult) {
-          is IntegrationFlowUseCase.IntegrationResult.CleanedWeeklyExists -> {
-            addEventLog(flowResult.message)
-          }
-          is IntegrationFlowUseCase.IntegrationResult.DataExists -> {
-            addEventLog(flowResult.message)
-            // Generate cleaned weekly
-            val cleanResult = integrationFlowUseCase.generateCleanedWeekly()
-            when (cleanResult) {
-              is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
-                addEventLog(cleanResult.message)
-              }
-              is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
-                addEventLog("[Integration] Generation failed: ${cleanResult.message}")
-                return@launch
-              }
+    private suspend fun loadSchedule() {
+        try {
+            val response = weeklyRepository.getWeeklyData(false)
+            if (response != null && response.success) {
+                val items = ScheduleParser.parse(response.data)
+                _uiState.update { it.copy(scheduleItems = items) }
             }
-          }
-          is IntegrationFlowUseCase.IntegrationResult.DataFetched -> {
-            addEventLog(flowResult.message)
-            // Generate cleaned weekly
-            val cleanResult = integrationFlowUseCase.generateCleanedWeekly()
-            when (cleanResult) {
-              is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
-                addEventLog(cleanResult.message)
-              }
-              is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
-                addEventLog("[Integration] Generation failed: ${cleanResult.message}")
-                return@launch
-              }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load schedule", e)
+        }
+    }
+
+    /**
+     * Add an event log entry to the UI
+     */
+    fun addEventLog(message: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            _uiState.update { state ->
+                state.copy(eventLogs = state.eventLogs + message)
             }
-          }
-          is IntegrationFlowUseCase.IntegrationResult.AuthRequired -> {
-            addEventLog(flowResult.message)
-            _uiState.update { it.copy(needsLogin = true) }
-            return@launch
-          }
-          is IntegrationFlowUseCase.IntegrationResult.Error -> {
-            addEventLog("[Integration] Error: ${flowResult.message}")
-            return@launch
-          }
         }
-
-        // Step 2: Submit calendar write task
-        integrationFlowUseCase.submitAndMonitorCalendarWrite { status ->
-          addEventLog(status)
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Integration flow error", e)
-        addEventLog("[Integration] Unexpected error: ${e.message}")
-      }
     }
-  }
 
-  /**
-   * Handle integration pending state for permission callback
-   */
-  fun setIntegrationPending(pending: Boolean) {
-    _uiState.update { it.copy(integrationPending = pending) }
-  }
+    /**
+     * Clear all event logs
+     */
+    fun clearEventLogs() {
+        _uiState.update { it.copy(eventLogs = emptyList()) }
+    }
 
-  /**
-   * Generate cleaned weekly manually
-   */
-  fun onGenerateCleanedWeekly() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Generating cleaned weekly...")
-        val result = integrationFlowUseCase.generateCleanedWeekly()
+    /**
+     * Navigate to a specific page
+     */
+    fun onPageChange(newPage: Int) {
+        _uiState.update { it.copy(currentPage = newPage) }
+    }
 
-        when (result) {
-          is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
-            addEventLog(result.message)
-            val cleanedPath = weeklyCleaner.getCleanedFilePath()
-            if (cleanedPath != null) {
-              addEventLog("Saved cleaned weekly: $cleanedPath")
+    /**
+     * Perform manual refresh of weekly data
+     */
+    fun onRefreshWeekly() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Triggering manual sync...")
+                val result = refreshWeeklyUseCase.manualRefresh()
+
+                when (result) {
+                    is RefreshWeeklyUseCase.RefreshResult.Success -> {
+                        addEventLog(result.message)
+                        addEventLog("Cache status: ${if (result.cacheStatus.isExpired) "Expired" else "Valid"}")
+                        addEventLog("Cache expires on: ${result.cacheStatus.expiresDate ?: "unknown"}")
+                        loadSchedule()
+                    }
+                    is RefreshWeeklyUseCase.RefreshResult.AuthRequired -> {
+                        addEventLog(result.message)
+                        _uiState.update { it.copy(needsLogin = true) }
+                    }
+                    is RefreshWeeklyUseCase.RefreshResult.Error -> {
+                        addEventLog("Sync exception: ${result.message}")
+                    }
+                    else -> addEventLog("Sync: unexpected result state")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Refresh weekly error", e)
+                addEventLog("Sync exception: ${e.message}")
             }
-          }
-          is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
-            addEventLog("Exception during cleaning: ${result.message}")
-          }
         }
-      } catch (e: Exception) {
-        Log.e(TAG, "Generate cleaned weekly error", e)
-        addEventLog("Exception during cleaning: ${e.message ?: e.toString()}")
-      }
     }
-  }
 
-  /**
-   * Print cleaned weekly file contents
-   */
-  fun onPrintCleanedWeekly() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Printing cleaned weekly to logs...")
-        val cm = CacheManager(context)
-        val content = cm.readFromCache("cleaned_weekly.json")
-
-        if (content.isNullOrBlank()) {
-          addEventLog("No cleaned weekly found in cache")
-        } else {
-          Log.d(TAG, "Cleaned weekly (${content.length} bytes):\n$content")
-          addEventLog("Printed cleaned weekly to logs (${content.length} bytes)")
-          addEventLog("Preview: ${content.take(800)}")
+    /**
+     * Check cache status
+     */
+    fun onCheckCacheStatus() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cacheStatus = refreshWeeklyUseCase.checkCacheStatus()
+                addEventLog("[Home] Cache exists: ${cacheStatus.exists}, expired: ${cacheStatus.isExpired}")
+            } catch (e: Exception) {
+                addEventLog("[Home] Cannot read cache status: ${e.message ?: e.toString()}")
+            }
         }
-      } catch (e: Exception) {
-        Log.e(TAG, "Print cleaned weekly error", e)
-        addEventLog("Print cleaned weekly failed: ${e.message ?: e.toString()}")
-      }
     }
-  }
 
-  /**
-   * Print weekly files
-   */
-  fun onPrintWeekly() {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        addEventLog("Printing weekly files...")
-        val previews = weeklyRepository.getWeeklyFilePreviews()
+    /**
+     * Initiate calendar write operation
+     */
+    fun onWriteCalendar() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Writing calendar from backend...")
+                val result = writeCalendarUseCase.writeCalendarFromBackend()
 
-        if (previews.isEmpty()) {
-          addEventLog("No weekly files found to print")
-          return@launch
+                when (result) {
+                    is WriteCalendarUseCase.WriteResult.Enqueued -> {
+                        addEventLog(result.message)
+                        // Start observing the work
+                        writeCalendarUseCase.observeCalendarWriteStatus(result.workId) { status ->
+                            addEventLog(status)
+                        }
+                    }
+                    is WriteCalendarUseCase.WriteResult.Error -> {
+                        addEventLog("Calendar write error: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Write calendar error", e)
+                addEventLog("Calendar write error: ${e.message ?: e.toString()}")
+            }
         }
-
-        for (p in previews) {
-          Log.d(TAG, "File: ${p.name} (${p.size} bytes)\n${p.preview}")
-          addEventLog("Printed ${p.name} (${p.size} bytes)")
-          addEventLog("Preview: ${p.preview.take(200)}...")
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "Print weekly error", e)
-        addEventLog("Print failed: ${e.message ?: e.toString()}")
-      }
     }
-  }
+
+    /**
+     * Execute experimental sync (API2)
+     */
+    fun onExperimentalSync() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Running experimental sync (API2)...")
+                val waterListRepo = RepositoryProvider.getWaterListRepository()
+                val result = waterListRepo.refreshWaterListData()
+
+                if (result != null) {
+                    addEventLog("Experimental sync completed successfully")
+                    addEventLog("API2 data fetched and saved")
+                } else {
+                    addEventLog("Experimental sync failed - null result")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Experimental sync error", e)
+                addEventLog("Experimental sync exception: ${e.message ?: e.toString()}")
+            }
+        }
+    }
+
+    /**
+     * Execute integration flow (ensure cleaned weekly and write to calendar)
+     */
+    fun onStartIntegration() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("[Integration] Starting integration flow...")
+
+                // Step 1: Execute integration flow
+                val flowResult = integrationFlowUseCase.executeIntegrationFlow()
+                when (flowResult) {
+                    is IntegrationFlowUseCase.IntegrationResult.CleanedWeeklyExists -> {
+                        addEventLog(flowResult.message)
+                    }
+                    is IntegrationFlowUseCase.IntegrationResult.DataExists -> {
+                        addEventLog(flowResult.message)
+                        // Generate cleaned weekly
+                        val cleanResult = integrationFlowUseCase.generateCleanedWeekly()
+                        when (cleanResult) {
+                            is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
+                                addEventLog(cleanResult.message)
+                            }
+                            is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
+                                addEventLog("[Integration] Generation failed: ${cleanResult.message}")
+                                return@launch
+                            }
+                        }
+                    }
+                    is IntegrationFlowUseCase.IntegrationResult.DataFetched -> {
+                        addEventLog(flowResult.message)
+                        // Generate cleaned weekly
+                        val cleanResult = integrationFlowUseCase.generateCleanedWeekly()
+                        when (cleanResult) {
+                            is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
+                                addEventLog(cleanResult.message)
+                            }
+                            is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
+                                addEventLog("[Integration] Generation failed: ${cleanResult.message}")
+                                return@launch
+                            }
+                        }
+                    }
+                    is IntegrationFlowUseCase.IntegrationResult.AuthRequired -> {
+                        addEventLog(flowResult.message)
+                        _uiState.update { it.copy(needsLogin = true) }
+                        return@launch
+                    }
+                    is IntegrationFlowUseCase.IntegrationResult.Error -> {
+                        addEventLog("[Integration] Error: ${flowResult.message}")
+                        return@launch
+                    }
+                }
+
+                // Step 2: Submit calendar write task
+                integrationFlowUseCase.submitAndMonitorCalendarWrite { status ->
+                    addEventLog(status)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Integration flow error", e)
+                addEventLog("[Integration] Unexpected error: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Handle integration pending state for permission callback
+     */
+    fun setIntegrationPending(pending: Boolean) {
+        _uiState.update { it.copy(integrationPending = pending) }
+    }
+
+    /**
+     * Generate cleaned weekly manually
+     */
+    fun onGenerateCleanedWeekly() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Generating cleaned weekly...")
+                val result = integrationFlowUseCase.generateCleanedWeekly()
+
+                when (result) {
+                    is IntegrationFlowUseCase.GenerateCleanedResult.Success -> {
+                        addEventLog(result.message)
+                        val cleanedPath = weeklyCleaner.getCleanedFilePath()
+                        if (cleanedPath != null) {
+                            addEventLog("Saved cleaned weekly: $cleanedPath")
+                        }
+                    }
+                    is IntegrationFlowUseCase.GenerateCleanedResult.Error -> {
+                        addEventLog("Exception during cleaning: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Generate cleaned weekly error", e)
+                addEventLog("Exception during cleaning: ${e.message ?: e.toString()}")
+            }
+        }
+    }
+
+    /**
+     * Print cleaned weekly file contents
+     */
+    fun onPrintCleanedWeekly() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Printing cleaned weekly to logs...")
+                val cm = CacheManager(context)
+                val content = cm.readFromCache("cleaned_weekly.json")
+
+                if (content.isNullOrBlank()) {
+                    addEventLog("No cleaned weekly found in cache")
+                } else {
+                    Log.d(TAG, "Cleaned weekly (${content.length} bytes):\n$content")
+                    addEventLog("Printed cleaned weekly to logs (${content.length} bytes)")
+                    addEventLog("Preview: ${content.take(800)}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Print cleaned weekly error", e)
+                addEventLog("Print cleaned weekly failed: ${e.message ?: e.toString()}")
+            }
+        }
+    }
+
+    /**
+     * Print weekly files
+     */
+    fun onPrintWeekly() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                addEventLog("Printing weekly files...")
+                val previews = weeklyRepository.getWeeklyFilePreviews()
+
+                if (previews.isEmpty()) {
+                    addEventLog("No weekly files found to print")
+                    return@launch
+                }
+
+                for (p in previews) {
+                    Log.d(TAG, "File: ${p.name} (${p.size} bytes)\n${p.preview}")
+                    addEventLog("Printed ${p.name} (${p.size} bytes)")
+                    addEventLog("Preview: ${p.preview.take(200)}...")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Print weekly error", e)
+                addEventLog("Print failed: ${e.message ?: e.toString()}")
+            }
+        }
+    }
 }
